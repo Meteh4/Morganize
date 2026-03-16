@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_create_screen_title">New Note</string>
+    <string name="feature_create_back">Back</string>
+    <string name="feature_create_save">Save note</string>
+    <string name="feature_create_title_hint">Title</string>
+    <string name="feature_create_content_hint">Start writing…</string>
+</resources>

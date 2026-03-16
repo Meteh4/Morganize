@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_edit_screen_title">Edit Note</string>
+    <string name="feature_edit_back">Back</string>
+    <string name="feature_edit_delete_note">Delete note</string>
+    <string name="feature_edit_delete_dialog_title">Delete note?</string>
+    <string name="feature_edit_delete_dialog_message">This action cannot be undone.</string>
+    <string name="feature_edit_delete_confirm">Delete</string>
+    <string name="feature_edit_delete_cancel">Cancel</string>
+    <string name="feature_edit_save">Save changes</string>
+    <string name="feature_edit_title_hint">Title</string>
+    <string name="feature_edit_content_hint">Start writing…</string>
+</resources>

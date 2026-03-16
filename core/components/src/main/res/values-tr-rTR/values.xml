@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+        <string name="core_components_delete_dialog_title">Notu Sil</string>
+        <string name="core_components_delete_dialog_message">"%s" silinecek. Bu işlem geri alınamaz.</string>
+        <string name="core_components_delete_dialog_generic_message">Bu not silinecek. Bu işlem geri alınamaz.</string>
+        <string name="core_components_untitled">İsimsiz Not</string>
+        <string name="core_components_delete_dialog_confirm">Sil</string>
+        <string name="core_components_delete_dialog_cancel">İptal</string>
+</resources>

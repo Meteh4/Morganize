@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="core_components_delete_dialog_title">Delete Note</string>
+    <string name="core_components_delete_dialog_message">"%s" will be deleted. This action cannot be undone.</string>
+    <string name="core_components_delete_dialog_generic_message">This note will be deleted. This action cannot be undone.</string>
+    <string name="core_components_untitled">Untitled Note</string>
+    <string name="core_components_delete_dialog_confirm">Delete</string>
+    <string name="core_components_delete_dialog_cancel">Cancel</string>
+</resources>
