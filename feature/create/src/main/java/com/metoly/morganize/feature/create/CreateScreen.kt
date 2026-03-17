@@ -2,6 +2,12 @@ package com.metoly.morganize.feature.create
 
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -18,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.metoly.components.MarkdownToolbar
 import com.metoly.components.NoteBottomBar
 import com.metoly.components.NoteDrawingDialog
 import com.metoly.components.rememberNoteImagePicker
@@ -41,6 +48,7 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
             viewModel.onEvent(CreateEvent.NavigationHandled)
         }
     }
+
     LaunchedEffect(uiState.userMessage) {
         uiState.userMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -68,18 +76,43 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            NoteBottomBar(
-                onAddImage = {
-                    imagePickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            Column {
+                AnimatedVisibility(
+                    visible = uiState.isMarkdownEnabled,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                ) {
+                    MarkdownToolbar(
+                        onBold = {
+                            viewModel.onEvent(CreateEvent.ContentChanged(uiState.content + "**text**"))
+                        },
+                        onItalic = {
+                            viewModel.onEvent(CreateEvent.ContentChanged(uiState.content + "*text*"))
+                        },
+                        onHeading = {
+                            viewModel.onEvent(CreateEvent.ContentChanged(uiState.content + "\n# text"))
+                        },
+                        onBulletList = {
+                            viewModel.onEvent(CreateEvent.ContentChanged(uiState.content + "\n- text"))
+                        },
+                        onNumberedList = {
+                            viewModel.onEvent(CreateEvent.ContentChanged(uiState.content + "\n1. text"))
+                        }
                     )
-                },
-                onDraw = { showDrawingDialog = true },
-                onToggleMarkdown = { viewModel.onEvent(CreateEvent.MarkdownToggled) },
-                onAddChecklistItem = { viewModel.onEvent(CreateEvent.ChecklistItemAdded("")) },
-                onSave = { viewModel.onEvent(CreateEvent.Save) },
-                saveContentDescription = stringResource(R.string.feature_create_save)
-            )
+                }
+                NoteBottomBar(
+                    onAddImage = {
+                        imagePickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    onDraw = { showDrawingDialog = true },
+                    onToggleMarkdown = { viewModel.onEvent(CreateEvent.MarkdownToggled) },
+                    onAddChecklistItem = { viewModel.onEvent(CreateEvent.ChecklistItemAdded("")) },
+                    onSave = { viewModel.onEvent(CreateEvent.Save) },
+                    saveContentDescription = stringResource(R.string.feature_create_save)
+                )
+            }
         }
     ) { padding ->
         CreateNoteContent(

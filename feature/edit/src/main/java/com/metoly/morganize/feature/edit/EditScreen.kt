@@ -2,6 +2,12 @@ package com.metoly.morganize.feature.edit
 
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -19,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.metoly.components.DeleteNoteDialog
+import com.metoly.components.MarkdownToolbar
 import com.metoly.components.NoteBottomBar
 import com.metoly.components.NoteDrawingDialog
 import com.metoly.components.rememberNoteImagePicker
@@ -42,6 +49,7 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
             viewModel.onEvent(EditEvent.NavigationHandled)
         }
     }
+
     LaunchedEffect(uiState.userMessage) {
         uiState.userMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -77,18 +85,43 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            NoteBottomBar(
-                onAddImage = {
-                    imagePickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            Column {
+                AnimatedVisibility(
+                    visible = uiState.isMarkdownEnabled,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                ) {
+                    MarkdownToolbar(
+                        onBold = {
+                            viewModel.onEvent(EditEvent.ContentChanged(uiState.content + "**text**"))
+                        },
+                        onItalic = {
+                            viewModel.onEvent(EditEvent.ContentChanged(uiState.content + "*text*"))
+                        },
+                        onHeading = {
+                            viewModel.onEvent(EditEvent.ContentChanged(uiState.content + "\n# text"))
+                        },
+                        onBulletList = {
+                            viewModel.onEvent(EditEvent.ContentChanged(uiState.content + "\n- text"))
+                        },
+                        onNumberedList = {
+                            viewModel.onEvent(EditEvent.ContentChanged(uiState.content + "\n1. text"))
+                        }
                     )
-                },
-                onDraw = { showDrawingDialog = true },
-                onToggleMarkdown = { viewModel.onEvent(EditEvent.MarkdownToggled) },
-                onAddChecklistItem = { viewModel.onEvent(EditEvent.ChecklistItemAdded("")) },
-                onSave = { viewModel.onEvent(EditEvent.Save) },
-                saveContentDescription = stringResource(R.string.feature_edit_save)
-            )
+                }
+                NoteBottomBar(
+                    onAddImage = {
+                        imagePickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    onDraw = { showDrawingDialog = true },
+                    onToggleMarkdown = { viewModel.onEvent(EditEvent.MarkdownToggled) },
+                    onAddChecklistItem = { viewModel.onEvent(EditEvent.ChecklistItemAdded("")) },
+                    onSave = { viewModel.onEvent(EditEvent.Save) },
+                    saveContentDescription = stringResource(R.string.feature_edit_save)
+                )
+            }
         }
     ) { padding ->
         EditNoteContent(

@@ -30,9 +30,9 @@ data class ChecklistItemUi(val text: String, val isChecked: Boolean)
 
 @Composable
 fun noteTransparentFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor   = Color.Transparent,
+    focusedBorderColor = Color.Transparent,
     unfocusedBorderColor = Color.Transparent,
-    focusedContainerColor   = Color.Transparent,
+    focusedContainerColor = Color.Transparent,
     unfocusedContainerColor = Color.Transparent
 )
 
@@ -59,7 +59,7 @@ fun NoteContent(
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
-    val fieldColors  = noteTransparentFieldColors()
+    val fieldColors = noteTransparentFieldColors()
 
     Column(modifier = modifier.verticalScroll(rememberScrollState())) {
         Spacer(Modifier.height(16.dp))
@@ -96,19 +96,6 @@ fun NoteContent(
             colors = fieldColors
         )
 
-        if (isMarkdownEnabled) {
-            MarkdownToolbar(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                onBold          = { onContentChange("$content**text**") },
-                onItalic        = { onContentChange("$content*text*") },
-                onHeading       = { onContentChange("$content\n# text") },
-                onBulletList    = { onContentChange("$content\n- text") },
-                onNumberedList  = { onContentChange("$content\n1. text") }
-            )
-        }
-
         OutlinedTextField(
             value = content,
             onValueChange = onContentChange,
@@ -124,11 +111,11 @@ fun NoteContent(
         if (checklistItems.isNotEmpty()) {
             Spacer(Modifier.height(8.dp))
             NoteChecklistSection(
-                items            = checklistItems,
-                onItemToggled    = onChecklistItemToggled,
+                items = checklistItems,
+                onItemToggled = onChecklistItemToggled,
                 onItemTextChanged = onChecklistItemTextChanged,
-                onItemRemoved    = onChecklistItemRemoved,
-                fieldColors      = fieldColors
+                onItemRemoved = onChecklistItemRemoved,
+                fieldColors = fieldColors
             )
         }
 
