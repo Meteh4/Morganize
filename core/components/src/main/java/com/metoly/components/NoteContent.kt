@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.metoly.morganize.core.model.Category
@@ -30,19 +31,27 @@ data class ChecklistItemUi(val text: String, val isChecked: Boolean)
 
 @Composable
 fun noteTransparentFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor   = Color.Transparent,
+    focusedBorderColor = Color.Transparent,
     unfocusedBorderColor = Color.Transparent,
-    focusedContainerColor   = Color.Transparent,
+    focusedContainerColor = Color.Transparent,
     unfocusedContainerColor = Color.Transparent
 )
 
+/**
+ * Unified note content area used by both Create and Edit screens.
+ *
+ * The title uses a plain [OutlinedTextField].
+ * The body uses [RichTextEditor] with native AnnotatedString formatting.
+ * The [RichTextToolbar] is shown inline above the content and always visible.
+ */
 @Composable
 fun NoteContent(
     title: String,
     onTitleChange: (String) -> Unit,
     titleHint: String,
-    content: String,
-    onContentChange: (String) -> Unit,
+    richTextState: RichTextEditorState,
+    onRichTextChange: (TextFieldValue) -> Unit,
+    onEnterPressed: () -> Unit,
     contentHint: String,
     categories: List<Category>,
     selectedCategoryId: Long?,
@@ -51,7 +60,6 @@ fun NoteContent(
     onImageRemoved: (String) -> Unit,
     drawingPath: String?,
     onDrawingRemoved: () -> Unit,
-    isMarkdownEnabled: Boolean,
     checklistItems: List<ChecklistItemUi>,
     onChecklistItemToggled: (Int) -> Unit,
     onChecklistItemTextChanged: (Int, String) -> Unit,
@@ -59,7 +67,7 @@ fun NoteContent(
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
-    val fieldColors  = noteTransparentFieldColors()
+    val fieldColors = noteTransparentFieldColors()
 
     Column(modifier = modifier.verticalScroll(rememberScrollState())) {
         Spacer(Modifier.height(16.dp))
@@ -82,6 +90,7 @@ fun NoteContent(
             Spacer(Modifier.height(16.dp))
         }
 
+        // Title field
         OutlinedTextField(
             value = title,
             onValueChange = onTitleChange,
@@ -96,39 +105,35 @@ fun NoteContent(
             colors = fieldColors
         )
 
-        if (isMarkdownEnabled) {
-            MarkdownToolbar(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                onBold          = { onContentChange("$content**text**") },
-                onItalic        = { onContentChange("$content*text*") },
-                onHeading       = { onContentChange("$content\n# text") },
-                onBulletList    = { onContentChange("$content\n- text") },
-                onNumberedList  = { onContentChange("$content\n1. text") }
-            )
-        }
+        Spacer(Modifier.height(4.dp))
 
-        OutlinedTextField(
-            value = content,
-            onValueChange = onContentChange,
+        // Rich text content field
+        RichTextEditor(
+            state = richTextState,
+            onStateChange = onRichTextChange,
+            onEnterPressed = onEnterPressed,
+            textStyle = MaterialTheme.typography.bodyLarge,
+            hint = {
+                Text(
+                    text = contentHint,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
-            placeholder = { Text(contentHint, style = MaterialTheme.typography.bodyLarge) },
-            textStyle = MaterialTheme.typography.bodyLarge,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
-            colors = fieldColors
+                .defaultMinSize(minHeight = 200.dp)
+                .padding(horizontal = 16.dp)
         )
 
         if (checklistItems.isNotEmpty()) {
             Spacer(Modifier.height(8.dp))
             NoteChecklistSection(
-                items            = checklistItems,
-                onItemToggled    = onChecklistItemToggled,
+                items = checklistItems,
+                onItemToggled = onChecklistItemToggled,
                 onItemTextChanged = onChecklistItemTextChanged,
-                onItemRemoved    = onChecklistItemRemoved,
-                fieldColors      = fieldColors
+                onItemRemoved = onChecklistItemRemoved,
+                fieldColors = fieldColors
             )
         }
 

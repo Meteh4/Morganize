@@ -18,8 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.EditNote
-import androidx.compose.material.icons.filled.Label
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -39,10 +39,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.metoly.components.parseMarkdown
+import com.metoly.components.buildAnnotatedFromSpans
 import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.ChecklistItem
 import com.metoly.morganize.core.model.Note
+import com.metoly.morganize.core.model.RichSpan
 import com.metoly.morganize.feature.list.R
 import com.metoly.morganize.feature.list.util.DateFormatter
 import kotlinx.serialization.json.Json
@@ -61,6 +62,16 @@ internal fun NoteDetailPane(
         runCatching {
             if (note.checklistJson.isNotBlank()) {
                 Json.decodeFromString<List<ChecklistItem>>(note.checklistJson)
+            } else {
+                emptyList()
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    val richSpans = remember(note.richSpansJson) {
+        runCatching {
+            if (note.richSpansJson.isNotBlank()) {
+                Json.decodeFromString<List<RichSpan>>(note.richSpansJson)
             } else {
                 emptyList()
             }
@@ -113,7 +124,7 @@ internal fun NoteDetailPane(
             if (category != null) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Label,
+                        imageVector = Icons.AutoMirrored.Filled.Label,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
                         tint = Color(category.colorArgb)
@@ -163,17 +174,13 @@ internal fun NoteDetailPane(
             }
 
             if (note.content.isNotBlank()) {
-                if (note.isMarkdownEnabled) {
-                    Text(
-                        text = parseMarkdown(note.content),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                } else {
-                    Text(
-                        text = note.content,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                val annotatedText = remember(note.content, richSpans) {
+                    buildAnnotatedFromSpans(note.content, richSpans)
                 }
+                Text(
+                    text = annotatedText,
+                    style = MaterialTheme.typography.bodyLarge
+                )
                 Spacer(Modifier.height(16.dp))
             } else if (note.hasNoDisplayContent(checklistItems)) {
                 Text(

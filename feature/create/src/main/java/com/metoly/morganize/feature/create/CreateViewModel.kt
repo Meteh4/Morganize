@@ -2,11 +2,16 @@ package com.metoly.morganize.feature.create
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.metoly.components.RichTextEditorState
+import com.metoly.components.applyInlineFormat
+import com.metoly.components.continueList
 import com.metoly.morganize.core.data.CategoryRepository
 import com.metoly.morganize.core.data.NoteRepository
 import com.metoly.morganize.core.model.ChecklistItem
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.core.model.ResponseState
+import com.metoly.morganize.core.model.RichSpan
+import com.metoly.morganize.core.model.SpanFormatType
 import com.metoly.morganize.feature.create.model.CreateEvent
 import com.metoly.morganize.feature.create.model.CreateUiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,8 +40,150 @@ class CreateViewModel(
                 _uiState.update { it.copy(title = event.value) }
             }
 
-            is CreateEvent.ContentChanged -> {
-                _uiState.update { it.copy(content = event.value) }
+            is CreateEvent.RichTextChanged -> {
+                val current = _uiState.value.richTextState
+                var updated = current.copy(textFieldValue = event.value)
+
+                // Extend active inline format spans as the user types
+                if (current.isBoldActive && event.value.text.length > current.text.length) {
+                    updated = updated.applyInlineFormat(current, SpanFormatType.BOLD)
+                }
+                if (current.isItalicActive && event.value.text.length > current.text.length) {
+                    updated = updated.applyInlineFormat(current, SpanFormatType.ITALIC)
+                }
+
+                // Handle bullet list prefix auto-insertion on entering list mode
+                if (current.isBulletListActive && event.value.text.length > current.text.length) {
+                    // Mark bullet prefix range
+                    val newCursor = event.value.selection.start
+                    val oldCursor = current.cursor
+                    if (newCursor > oldCursor) {
+                        updated = updated.copy(
+                            spans = updated.spans + RichSpan(
+                                start = oldCursor,
+                                end = newCursor,
+                                type = SpanFormatType.BULLET_LIST
+                            )
+                        )
+                    }
+                }
+
+                if (current.isNumberedListActive && event.value.text.length > current.text.length) {
+                    val newCursor = event.value.selection.start
+                    val oldCursor = current.cursor
+                    if (newCursor > oldCursor) {
+                        updated = updated.copy(
+                            spans = updated.spans + RichSpan(
+                                start = oldCursor,
+                                end = newCursor,
+                                type = SpanFormatType.NUMBERED_LIST
+                            )
+                        )
+                    }
+                }
+
+                _uiState.update { it.copy(richTextState = updated) }
+            }
+
+            CreateEvent.ToggleBold -> {
+                _uiState.update { state ->
+                    val rich = state.richTextState
+                    state.copy(
+                        richTextState = rich.copy(
+                            isBoldActive = !rich.isBoldActive,
+                            isItalicActive = false // mutually exclusive inline formats
+                        )
+                    )
+                }
+            }
+
+            CreateEvent.ToggleItalic -> {
+                _uiState.update { state ->
+                    val rich = state.richTextState
+                    state.copy(
+                        richTextState = rich.copy(
+                            isItalicActive = !rich.isItalicActive,
+                            isBoldActive = false
+                        )
+                    )
+                }
+            }
+
+            CreateEvent.ToggleBulletList -> {
+                _uiState.update { state ->
+                    val rich = state.richTextState
+                    val newActive = !rich.isBulletListActive
+                    var updated = rich.copy(
+                        isBulletListActive = newActive,
+                        isNumberedListActive = false
+                    )
+                    // Insert initial bullet prefix if turning on
+                    if (newActive) {
+                        val cursor = rich.cursor
+                        val text = rich.text
+                        val prefix = "• "
+                        val newText = text.substring(0, cursor) + prefix + text.substring(cursor)
+                        val newCursor = cursor + prefix.length
+                        updated = updated.copy(
+                            textFieldValue = updated.textFieldValue.copy(
+                                text = newText,
+                                selection = androidx.compose.ui.text.TextRange(newCursor)
+                            ),
+                            spans = updated.spans + RichSpan(
+                                start = cursor, end = newCursor, type = SpanFormatType.BULLET_LIST
+                            )
+                        )
+                    }
+                    state.copy(richTextState = updated)
+                }
+            }
+
+            CreateEvent.ToggleNumberedList -> {
+                _uiState.update { state ->
+                    val rich = state.richTextState
+                    val newActive = !rich.isNumberedListActive
+                    var updated = rich.copy(
+                        isNumberedListActive = newActive,
+                        isBulletListActive = false
+                    )
+                    // Insert initial number prefix if turning on
+                    if (newActive) {
+                        val cursor = rich.cursor
+                        val text = rich.text
+                        val linesBefore = text.substring(0, cursor).lines()
+                        val nextNum = linesBefore.count { it.matches(Regex("^\\d+\\..*")) } + 1
+                        val prefix = "$nextNum. "
+                        val newText = text.substring(0, cursor) + prefix + text.substring(cursor)
+                        val newCursor = cursor + prefix.length
+                        updated = updated.copy(
+                            textFieldValue = updated.textFieldValue.copy(
+                                text = newText,
+                                selection = androidx.compose.ui.text.TextRange(newCursor)
+                            ),
+                            spans = updated.spans + RichSpan(
+                                start = cursor, end = newCursor, type = SpanFormatType.NUMBERED_LIST
+                            )
+                        )
+                    }
+                    state.copy(richTextState = updated)
+                }
+            }
+
+            CreateEvent.ContinueList -> {
+                _uiState.update { state ->
+                    val currentLine = getCurrentLine(state.richTextState)
+                    // If current line is just a bullet/number with no content → exit list mode
+                    if (currentLine.trim() == "•" || currentLine.trim().matches(Regex("^\\d+\\.$"))) {
+                        state.copy(
+                            richTextState = state.richTextState.copy(
+                                isBulletListActive = false,
+                                isNumberedListActive = false
+                            )
+                        )
+                    } else {
+                        state.copy(richTextState = state.richTextState.continueList())
+                    }
+                }
             }
 
             is CreateEvent.BackgroundColorChanged -> {
@@ -57,10 +204,6 @@ class CreateViewModel(
 
             is CreateEvent.DrawingChanged -> {
                 _uiState.update { it.copy(drawingPath = event.path) }
-            }
-
-            CreateEvent.MarkdownToggled -> {
-                _uiState.update { it.copy(isMarkdownEnabled = !it.isMarkdownEnabled) }
             }
 
             is CreateEvent.ChecklistItemAdded -> {
@@ -104,7 +247,6 @@ class CreateViewModel(
             is CreateEvent.NavigationHandled -> {
                 _uiState.update { it.copy(isDone = false) }
             }
-
             is CreateEvent.SnackbarDismissed -> {
                 _uiState.update { it.copy(userMessage = null) }
             }
@@ -125,27 +267,29 @@ class CreateViewModel(
     private fun saveNote() {
         val currentState = _uiState.value
         val hasChecklist = currentState.checklistItems.isNotEmpty()
+        val plainText = currentState.richTextState.text.trim()
+
         if (currentState.title.isBlank() &&
-            currentState.content.isBlank() &&
+            plainText.isBlank() &&
             currentState.imagePaths.isEmpty() &&
             currentState.drawingPath == null &&
             !hasChecklist
-        )
-            return
+        ) return
 
-        val note =
-            Note(
-                title = currentState.title.trim(),
-                content = currentState.content.trim(),
-                backgroundColor = currentState.backgroundColor,
-                categoryId = currentState.categoryId,
-                imagePaths = currentState.imagePaths,
-                drawingPath = currentState.drawingPath,
-                isMarkdownEnabled = currentState.isMarkdownEnabled,
-                checklistJson =
-                    if (hasChecklist) Json.encodeToString(currentState.checklistItems)
-                    else ""
-            )
+        val note = Note(
+            title = currentState.title.trim(),
+            content = plainText,
+            backgroundColor = currentState.backgroundColor,
+            categoryId = currentState.categoryId,
+            imagePaths = currentState.imagePaths,
+            drawingPath = currentState.drawingPath,
+            richSpansJson = if (currentState.richTextState.spans.isNotEmpty())
+                Json.encodeToString(currentState.richTextState.spans)
+            else "",
+            checklistJson = if (hasChecklist)
+                Json.encodeToString(currentState.checklistItems)
+            else ""
+        )
 
         noteRepository
             .insertNote(note)
@@ -154,14 +298,19 @@ class CreateViewModel(
                     is ResponseState.Success -> {
                         _uiState.update { it.copy(isDone = true) }
                     }
-
                     is ResponseState.Error -> {
                         _uiState.update { it.copy(userMessage = state.message) }
                     }
-
                     else -> Unit
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun getCurrentLine(state: RichTextEditorState): String {
+        val text = state.text
+        val cursor = state.cursor
+        val lineStart = text.lastIndexOf('\n', cursor - 1).let { if (it == -1) 0 else it + 1 }
+        return text.substring(lineStart, cursor)
     }
 }

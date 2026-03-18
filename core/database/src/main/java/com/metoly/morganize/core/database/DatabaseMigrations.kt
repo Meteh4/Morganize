@@ -7,18 +7,16 @@ import androidx.sqlite.db.SupportSQLiteDatabase
  * Room database migrations.
  *
  * MIGRATION_1_2 — adds new columns to 'notes' required for the following features:
- * - backgroundColor (colour picker)
- * - categoryId (category filtering)
- * - imagePaths (image attachments, stored as JSON)
- * - drawingPath (hand-drawn sketch file path)
- * - isMarkdownEnabled (markdown / rich-text mode toggle)
- * - checklistJson (checkbox list, stored as JSON) Also creates the new 'categories' table.
+ * - backgroundColor, categoryId, imagePaths, drawingPath, isMarkdownEnabled, checklistJson
+ * - Also creates the 'categories' table.
+ *
+ * MIGRATION_2_3 — replaces the Markdown system with native Rich Text:
+ * - richSpansJson: JSON-serialized List<RichSpan> describing formatting ranges
+ * - isMarkdownEnabled column is kept for backward compatibility but no longer used
  */
 val MIGRATION_1_2 =
         object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // New columns on the existing notes table (SQLite ALTER TABLE adds one column at a
-                // time)
                 db.execSQL("ALTER TABLE notes ADD COLUMN backgroundColor INTEGER")
                 db.execSQL("ALTER TABLE notes ADD COLUMN categoryId INTEGER")
                 db.execSQL("ALTER TABLE notes ADD COLUMN imagePaths TEXT NOT NULL DEFAULT '[]'")
@@ -28,7 +26,6 @@ val MIGRATION_1_2 =
                 )
                 db.execSQL("ALTER TABLE notes ADD COLUMN checklistJson TEXT NOT NULL DEFAULT ''")
 
-                // New categories table
                 db.execSQL(
                         """
             CREATE TABLE IF NOT EXISTS `categories` (
@@ -38,5 +35,13 @@ val MIGRATION_1_2 =
             )
             """.trimIndent()
                 )
+            }
+        }
+
+val MIGRATION_2_3 =
+        object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Add rich text span storage column (plain JSON, default empty)
+                db.execSQL("ALTER TABLE notes ADD COLUMN richSpansJson TEXT NOT NULL DEFAULT ''")
             }
         }

@@ -18,9 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import com.metoly.components.DeleteNoteDialog
 import com.metoly.components.NoteBottomBar
 import com.metoly.components.NoteDrawingDialog
+import com.metoly.components.RichTextToolbar
 import com.metoly.components.rememberNoteImagePicker
 import com.metoly.morganize.feature.edit.components.EditNoteContent
 import com.metoly.morganize.feature.edit.components.EditTopBar
@@ -31,6 +35,7 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showDrawingDialog by remember { mutableStateOf(false) }
+    var showRichTextTools by remember { mutableStateOf(false) }
 
     val imagePickerLauncher = rememberNoteImagePicker {
         viewModel.onEvent(EditEvent.ImageAdded(it))
@@ -42,6 +47,7 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
             viewModel.onEvent(EditEvent.NavigationHandled)
         }
     }
+
     LaunchedEffect(uiState.userMessage) {
         uiState.userMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -77,18 +83,32 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            NoteBottomBar(
-                onAddImage = {
-                    imagePickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                AnimatedVisibility(visible = showRichTextTools) {
+                    RichTextToolbar(
+                        isBoldActive = uiState.richTextState.isBoldActive,
+                        isItalicActive = uiState.richTextState.isItalicActive,
+                        isBulletListActive = uiState.richTextState.isBulletListActive,
+                        isNumberedListActive = uiState.richTextState.isNumberedListActive,
+                        onToggleBold = { viewModel.onEvent(EditEvent.ToggleBold) },
+                        onToggleItalic = { viewModel.onEvent(EditEvent.ToggleItalic) },
+                        onToggleBulletList = { viewModel.onEvent(EditEvent.ToggleBulletList) },
+                        onToggleNumberedList = { viewModel.onEvent(EditEvent.ToggleNumberedList) }
                     )
-                },
-                onDraw = { showDrawingDialog = true },
-                onToggleMarkdown = { viewModel.onEvent(EditEvent.MarkdownToggled) },
-                onAddChecklistItem = { viewModel.onEvent(EditEvent.ChecklistItemAdded("")) },
-                onSave = { viewModel.onEvent(EditEvent.Save) },
-                saveContentDescription = stringResource(R.string.feature_edit_save)
-            )
+                }
+                NoteBottomBar(
+                    onAddImage = {
+                        imagePickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    onDraw = { showDrawingDialog = true },
+                    onAddChecklistItem = { viewModel.onEvent(EditEvent.ChecklistItemAdded("")) },
+                    onToggleRichTextTools = { showRichTextTools = !showRichTextTools },
+                    onSave = { viewModel.onEvent(EditEvent.Save) },
+                    saveContentDescription = stringResource(R.string.feature_edit_save)
+                )
+            }
         }
     ) { padding ->
         EditNoteContent(

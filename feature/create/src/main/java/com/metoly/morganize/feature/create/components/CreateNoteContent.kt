@@ -21,24 +21,24 @@ internal fun CreateNoteContent(
     }
 
     NoteContent(
-        title              = uiState.title,
-        onTitleChange      = { onEvent(CreateEvent.TitleChanged(it)) },
-        titleHint          = stringResource(R.string.feature_create_title_hint),
-        content            = uiState.content,
-        onContentChange    = { onEvent(CreateEvent.ContentChanged(it)) },
-        contentHint        = stringResource(R.string.feature_create_content_hint),
-        categories         = uiState.categories,
-        selectedCategoryId = uiState.categoryId,
-        onCategorySelected = { onEvent(CreateEvent.CategorySelected(it)) },
-        imagePaths         = uiState.imagePaths,
-        onImageRemoved     = { onEvent(CreateEvent.ImageRemoved(it)) },
-        drawingPath        = uiState.drawingPath,
-        onDrawingRemoved   = { onEvent(CreateEvent.DrawingChanged(null)) },
-        isMarkdownEnabled  = uiState.isMarkdownEnabled,
+        title                      = uiState.title,
+        onTitleChange              = { onEvent(CreateEvent.TitleChanged(it)) },
+        titleHint                  = stringResource(R.string.feature_create_title_hint),
+        richTextState              = uiState.richTextState,
+        onRichTextChange           = { onEvent(CreateEvent.RichTextChanged(it)) },
+        onEnterPressed             = { onEvent(CreateEvent.ContinueList) },
+        contentHint                = stringResource(R.string.feature_create_content_hint),
+        categories                 = uiState.categories,
+        selectedCategoryId         = uiState.categoryId,
+        onCategorySelected         = { onEvent(CreateEvent.CategorySelected(it)) },
+        imagePaths                 = uiState.imagePaths,
+        onImageRemoved             = { onEvent(CreateEvent.ImageRemoved(it)) },
+        drawingPath                = uiState.drawingPath,
+        onDrawingRemoved           = { onEvent(CreateEvent.DrawingChanged(null)) },
         checklistItems             = checklistItemsUi,
         onChecklistItemToggled     = { onEvent(CreateEvent.ChecklistItemToggled(it)) },
         onChecklistItemTextChanged = { i, t -> onEvent(CreateEvent.ChecklistItemTextChanged(i, t)) },
         onChecklistItemRemoved     = { onEvent(CreateEvent.ChecklistItemRemoved(it)) },
-        modifier = modifier
+        modifier                   = modifier
     )
 }

@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -111,7 +111,7 @@ internal fun NoteCard(
                 if (category != null) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.Label,
+                            imageVector = Icons.AutoMirrored.Filled.Label,
                             contentDescription = null,
                             modifier = Modifier.size(14.dp),
                             tint = Color(category.colorArgb)
@@ -134,7 +134,7 @@ internal fun NoteCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                if (note.content.isNotBlank() && !note.isMarkdownEnabled) {
+                if (note.content.isNotBlank()) {
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = note.content,
@@ -142,14 +142,6 @@ internal fun NoteCard(
                         color = textColor.copy(alpha = 0.8f),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
-                    )
-                } else if (note.isMarkdownEnabled) {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = "Rich Text",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = textColor.copy(alpha = 0.8f),
-                        maxLines = 1,
                     )
                 }
 
