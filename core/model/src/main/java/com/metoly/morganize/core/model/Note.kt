@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
  *
  * - [imagePaths] : Stored image URIs / file paths (JSON list via TypeConverter)
  * - [drawingPath] : File path of the saved drawing Bitmap (null if no drawing)
- * - [isMarkdownEnabled] : Whether the content field contains Markdown markup
+ * - [richSpansJson] : JSON-serialized list of [RichSpan] objects describing rich-text formatting
  * - [checklistJson] : JSON-serialized list of [ChecklistItem] objects
  * - [backgroundColor] : ARGB colour int applied to the note card; null = default theme
  * - [categoryId] : FK to [Category.id]; null = uncategorised
@@ -29,6 +29,6 @@ data class Note(
         val categoryId: Long? = null,
         val imagePaths: List<String> = emptyList(),
         val drawingPath: String? = null,
-        val isMarkdownEnabled: Boolean = false,
+        val richSpansJson: String = "",
         val checklistJson: String = ""
 )

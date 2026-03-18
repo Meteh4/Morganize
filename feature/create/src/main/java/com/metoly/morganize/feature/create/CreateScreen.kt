@@ -2,12 +2,6 @@ package com.metoly.morganize.feature.create
 
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -24,9 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.metoly.components.MarkdownToolbar
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import com.metoly.components.NoteBottomBar
 import com.metoly.components.NoteDrawingDialog
+import com.metoly.components.RichTextToolbar
 import com.metoly.components.rememberNoteImagePicker
 import com.metoly.morganize.feature.create.components.CreateNoteContent
 import com.metoly.morganize.feature.create.components.CreateTopBar
@@ -37,6 +34,7 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showDrawingDialog by remember { mutableStateOf(false) }
+    var showRichTextTools by remember { mutableStateOf(false) }
 
     val imagePickerLauncher = rememberNoteImagePicker {
         viewModel.onEvent(CreateEvent.ImageAdded(it))
@@ -76,28 +74,19 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            Column {
-                AnimatedVisibility(
-                    visible = uiState.isMarkdownEnabled,
-                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-                ) {
-                    MarkdownToolbar(
-                        onBold = {
-                            viewModel.onEvent(CreateEvent.ContentChanged(uiState.content + "**text**"))
-                        },
-                        onItalic = {
-                            viewModel.onEvent(CreateEvent.ContentChanged(uiState.content + "*text*"))
-                        },
-                        onHeading = {
-                            viewModel.onEvent(CreateEvent.ContentChanged(uiState.content + "\n# text"))
-                        },
-                        onBulletList = {
-                            viewModel.onEvent(CreateEvent.ContentChanged(uiState.content + "\n- text"))
-                        },
-                        onNumberedList = {
-                            viewModel.onEvent(CreateEvent.ContentChanged(uiState.content + "\n1. text"))
-                        }
+            Column(modifier = Modifier
+                .imePadding()
+                .fillMaxWidth()) {
+                AnimatedVisibility(visible = showRichTextTools) {
+                    RichTextToolbar(
+                        isBoldActive = uiState.richTextState.isBoldActive,
+                        isItalicActive = uiState.richTextState.isItalicActive,
+                        isBulletListActive = uiState.richTextState.isBulletListActive,
+                        isNumberedListActive = uiState.richTextState.isNumberedListActive,
+                        onToggleBold = { viewModel.onEvent(CreateEvent.ToggleBold) },
+                        onToggleItalic = { viewModel.onEvent(CreateEvent.ToggleItalic) },
+                        onToggleBulletList = { viewModel.onEvent(CreateEvent.ToggleBulletList) },
+                        onToggleNumberedList = { viewModel.onEvent(CreateEvent.ToggleNumberedList) }
                     )
                 }
                 NoteBottomBar(
@@ -107,8 +96,8 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
                         )
                     },
                     onDraw = { showDrawingDialog = true },
-                    onToggleMarkdown = { viewModel.onEvent(CreateEvent.MarkdownToggled) },
                     onAddChecklistItem = { viewModel.onEvent(CreateEvent.ChecklistItemAdded("")) },
+                    onToggleRichTextTools = { showRichTextTools = !showRichTextTools },
                     onSave = { viewModel.onEvent(CreateEvent.Save) },
                     saveContentDescription = stringResource(R.string.feature_create_save)
                 )
