@@ -49,14 +49,12 @@ internal fun NoteCard(
 ) {
     val resolvedNoteColor = resolveNoteColor(note.backgroundColor)
 
-    /* ── Şerit → tam dolgu animasyonu ── */
     val fillFraction by animateFloatAsState(
         targetValue = if (isSelected && resolvedNoteColor != null) 1f else 0f,
         animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
         label = "fill"
     )
 
-    /* Renksiz notlar için seçim arkaplanı */
     val containerColor by animateColorAsState(
         targetValue = if (isSelected && resolvedNoteColor == null)
             MaterialTheme.colorScheme.secondaryContainer
@@ -65,15 +63,12 @@ internal fun NoteCard(
         label = "card_bg"
     )
 
-    /* Yazı rengi, mevcut arkaplan kontrastına uyum sağlar */
     val textColor by animateColorAsState(
         targetValue = when {
             isSelected && resolvedNoteColor != null ->
                 if (resolvedNoteColor.luminance() > 0.5f) Color.Black else Color.White
-
             isSelected ->
                 MaterialTheme.colorScheme.onSecondaryContainer
-
             else ->
                 MaterialTheme.colorScheme.onSurfaceVariant
         },
@@ -101,13 +96,11 @@ internal fun NoteCard(
                     } else Modifier
                 )
         ) {
-            /* Renk şeridi için boşluk (layout push) */
             if (resolvedNoteColor != null) {
                 Spacer(modifier = Modifier.width(5.dp))
             }
 
             Column(modifier = Modifier.weight(1f).padding(16.dp)) {
-
                 if (category != null) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
@@ -133,17 +126,6 @@ internal fun NoteCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-
-                if (note.content.isNotBlank()) {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = note.content,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = textColor.copy(alpha = 0.8f),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
 
                 Spacer(Modifier.height(8.dp))
 

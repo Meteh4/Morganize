@@ -8,7 +8,7 @@ import com.metoly.morganize.core.model.Converters
 import com.metoly.morganize.core.model.Note
 
 /** Main Room database for the Morganize application. */
-@Database(entities = [Note::class, Category::class], version = 3, exportSchema = true)
+@Database(entities = [Note::class, Category::class], version = 4, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao

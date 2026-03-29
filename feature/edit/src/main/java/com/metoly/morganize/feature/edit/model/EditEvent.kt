@@ -1,24 +1,25 @@
 package com.metoly.morganize.feature.edit.model
 
-import androidx.compose.ui.text.input.TextFieldValue
+import com.metoly.components.RichTextEditorState
 
 sealed interface EditEvent {
     data class TitleChanged(val value: String) : EditEvent
-    data class RichTextChanged(val value: TextFieldValue) : EditEvent
-    data object ToggleBold : EditEvent
-    data object ToggleItalic : EditEvent
-    data object ToggleBulletList : EditEvent
-    data object ToggleNumberedList : EditEvent
-    data object ContinueList : EditEvent
+    data object AddPage : EditEvent
+    data class ItemSelected(val itemId: String?) : EditEvent
+    data class ItemMoved(val pageId: String, val itemId: String, val newX: Int, val newY: Int) : EditEvent
+    data class ItemResized(val pageId: String, val itemId: String, val newWidth: Int, val newHeight: Int, val newX: Int, val newY: Int) : EditEvent
+    data class TextGridItemTextChanged(val pageId: String, val itemId: String, val text: String) : EditEvent
+    data class TextGridItemRichSpansChanged(val pageId: String, val itemId: String, val richSpansJson: String) : EditEvent
+    data class TextGridItemTypographyChanged(val pageId: String, val itemId: String, val fontSize: Float, val textAlign: String, val lineHeight: Float) : EditEvent
+    data class TextGridItemAdded(val text: String) : EditEvent
+    data class ImageGridItemAdded(val path: String) : EditEvent
+    data class ItemDeleted(val pageId: String, val itemId: String) : EditEvent
     data class BackgroundColorChanged(val colorArgb: Int?) : EditEvent
     data class CategorySelected(val categoryId: Long?) : EditEvent
-    data class ImageAdded(val path: String) : EditEvent
-    data class ImageRemoved(val path: String) : EditEvent
-    data class DrawingChanged(val path: String?) : EditEvent
-    data class ChecklistItemAdded(val text: String) : EditEvent
-    data class ChecklistItemToggled(val index: Int) : EditEvent
-    data class ChecklistItemTextChanged(val index: Int, val text: String) : EditEvent
-    data class ChecklistItemRemoved(val index: Int) : EditEvent
+
+    data class EditingTextItemChanged(val itemId: String?) : EditEvent
+    data class RichStateUpdated(val state: RichTextEditorState) : EditEvent
+
     data object Save : EditEvent
     data object DeleteRequested : EditEvent
     data object DeleteConfirmed : EditEvent

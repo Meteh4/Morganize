@@ -7,26 +7,18 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun NoteBottomBar(
+    onAddText: () -> Unit,
     onAddImage: () -> Unit,
-    onDraw: () -> Unit,
-    onAddChecklistItem: () -> Unit,
-    onToggleRichTextTools: () -> Unit,
     onSave: () -> Unit,
     saveContentDescription: String
 ) {
     BottomAppBar(
         actions = {
-            IconButton(onClick = onToggleRichTextTools) {
-                Icon(Icons.Default.TextFields, contentDescription = "Format Text")
+            IconButton(onClick = onAddText) {
+                Icon(Icons.Default.TextFields, contentDescription = "Add Text")
             }
             IconButton(onClick = onAddImage) {
                 Icon(Icons.Default.Image, contentDescription = "Add Image")
-            }
-            IconButton(onClick = onDraw) {
-                Icon(Icons.Default.Brush, contentDescription = "Draw")
-            }
-            IconButton(onClick = onAddChecklistItem) {
-                Icon(Icons.Default.Checklist, contentDescription = "Add Checklist Item")
             }
         },
         floatingActionButton = {

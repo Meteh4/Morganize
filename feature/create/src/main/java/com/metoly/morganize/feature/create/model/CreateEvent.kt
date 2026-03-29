@@ -1,24 +1,25 @@
 package com.metoly.morganize.feature.create.model
 
-import androidx.compose.ui.text.input.TextFieldValue
+import com.metoly.components.RichTextEditorState
 
 sealed interface CreateEvent {
     data class TitleChanged(val value: String) : CreateEvent
-    data class RichTextChanged(val value: TextFieldValue) : CreateEvent
-    data object ToggleBold : CreateEvent
-    data object ToggleItalic : CreateEvent
-    data object ToggleBulletList : CreateEvent
-    data object ToggleNumberedList : CreateEvent
-    data object ContinueList : CreateEvent
+    data object AddPage : CreateEvent
+    data class ItemSelected(val itemId: String?) : CreateEvent
+    data class ItemMoved(val pageId: String, val itemId: String, val newX: Int, val newY: Int) : CreateEvent
+    data class ItemResized(val pageId: String, val itemId: String, val newWidth: Int, val newHeight: Int, val newX: Int, val newY: Int) : CreateEvent
+    data class TextGridItemTextChanged(val pageId: String, val itemId: String, val text: String) : CreateEvent
+    data class TextGridItemRichSpansChanged(val pageId: String, val itemId: String, val richSpansJson: String) : CreateEvent
+    data class TextGridItemTypographyChanged(val pageId: String, val itemId: String, val fontSize: Float, val textAlign: String, val lineHeight: Float) : CreateEvent
+    data class TextGridItemAdded(val text: String) : CreateEvent
+    data class ImageGridItemAdded(val path: String) : CreateEvent
+    data class ItemDeleted(val pageId: String, val itemId: String) : CreateEvent
     data class BackgroundColorChanged(val colorArgb: Int?) : CreateEvent
     data class CategorySelected(val categoryId: Long?) : CreateEvent
-    data class ImageAdded(val path: String) : CreateEvent
-    data class ImageRemoved(val path: String) : CreateEvent
-    data class DrawingChanged(val path: String?) : CreateEvent
-    data class ChecklistItemAdded(val text: String) : CreateEvent
-    data class ChecklistItemToggled(val index: Int) : CreateEvent
-    data class ChecklistItemRemoved(val index: Int) : CreateEvent
-    data class ChecklistItemTextChanged(val index: Int, val text: String) : CreateEvent
+    // Rich text toolbar actions
+    data class EditingTextItemChanged(val itemId: String?) : CreateEvent
+    data class RichStateUpdated(val state: RichTextEditorState) : CreateEvent
+
     data object Save : CreateEvent
     data object NavigationHandled : CreateEvent
     data object SnackbarDismissed : CreateEvent

@@ -6,8 +6,9 @@ import kotlinx.serialization.json.Json
 /**
  * Room [TypeConverter]s for complex types stored in the database.
  *
- * - [List<String>] (image paths) ↔ JSON String
- * - [List<RichSpan>] (rich text spans) ↔ JSON String
+ * Currently converts [List]<[String]> (e.g. legacy image path lists) to/from JSON.
+ * Rich-text spans and grid pages are stored as raw JSON strings directly on their
+ * respective model fields, so they do not need a Room TypeConverter.
  */
 class Converters {
 

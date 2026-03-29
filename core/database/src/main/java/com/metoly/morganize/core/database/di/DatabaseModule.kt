@@ -10,12 +10,13 @@ import org.koin.dsl.module
 val databaseModule = module {
     single {
         Room.databaseBuilder(
-                        context = androidContext(),
-                        klass = AppDatabase::class.java,
-                        name = AppDatabase.DATABASE_NAME
-                )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
-                .build()
+            context = androidContext(),
+            klass = AppDatabase::class.java,
+            name = AppDatabase.DATABASE_NAME
+        )
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .fallbackToDestructiveMigration(false)
+            .build()
     }
 
     single { get<AppDatabase>().noteDao() }
