@@ -1,10 +1,8 @@
 package com.metoly.morganize.feature.create.components
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.metoly.components.ChecklistItemUi
 import com.metoly.components.NoteContent
 import com.metoly.morganize.feature.create.R
 import com.metoly.morganize.feature.create.model.CreateEvent
@@ -12,33 +10,39 @@ import com.metoly.morganize.feature.create.model.CreateUiState
 
 @Composable
 internal fun CreateNoteContent(
+    modifier: Modifier = Modifier,
     uiState: CreateUiState,
     onEvent: (CreateEvent) -> Unit,
-    modifier: Modifier = Modifier
+    activeEditingTextItemId: String? = null,
+    activeRichState: com.metoly.components.RichTextEditorState? = null,
+    onActiveRichStateChange: (com.metoly.components.RichTextEditorState) -> Unit = {}
 ) {
-    val checklistItemsUi = remember(uiState.checklistItems) {
-        uiState.checklistItems.map { ChecklistItemUi(it.text, it.isChecked) }
-    }
-
     NoteContent(
-        title                      = uiState.title,
-        onTitleChange              = { onEvent(CreateEvent.TitleChanged(it)) },
-        titleHint                  = stringResource(R.string.feature_create_title_hint),
-        richTextState              = uiState.richTextState,
-        onRichTextChange           = { onEvent(CreateEvent.RichTextChanged(it)) },
-        onEnterPressed             = { onEvent(CreateEvent.ContinueList) },
-        contentHint                = stringResource(R.string.feature_create_content_hint),
-        categories                 = uiState.categories,
-        selectedCategoryId         = uiState.categoryId,
-        onCategorySelected         = { onEvent(CreateEvent.CategorySelected(it)) },
-        imagePaths                 = uiState.imagePaths,
-        onImageRemoved             = { onEvent(CreateEvent.ImageRemoved(it)) },
-        drawingPath                = uiState.drawingPath,
-        onDrawingRemoved           = { onEvent(CreateEvent.DrawingChanged(null)) },
-        checklistItems             = checklistItemsUi,
-        onChecklistItemToggled     = { onEvent(CreateEvent.ChecklistItemToggled(it)) },
-        onChecklistItemTextChanged = { i, t -> onEvent(CreateEvent.ChecklistItemTextChanged(i, t)) },
-        onChecklistItemRemoved     = { onEvent(CreateEvent.ChecklistItemRemoved(it)) },
-        modifier                   = modifier
+        title = uiState.title,
+        onTitleChange = { onEvent(CreateEvent.TitleChanged(it)) },
+        titleHint = stringResource(R.string.feature_create_title_hint),
+        pages = uiState.pages,
+        selectedItemId = uiState.selectedItemId,
+        onItemSelected = { onEvent(CreateEvent.ItemSelected(it)) },
+        onItemMoved = { pId, iId, nX, nY -> onEvent(CreateEvent.ItemMoved(pId, iId, nX, nY)) },
+        onItemResized = { pId, iId, nW, nH, nX, nY -> onEvent(CreateEvent.ItemResized(pId, iId, nW, nH, nX, nY)) },
+        onItemTextChanged = { pId, iId, text -> onEvent(CreateEvent.TextGridItemTextChanged(pId, iId, text)) },
+        onItemRichSpansChanged = { pId, iId, spansJson -> onEvent(CreateEvent.TextGridItemRichSpansChanged(pId, iId, spansJson)) },
+        onItemTypographyChanged = { pId, iId, fs, ta, lh -> onEvent(CreateEvent.TextGridItemTypographyChanged(pId, iId, fs, ta, lh)) },
+        onItemDeleted = { pId, iId -> onEvent(CreateEvent.ItemDeleted(pId, iId)) },
+        onEditingTextItemChanged = { itemId, richState ->
+            onEvent(CreateEvent.EditingTextItemChanged(itemId))
+            if (richState != null) {
+                onEvent(CreateEvent.RichStateUpdated(richState))
+            }
+        },
+        editingTextItemId = activeEditingTextItemId,
+        activeRichState = activeRichState,
+        onActiveRichStateChange = onActiveRichStateChange,
+        categories = uiState.categories,
+        selectedCategoryId = uiState.categoryId,
+        onCategorySelected = { onEvent(CreateEvent.CategorySelected(it)) },
+        onAddPage = { onEvent(CreateEvent.AddPage) },
+        modifier = modifier
     )
 }

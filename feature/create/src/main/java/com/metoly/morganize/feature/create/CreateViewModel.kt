@@ -1,17 +1,18 @@
+// CreateViewModel.kt
 package com.metoly.morganize.feature.create
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.metoly.components.RichTextEditorState
-import com.metoly.components.applyInlineFormat
-import com.metoly.components.continueList
+import com.metoly.components.model.addItemToLastPage
+import com.metoly.components.model.removeItem
+import com.metoly.components.model.updateItem
+import com.metoly.components.model.updateItemSimple
 import com.metoly.morganize.core.data.CategoryRepository
 import com.metoly.morganize.core.data.NoteRepository
-import com.metoly.morganize.core.model.ChecklistItem
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.core.model.ResponseState
-import com.metoly.morganize.core.model.RichSpan
-import com.metoly.morganize.core.model.SpanFormatType
+import com.metoly.morganize.core.model.grid.GridItem
+import com.metoly.morganize.core.model.grid.NotePage
 import com.metoly.morganize.feature.create.model.CreateEvent
 import com.metoly.morganize.feature.create.model.CreateUiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
+import java.util.UUID
 
 class CreateViewModel(
     private val noteRepository: NoteRepository,
@@ -36,226 +38,164 @@ class CreateViewModel(
 
     fun onEvent(event: CreateEvent) {
         when (event) {
-            is CreateEvent.TitleChanged -> {
+            is CreateEvent.TitleChanged ->
                 _uiState.update { it.copy(title = event.value) }
-            }
 
-            is CreateEvent.RichTextChanged -> {
-                val current = _uiState.value.richTextState
-                var updated = current.copy(textFieldValue = event.value)
-
-                // Extend active inline format spans as the user types
-                if (current.isBoldActive && event.value.text.length > current.text.length) {
-                    updated = updated.applyInlineFormat(current, SpanFormatType.BOLD)
-                }
-                if (current.isItalicActive && event.value.text.length > current.text.length) {
-                    updated = updated.applyInlineFormat(current, SpanFormatType.ITALIC)
-                }
-
-                // Handle bullet list prefix auto-insertion on entering list mode
-                if (current.isBulletListActive && event.value.text.length > current.text.length) {
-                    // Mark bullet prefix range
-                    val newCursor = event.value.selection.start
-                    val oldCursor = current.cursor
-                    if (newCursor > oldCursor) {
-                        updated = updated.copy(
-                            spans = updated.spans + RichSpan(
-                                start = oldCursor,
-                                end = newCursor,
-                                type = SpanFormatType.BULLET_LIST
-                            )
-                        )
-                    }
-                }
-
-                if (current.isNumberedListActive && event.value.text.length > current.text.length) {
-                    val newCursor = event.value.selection.start
-                    val oldCursor = current.cursor
-                    if (newCursor > oldCursor) {
-                        updated = updated.copy(
-                            spans = updated.spans + RichSpan(
-                                start = oldCursor,
-                                end = newCursor,
-                                type = SpanFormatType.NUMBERED_LIST
-                            )
-                        )
-                    }
-                }
-
-                _uiState.update { it.copy(richTextState = updated) }
-            }
-
-            CreateEvent.ToggleBold -> {
+            is CreateEvent.AddPage ->
                 _uiState.update { state ->
-                    val rich = state.richTextState
+                    state.copy(pages = state.pages + NotePage(id = UUID.randomUUID().toString()))
+                }
+
+            is CreateEvent.ItemSelected ->
+                _uiState.update { it.copy(selectedItemId = event.itemId) }
+
+            is CreateEvent.ItemMoved ->
+                _uiState.update { state ->
                     state.copy(
-                        richTextState = rich.copy(
-                            isBoldActive = !rich.isBoldActive,
-                            isItalicActive = false // mutually exclusive inline formats
-                        )
+                        pages = state.pages.updateItem(event.pageId, event.itemId, revertOnOverlap = true) { item ->
+                            when (item) {
+                                is GridItem.Text -> item.copy(x = event.newX, y = event.newY)
+                                is GridItem.Image -> item.copy(x = event.newX, y = event.newY)
+                            }
+                        }
                     )
                 }
-            }
 
-            CreateEvent.ToggleItalic -> {
+            is CreateEvent.ItemResized ->
                 _uiState.update { state ->
-                    val rich = state.richTextState
                     state.copy(
-                        richTextState = rich.copy(
-                            isItalicActive = !rich.isItalicActive,
-                            isBoldActive = false
+                        pages = state.pages.updateItem(event.pageId, event.itemId, revertOnOverlap = true) { item ->
+                            when (item) {
+                                is GridItem.Text -> item.copy(width = event.newWidth, height = event.newHeight, x = event.newX, y = event.newY)
+                                is GridItem.Image -> item.copy(width = event.newWidth, height = event.newHeight, x = event.newX, y = event.newY)
+                            }
+                        }
+                    )
+                }
+
+            is CreateEvent.TextGridItemTextChanged ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                            if (item is GridItem.Text) item.copy(textContent = event.text) else item
+                        }
+                    )
+                }
+
+            is CreateEvent.TextGridItemRichSpansChanged ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                            if (item is GridItem.Text) item.copy(richSpansJson = event.richSpansJson) else item
+                        }
+                    )
+                }
+
+            is CreateEvent.TextGridItemTypographyChanged ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                            if (item is GridItem.Text) item.copy(
+                                fontSize = event.fontSize,
+                                textAlign = event.textAlign,
+                                lineHeight = event.lineHeight
+                            ) else item
+                        }
+                    )
+                }
+
+            is CreateEvent.TextGridItemAdded ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.addItemToLastPage(
+                            GridItem.Text(
+                                id = UUID.randomUUID().toString(),
+                                x = 0, y = 0, width = 4, height = 4,
+                                textContent = event.text
+                            )
                         )
                     )
                 }
-            }
 
-            CreateEvent.ToggleBulletList -> {
+            is CreateEvent.ImageGridItemAdded ->
                 _uiState.update { state ->
-                    val rich = state.richTextState
-                    val newActive = !rich.isBulletListActive
-                    var updated = rich.copy(
-                        isBulletListActive = newActive,
-                        isNumberedListActive = false
+                    state.copy(
+                        pages = state.pages.addItemToLastPage(
+                            GridItem.Image(
+                                id = UUID.randomUUID().toString(),
+                                x = 0, y = 0, width = 6, height = 6,
+                                imageUri = event.path
+                            )
+                        )
                     )
-                    // Insert initial bullet prefix if turning on
-                    if (newActive) {
-                        val cursor = rich.cursor
-                        val text = rich.text
-                        val prefix = "• "
-                        val newText = text.substring(0, cursor) + prefix + text.substring(cursor)
-                        val newCursor = cursor + prefix.length
-                        updated = updated.copy(
-                            textFieldValue = updated.textFieldValue.copy(
-                                text = newText,
-                                selection = androidx.compose.ui.text.TextRange(newCursor)
-                            ),
-                            spans = updated.spans + RichSpan(
-                                start = cursor, end = newCursor, type = SpanFormatType.BULLET_LIST
-                            )
-                        )
-                    }
-                    state.copy(richTextState = updated)
                 }
-            }
 
-            CreateEvent.ToggleNumberedList -> {
+            is CreateEvent.ItemDeleted ->
                 _uiState.update { state ->
-                    val rich = state.richTextState
-                    val newActive = !rich.isNumberedListActive
-                    var updated = rich.copy(
-                        isNumberedListActive = newActive,
-                        isBulletListActive = false
-                    )
-                    // Insert initial number prefix if turning on
-                    if (newActive) {
-                        val cursor = rich.cursor
-                        val text = rich.text
-                        val linesBefore = text.substring(0, cursor).lines()
-                        val nextNum = linesBefore.count { it.matches(Regex("^\\d+\\..*")) } + 1
-                        val prefix = "$nextNum. "
-                        val newText = text.substring(0, cursor) + prefix + text.substring(cursor)
-                        val newCursor = cursor + prefix.length
-                        updated = updated.copy(
-                            textFieldValue = updated.textFieldValue.copy(
-                                text = newText,
-                                selection = androidx.compose.ui.text.TextRange(newCursor)
-                            ),
-                            spans = updated.spans + RichSpan(
-                                start = cursor, end = newCursor, type = SpanFormatType.NUMBERED_LIST
-                            )
-                        )
-                    }
-                    state.copy(richTextState = updated)
+                    state.copy(pages = state.pages.removeItem(event.pageId, event.itemId))
                 }
-            }
 
-            CreateEvent.ContinueList -> {
-                _uiState.update { state ->
-                    val currentLine = getCurrentLine(state.richTextState)
-                    // If current line is just a bullet/number with no content → exit list mode
-                    if (currentLine.trim() == "•" || currentLine.trim().matches(Regex("^\\d+\\.$"))) {
-                        state.copy(
-                            richTextState = state.richTextState.copy(
-                                isBulletListActive = false,
-                                isNumberedListActive = false
-                            )
-                        )
-                    } else {
-                        state.copy(richTextState = state.richTextState.continueList())
-                    }
-                }
-            }
-
-            is CreateEvent.BackgroundColorChanged -> {
+            is CreateEvent.BackgroundColorChanged ->
                 _uiState.update { it.copy(backgroundColor = event.colorArgb) }
-            }
 
-            is CreateEvent.CategorySelected -> {
+            is CreateEvent.CategorySelected ->
                 _uiState.update { it.copy(categoryId = event.categoryId) }
-            }
 
-            is CreateEvent.ImageAdded -> {
-                _uiState.update { it.copy(imagePaths = it.imagePaths + event.path) }
-            }
+            // ---- Rich text toolbar events ----
 
-            is CreateEvent.ImageRemoved -> {
-                _uiState.update { it.copy(imagePaths = it.imagePaths - event.path) }
-            }
+            is CreateEvent.EditingTextItemChanged ->
+                _uiState.update { it.copy(editingTextItemId = event.itemId) }
 
-            is CreateEvent.DrawingChanged -> {
-                _uiState.update { it.copy(drawingPath = event.path) }
-            }
-
-            is CreateEvent.ChecklistItemAdded -> {
-                _uiState.update {
-                    it.copy(
-                        checklistItems = it.checklistItems + ChecklistItem(
-                            text = event.text,
-                            isChecked = false
-                        )
-                    )
-                }
-            }
-
-            is CreateEvent.ChecklistItemToggled -> {
-                _uiState.update {
-                    val newItems = it.checklistItems.toMutableList()
-                    val item = newItems[event.index]
-                    newItems[event.index] = item.copy(isChecked = !item.isChecked)
-                    it.copy(checklistItems = newItems)
-                }
-            }
-
-            is CreateEvent.ChecklistItemRemoved -> {
-                _uiState.update {
-                    val newItems = it.checklistItems.toMutableList()
-                    newItems.removeAt(event.index)
-                    it.copy(checklistItems = newItems)
-                }
-            }
-
-            is CreateEvent.ChecklistItemTextChanged -> {
-                _uiState.update {
-                    val newItems = it.checklistItems.toMutableList()
-                    val item = newItems[event.index]
-                    newItems[event.index] = item.copy(text = event.text)
-                    it.copy(checklistItems = newItems)
+            is CreateEvent.RichStateUpdated -> {
+                val oldState = _uiState.value.editingRichState
+                _uiState.update { it.copy(editingRichState = event.state) }
+                if (oldState != null && 
+                    (oldState.fontSize != event.state.fontSize || 
+                     oldState.textAlign != event.state.textAlign || 
+                     oldState.lineHeight != event.state.lineHeight)) {
+                    persistTypography()
                 }
             }
 
             is CreateEvent.Save -> saveNote()
-            is CreateEvent.NavigationHandled -> {
+
+            is CreateEvent.NavigationHandled ->
                 _uiState.update { it.copy(isDone = false) }
-            }
-            is CreateEvent.SnackbarDismissed -> {
+
+            is CreateEvent.SnackbarDismissed ->
                 _uiState.update { it.copy(userMessage = null) }
-            }
+        }
+    }
+
+    /**
+     * Persist updated typography from editingRichState into the GridItem.Text in pages.
+     * Called after font size / align / line height toolbar actions.
+     */
+    private fun persistTypography() {
+        val state = _uiState.value
+        val itemId = state.editingTextItemId ?: return
+        val rs = state.editingRichState ?: return
+        _uiState.update { s ->
+            s.copy(
+                pages = s.pages.map { page ->
+                    page.copy(
+                        items = page.items.map { item ->
+                            if (item is GridItem.Text && item.id == itemId) {
+                                item.copy(
+                                    fontSize = rs.fontSize,
+                                    textAlign = rs.textAlign,
+                                    lineHeight = rs.lineHeight
+                                )
+                            } else item
+                        }
+                    )
+                }
+            )
         }
     }
 
     private fun observeCategories() {
-        categoryRepository
-            .getAllCategories()
+        categoryRepository.getAllCategories()
             .onEach { state ->
                 if (state is ResponseState.Success) {
                     _uiState.update { it.copy(categories = state.data) }
@@ -265,52 +205,24 @@ class CreateViewModel(
     }
 
     private fun saveNote() {
-        val currentState = _uiState.value
-        val hasChecklist = currentState.checklistItems.isNotEmpty()
-        val plainText = currentState.richTextState.text.trim()
-
-        if (currentState.title.isBlank() &&
-            plainText.isBlank() &&
-            currentState.imagePaths.isEmpty() &&
-            currentState.drawingPath == null &&
-            !hasChecklist
-        ) return
+        val state = _uiState.value
+        if (state.title.isBlank() && state.pages.all { it.items.isEmpty() }) return
 
         val note = Note(
-            title = currentState.title.trim(),
-            content = plainText,
-            backgroundColor = currentState.backgroundColor,
-            categoryId = currentState.categoryId,
-            imagePaths = currentState.imagePaths,
-            drawingPath = currentState.drawingPath,
-            richSpansJson = if (currentState.richTextState.spans.isNotEmpty())
-                Json.encodeToString(currentState.richTextState.spans)
-            else "",
-            checklistJson = if (hasChecklist)
-                Json.encodeToString(currentState.checklistItems)
-            else ""
+            title = state.title.trim(),
+            pagesJson = Json.encodeToString(state.pages),
+            backgroundColor = state.backgroundColor,
+            categoryId = state.categoryId
         )
 
-        noteRepository
-            .insertNote(note)
-            .onEach { state ->
-                when (state) {
-                    is ResponseState.Success -> {
-                        _uiState.update { it.copy(isDone = true) }
-                    }
-                    is ResponseState.Error -> {
-                        _uiState.update { it.copy(userMessage = state.message) }
-                    }
+        noteRepository.insertNote(note)
+            .onEach { result ->
+                when (result) {
+                    is ResponseState.Success -> _uiState.update { it.copy(isDone = true) }
+                    is ResponseState.Error -> _uiState.update { it.copy(userMessage = result.message) }
                     else -> Unit
                 }
             }
             .launchIn(viewModelScope)
-    }
-
-    private fun getCurrentLine(state: RichTextEditorState): String {
-        val text = state.text
-        val cursor = state.cursor
-        val lineStart = text.lastIndexOf('\n', cursor - 1).let { if (it == -1) 0 else it + 1 }
-        return text.substring(lineStart, cursor)
     }
 }
