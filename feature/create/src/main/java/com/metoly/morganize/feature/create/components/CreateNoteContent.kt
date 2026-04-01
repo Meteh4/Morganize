@@ -55,6 +55,22 @@ internal fun CreateNoteContent(
         onStrokesUpdated = { pageId, strokes ->
             onEvent(CreateEvent.DrawingStrokesUpdated(pageId, strokes))
         },
+        // ── Checklist callbacks ──────────────────────────────────────────
+        onChecklistTitleChanged = { pId, iId, title ->
+            onEvent(CreateEvent.ChecklistTitleChanged(pId, iId, title))
+        },
+        onCheckboxToggled = { pId, iId, entryId ->
+            onEvent(CreateEvent.CheckboxToggled(pId, iId, entryId))
+        },
+        onCheckboxTextChanged = { pId, iId, entryId, text ->
+            onEvent(CreateEvent.CheckboxTextChanged(pId, iId, entryId, text))
+        },
+        onCheckboxAdded = { pId, iId ->
+            onEvent(CreateEvent.CheckboxAdded(pId, iId))
+        },
+        onCheckboxDeleted = { pId, iId, entryId ->
+            onEvent(CreateEvent.CheckboxDeleted(pId, iId, entryId))
+        },
         modifier = modifier
     )
 }

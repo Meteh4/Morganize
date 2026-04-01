@@ -165,6 +165,7 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
                     },
+                    onAddChecklist = { viewModel.onEvent(EditEvent.ChecklistGridItemAdded) },
                     onStartDrawing = { viewModel.onEvent(EditEvent.DrawingModeToggled) },
                     onSave = { viewModel.onEvent(EditEvent.Save) },
                     saveContentDescription = stringResource(R.string.feature_edit_save)

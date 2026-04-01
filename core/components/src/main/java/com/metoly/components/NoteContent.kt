@@ -73,6 +73,12 @@ fun NoteContent(
     eraserWidthFraction: Float = 0.04f,
     onStrokeAdded: (pageId: String, stroke: DrawingStroke) -> Unit = { _, _ -> },
     onStrokesUpdated: (pageId: String, strokes: List<DrawingStroke>) -> Unit = { _, _ -> },
+    // ── Checklist callbacks ─────────────────────────────────────────────────
+    onChecklistTitleChanged: (pageId: String, itemId: String, title: String) -> Unit = { _, _, _ -> },
+    onCheckboxToggled: (pageId: String, itemId: String, entryId: String) -> Unit = { _, _, _ -> },
+    onCheckboxTextChanged: (pageId: String, itemId: String, entryId: String, text: String) -> Unit = { _, _, _, _ -> },
+    onCheckboxAdded: (pageId: String, itemId: String) -> Unit = { _, _ -> },
+    onCheckboxDeleted: (pageId: String, itemId: String, entryId: String) -> Unit = { _, _, _ -> },
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -139,8 +145,12 @@ fun NoteContent(
                         editingTextItemId = editingTextItemId,
                         activeRichState = activeRichState,
                         onActiveRichStateChange = onActiveRichStateChange,
+                        onChecklistTitleChanged = { itemId, title -> onChecklistTitleChanged(page.id, itemId, title) },
+                        onCheckboxToggled = { itemId, entryId -> onCheckboxToggled(page.id, itemId, entryId) },
+                        onCheckboxTextChanged = { itemId, entryId, text -> onCheckboxTextChanged(page.id, itemId, entryId, text) },
+                        onCheckboxAdded = { itemId -> onCheckboxAdded(page.id, itemId) },
+                        onCheckboxDeleted = { itemId, entryId -> onCheckboxDeleted(page.id, itemId, entryId) },
                         modifier = Modifier.padding(horizontal = 0.dp),
-                        // Disable grid interactions while drawing so strokes are captured cleanly
                         isReadOnly = isReadOnly || isDrawingMode
                     )
 

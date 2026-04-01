@@ -36,4 +36,22 @@ sealed class GridItem {
         override val height: Int,
         val imageUri: String
     ) : GridItem()
+
+    @Serializable
+    data class Checklist(
+        override val id: String,
+        override val x: Int,
+        override val y: Int,
+        override val width: Int,
+        override val height: Int,
+        val title: String = "",
+        val entries: List<CheckboxEntry> = emptyList()
+    ) : GridItem()
 }
+
+@Serializable
+data class CheckboxEntry(
+    val id: String,
+    val text: String = "",
+    val isChecked: Boolean = false
+)

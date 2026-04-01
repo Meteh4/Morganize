@@ -148,6 +148,7 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
                     },
+                    onAddChecklist = { viewModel.onEvent(CreateEvent.ChecklistGridItemAdded) },
                     onStartDrawing = { viewModel.onEvent(CreateEvent.DrawingModeToggled) },
                     onSave = { viewModel.onEvent(CreateEvent.Save) },
                     saveContentDescription = stringResource(R.string.feature_create_save)

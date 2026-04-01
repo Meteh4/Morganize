@@ -18,6 +18,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,16 +27,24 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,9 +61,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.metoly.components.RichTextEditor
 import com.metoly.components.RichTextEditorState
@@ -77,6 +88,7 @@ private fun serializeRichSpans(spans: List<RichSpan>): String =
 
 @Composable
 fun GridCanvas(
+    modifier: Modifier = Modifier,
     page: NotePage,
     selectedItemId: String?,
     onItemSelected: (String?) -> Unit = {},
@@ -90,7 +102,12 @@ fun GridCanvas(
     editingTextItemId: String? = null,
     activeRichState: RichTextEditorState? = null,
     onActiveRichStateChange: (RichTextEditorState) -> Unit = {},
-    modifier: Modifier = Modifier,
+    // ── Checklist callbacks ──────────────────────────────────────────────────
+    onChecklistTitleChanged: (itemId: String, title: String) -> Unit = { _, _ -> },
+    onCheckboxToggled: (itemId: String, entryId: String) -> Unit = { _, _ -> },
+    onCheckboxTextChanged: (itemId: String, entryId: String, text: String) -> Unit = { _, _, _ -> },
+    onCheckboxAdded: (itemId: String) -> Unit = {},
+    onCheckboxDeleted: (itemId: String, entryId: String) -> Unit = { _, _ -> },
     columns: Int = 10,
     rows: Int = 20,
     isReadOnly: Boolean = false
@@ -139,7 +156,12 @@ fun GridCanvas(
                     },
                     editingTextItemId = editingTextItemId,
                     activeRichState = activeRichState,
-                    onActiveRichStateChange = onActiveRichStateChange
+                    onActiveRichStateChange = onActiveRichStateChange,
+                    onChecklistTitleChanged = { title -> onChecklistTitleChanged(item.id, title) },
+                    onCheckboxToggled = { entryId -> onCheckboxToggled(item.id, entryId) },
+                    onCheckboxTextChanged = { entryId, text -> onCheckboxTextChanged(item.id, entryId, text) },
+                    onCheckboxAdded = { onCheckboxAdded(item.id) },
+                    onCheckboxDeleted = { entryId -> onCheckboxDeleted(item.id, entryId) }
                 )
             }
         }
@@ -166,6 +188,11 @@ private fun GridDraggableItem(
     editingTextItemId: String?,
     activeRichState: RichTextEditorState?,
     onActiveRichStateChange: (RichTextEditorState) -> Unit,
+    onChecklistTitleChanged: (String) -> Unit = {},
+    onCheckboxToggled: (String) -> Unit = {},
+    onCheckboxTextChanged: (String, String) -> Unit = { _, _ -> },
+    onCheckboxAdded: () -> Unit = {},
+    onCheckboxDeleted: (String) -> Unit = {},
 ) {
     val density = LocalDensity.current
 
@@ -334,6 +361,19 @@ private fun GridDraggableItem(
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
+                    )
+                }
+                is GridItem.Checklist -> {
+                    ChecklistContent(
+                        item = item,
+                        isSelected = isSelected,
+                        isReadOnly = isReadOnly,
+                        onTitleChanged = onChecklistTitleChanged,
+                        onCheckboxToggled = onCheckboxToggled,
+                        onCheckboxTextChanged = onCheckboxTextChanged,
+                        onCheckboxAdded = onCheckboxAdded,
+                        onCheckboxDeleted = onCheckboxDeleted,
+                        modifier = Modifier.fillMaxSize().padding(8.dp)
                     )
                 }
             }
@@ -511,5 +551,126 @@ private fun BoxScope.EdgeResizeHandles(
     ) {
         Box(Modifier.align(Alignment.Center).height(visibleSize).width(40.dp)
             .background(handleColor, RoundedCornerShape(2.dp)))
+    }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Checklist content composable
+// ────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun ChecklistContent(
+    item: GridItem.Checklist,
+    isSelected: Boolean,
+    isReadOnly: Boolean,
+    onTitleChanged: (String) -> Unit,
+    onCheckboxToggled: (entryId: String) -> Unit,
+    onCheckboxTextChanged: (entryId: String, text: String) -> Unit,
+    onCheckboxAdded: () -> Unit,
+    onCheckboxDeleted: (entryId: String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(modifier = modifier) {
+        // Title
+        item(key = "title_${item.id}") {
+            BasicTextField(
+                value = item.title,
+                onValueChange = onTitleChanged,
+                textStyle = MaterialTheme.typography.titleSmall.copy(
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                enabled = isSelected && !isReadOnly,
+                decorationBox = { innerTextField ->
+                    Box {
+                        if (item.title.isEmpty()) {
+                            Text(
+                                "Checklist title",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        }
+                        innerTextField()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+            )
+        }
+
+        // Checkbox entries
+        items(item.entries, key = { it.id }) { entry ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Checkbox(
+                    checked = entry.isChecked,
+                    onCheckedChange = { onCheckboxToggled(entry.id) },
+                    enabled = isSelected && !isReadOnly,
+                    modifier = Modifier.size(32.dp)
+                )
+
+                BasicTextField(
+                    value = entry.text,
+                    onValueChange = { onCheckboxTextChanged(entry.id, it) },
+                    textStyle = TextStyle(
+                        fontSize = 13.sp,
+                        color = if (entry.isChecked)
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        else
+                            MaterialTheme.colorScheme.onSurface,
+                        textDecoration = if (entry.isChecked) TextDecoration.LineThrough else TextDecoration.None
+                    ),
+                    enabled = isSelected && !isReadOnly,
+                    decorationBox = { innerTextField ->
+                        Box(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
+                            if (entry.text.isEmpty()) {
+                                Text(
+                                    "Checkbox item",
+                                    style = TextStyle(fontSize = 13.sp),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                )
+                            }
+                            innerTextField()
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+
+                if (isSelected && !isReadOnly) {
+                    IconButton(
+                        onClick = { onCheckboxDeleted(entry.id) },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Delete checkbox",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            }
+        }
+
+        // "Add Checkbox" button – visible only when selected and not read-only
+        if (isSelected && !isReadOnly) {
+            item(key = "add_checkbox_${item.id}") {
+                TextButton(
+                    onClick = onCheckboxAdded,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        "Add Checkbox",
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+            }
+        }
     }
 }
