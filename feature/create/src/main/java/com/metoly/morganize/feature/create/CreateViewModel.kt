@@ -11,6 +11,7 @@ import com.metoly.morganize.core.data.CategoryRepository
 import com.metoly.morganize.core.data.NoteRepository
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.core.model.ResponseState
+import com.metoly.morganize.core.model.grid.CheckboxEntry
 import com.metoly.morganize.core.model.grid.DrawingStroke
 import com.metoly.morganize.core.model.grid.GridItem
 import com.metoly.morganize.core.model.grid.NotePage
@@ -60,6 +61,7 @@ class CreateViewModel(
                             when (item) {
                                 is GridItem.Text -> item.copy(x = event.newX, y = event.newY)
                                 is GridItem.Image -> item.copy(x = event.newX, y = event.newY)
+                                is GridItem.Checklist -> item.copy(x = event.newX, y = event.newY)
                             }
                         }
                     )
@@ -72,6 +74,7 @@ class CreateViewModel(
                             when (item) {
                                 is GridItem.Text -> item.copy(width = event.newWidth, height = event.newHeight, x = event.newX, y = event.newY)
                                 is GridItem.Image -> item.copy(width = event.newWidth, height = event.newHeight, x = event.newX, y = event.newY)
+                                is GridItem.Checklist -> item.copy(width = event.newWidth, height = event.newHeight, x = event.newX, y = event.newY)
                             }
                         }
                     )
@@ -131,6 +134,79 @@ class CreateViewModel(
                                 imageUri = event.path
                             )
                         )
+                    )
+                }
+
+            is CreateEvent.ChecklistGridItemAdded ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.addItemToLastPage(
+                            GridItem.Checklist(
+                                id = UUID.randomUUID().toString(),
+                                x = 0, y = 0, width = 6, height = 6,
+                                title = "",
+                                entries = listOf(
+                                    CheckboxEntry(id = UUID.randomUUID().toString())
+                                )
+                            )
+                        )
+                    )
+                }
+
+            is CreateEvent.ChecklistTitleChanged ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                            if (item is GridItem.Checklist) item.copy(title = event.title) else item
+                        }
+                    )
+                }
+
+            is CreateEvent.CheckboxToggled ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                            if (item is GridItem.Checklist) {
+                                item.copy(entries = item.entries.map { entry ->
+                                    if (entry.id == event.entryId) entry.copy(isChecked = !entry.isChecked) else entry
+                                })
+                            } else item
+                        }
+                    )
+                }
+
+            is CreateEvent.CheckboxTextChanged ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                            if (item is GridItem.Checklist) {
+                                item.copy(entries = item.entries.map { entry ->
+                                    if (entry.id == event.entryId) entry.copy(text = event.text) else entry
+                                })
+                            } else item
+                        }
+                    )
+                }
+
+            is CreateEvent.CheckboxAdded ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                            if (item is GridItem.Checklist) {
+                                item.copy(entries = item.entries + CheckboxEntry(id = UUID.randomUUID().toString()))
+                            } else item
+                        }
+                    )
+                }
+
+            is CreateEvent.CheckboxDeleted ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                            if (item is GridItem.Checklist) {
+                                item.copy(entries = item.entries.filter { it.id != event.entryId })
+                            } else item
+                        }
                     )
                 }
 

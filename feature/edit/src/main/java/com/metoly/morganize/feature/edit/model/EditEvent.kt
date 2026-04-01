@@ -14,6 +14,12 @@ sealed interface EditEvent {
     data class TextGridItemTypographyChanged(val pageId: String, val itemId: String, val fontSize: Float, val textAlign: String, val lineHeight: Float) : EditEvent
     data class TextGridItemAdded(val text: String) : EditEvent
     data class ImageGridItemAdded(val path: String) : EditEvent
+    data object ChecklistGridItemAdded : EditEvent
+    data class ChecklistTitleChanged(val pageId: String, val itemId: String, val title: String) : EditEvent
+    data class CheckboxToggled(val pageId: String, val itemId: String, val entryId: String) : EditEvent
+    data class CheckboxTextChanged(val pageId: String, val itemId: String, val entryId: String, val text: String) : EditEvent
+    data class CheckboxAdded(val pageId: String, val itemId: String) : EditEvent
+    data class CheckboxDeleted(val pageId: String, val itemId: String, val entryId: String) : EditEvent
     data class ItemDeleted(val pageId: String, val itemId: String) : EditEvent
     data class BackgroundColorChanged(val colorArgb: Int?) : EditEvent
     data class CategorySelected(val categoryId: Long?) : EditEvent

@@ -1,6 +1,8 @@
 // EditViewModel.kt
 package com.metoly.morganize.feature.edit
 
+import com.metoly.morganize.core.model.grid.CheckboxEntry
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.metoly.components.model.addItemToLastPage
@@ -70,6 +72,7 @@ class EditViewModel(
                             when (item) {
                                 is GridItem.Text -> item.copy(x = event.newX, y = event.newY)
                                 is GridItem.Image -> item.copy(x = event.newX, y = event.newY)
+                                is GridItem.Checklist -> item.copy(x = event.newX, y = event.newY)
                             }
                         }
                     )
@@ -82,6 +85,7 @@ class EditViewModel(
                             when (item) {
                                 is GridItem.Text -> item.copy(width = event.newWidth, height = event.newHeight, x = event.newX, y = event.newY)
                                 is GridItem.Image -> item.copy(width = event.newWidth, height = event.newHeight, x = event.newX, y = event.newY)
+                                is GridItem.Checklist -> item.copy(width = event.newWidth, height = event.newHeight, x = event.newX, y = event.newY)
                             }
                         }
                     )
@@ -141,6 +145,79 @@ class EditViewModel(
                                 imageUri = event.path
                             )
                         )
+                    )
+                }
+
+            is EditEvent.ChecklistGridItemAdded ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.addItemToLastPage(
+                            GridItem.Checklist(
+                                id = UUID.randomUUID().toString(),
+                                x = 0, y = 0, width = 6, height = 6,
+                                title = "",
+                                entries = listOf(
+                                    CheckboxEntry(id = UUID.randomUUID().toString())
+                                )
+                            )
+                        )
+                    )
+                }
+
+            is EditEvent.ChecklistTitleChanged ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                            if (item is GridItem.Checklist) item.copy(title = event.title) else item
+                        }
+                    )
+                }
+
+            is EditEvent.CheckboxToggled ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                            if (item is GridItem.Checklist) {
+                                item.copy(entries = item.entries.map { entry ->
+                                    if (entry.id == event.entryId) entry.copy(isChecked = !entry.isChecked) else entry
+                                })
+                            } else item
+                        }
+                    )
+                }
+
+            is EditEvent.CheckboxTextChanged ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                            if (item is GridItem.Checklist) {
+                                item.copy(entries = item.entries.map { entry ->
+                                    if (entry.id == event.entryId) entry.copy(text = event.text) else entry
+                                })
+                            } else item
+                        }
+                    )
+                }
+
+            is EditEvent.CheckboxAdded ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                            if (item is GridItem.Checklist) {
+                                item.copy(entries = item.entries + CheckboxEntry(id = UUID.randomUUID().toString()))
+                            } else item
+                        }
+                    )
+                }
+
+            is EditEvent.CheckboxDeleted ->
+                _uiState.update { state ->
+                    state.copy(
+                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                            if (item is GridItem.Checklist) {
+                                item.copy(entries = item.entries.filter { it.id != event.entryId })
+                            } else item
+                        }
                     )
                 }
 

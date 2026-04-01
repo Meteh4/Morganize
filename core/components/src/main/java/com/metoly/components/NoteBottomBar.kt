@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 fun NoteBottomBar(
     onAddText: () -> Unit,
     onAddImage: () -> Unit,
+    onAddChecklist: () -> Unit,
     onStartDrawing: () -> Unit,
     onSave: () -> Unit,
     saveContentDescription: String
@@ -20,6 +21,9 @@ fun NoteBottomBar(
             }
             IconButton(onClick = onAddImage) {
                 Icon(Icons.Default.Image, contentDescription = "Add Image")
+            }
+            IconButton(onClick = onAddChecklist) {
+                Icon(Icons.Default.Checklist, contentDescription = "Add Checklist")
             }
             IconButton(onClick = onStartDrawing) {
                 Icon(Icons.Default.Create, contentDescription = "Start Drawing")
