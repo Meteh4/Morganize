@@ -26,8 +26,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.metoly.components.grid.DrawingCanvas
 import com.metoly.components.grid.GridCanvas
+import com.metoly.components.grid.parseDrawingStrokes
 import com.metoly.morganize.core.model.Category
+import com.metoly.morganize.core.model.grid.DrawingStroke
 import com.metoly.morganize.core.model.grid.NotePage
 
 private val TransparentFieldColors
@@ -61,7 +64,15 @@ fun NoteContent(
     selectedCategoryId: Long?,
     onCategorySelected: (Long?) -> Unit,
     onAddPage: () -> Unit,
-    isReadOnly: Boolean = false
+    isReadOnly: Boolean = false,
+    // ── Drawing layer ────────────────────────────────────────────────────────
+    isDrawingMode: Boolean = false,
+    isEraserMode: Boolean = false,
+    penColorArgb: Long = 0xFF000000L,
+    strokeWidthFraction: Float = 0.008f,
+    eraserWidthFraction: Float = 0.04f,
+    onStrokeAdded: (pageId: String, stroke: DrawingStroke) -> Unit = { _, _ -> },
+    onStrokesUpdated: (pageId: String, strokes: List<DrawingStroke>) -> Unit = { _, _ -> },
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -106,29 +117,52 @@ fun NoteContent(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
 
-                GridCanvas(
-                    page = page,
-                    selectedItemId = selectedItemId,
-                    onItemSelected = onItemSelected,
-                    onItemMoved = { itemId, newX, newY -> onItemMoved(page.id, itemId, newX, newY) },
-                    onItemResized = { itemId, newW, newH, newX, newY ->
-                        onItemResized(page.id, itemId, newW, newH, newX, newY)
-                    },
-                    onItemTextChanged = { itemId, text -> onItemTextChanged(page.id, itemId, text) },
-                    onItemRichSpansChanged = { itemId, spansJson ->
-                        onItemRichSpansChanged(page.id, itemId, spansJson)
-                    },
-                    onItemTypographyChanged = { itemId, fs, ta, lh ->
-                        onItemTypographyChanged(page.id, itemId, fs, ta, lh)
-                    },
-                    onItemDeleted = { itemId -> onItemDeleted(page.id, itemId) },
-                    onEditingTextItemChanged = onEditingTextItemChanged,
-                    editingTextItemId = editingTextItemId,
-                    activeRichState = activeRichState,
-                    onActiveRichStateChange = onActiveRichStateChange,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    isReadOnly = isReadOnly
-                )
+                // Overlay: GridCanvas below, DrawingCanvas on top (when drawing mode active)
+                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    GridCanvas(
+                        page = page,
+                        selectedItemId = selectedItemId,
+                        onItemSelected = onItemSelected,
+                        onItemMoved = { itemId, newX, newY -> onItemMoved(page.id, itemId, newX, newY) },
+                        onItemResized = { itemId, newW, newH, newX, newY ->
+                            onItemResized(page.id, itemId, newW, newH, newX, newY)
+                        },
+                        onItemTextChanged = { itemId, text -> onItemTextChanged(page.id, itemId, text) },
+                        onItemRichSpansChanged = { itemId, spansJson ->
+                            onItemRichSpansChanged(page.id, itemId, spansJson)
+                        },
+                        onItemTypographyChanged = { itemId, fs, ta, lh ->
+                            onItemTypographyChanged(page.id, itemId, fs, ta, lh)
+                        },
+                        onItemDeleted = { itemId -> onItemDeleted(page.id, itemId) },
+                        onEditingTextItemChanged = onEditingTextItemChanged,
+                        editingTextItemId = editingTextItemId,
+                        activeRichState = activeRichState,
+                        onActiveRichStateChange = onActiveRichStateChange,
+                        modifier = Modifier.padding(horizontal = 0.dp),
+                        // Disable grid interactions while drawing so strokes are captured cleanly
+                        isReadOnly = isReadOnly || isDrawingMode
+                    )
+
+                    if (isDrawingMode || page.drawingData.isNotBlank()) {
+                        val strokes = parseDrawingStrokes(page.drawingData)
+                        DrawingCanvas(
+                            strokes = strokes,
+                            isActive = isDrawingMode,
+                            isEraserMode = isEraserMode,
+                            penColorArgb = penColorArgb,
+                            strokeWidthFraction = strokeWidthFraction,
+                            eraserWidthFraction = eraserWidthFraction,
+                            onStrokeFinished = { stroke ->
+                                onStrokeAdded(page.id, stroke)
+                            },
+                            onStrokesChanged = { updatedStrokes ->
+                                onStrokesUpdated(page.id, updatedStrokes)
+                            },
+                            modifier = Modifier.matchParentSize()
+                        )
+                    }
+                }
 
                 Spacer(Modifier.height(24.dp))
                 HorizontalDivider(

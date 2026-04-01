@@ -121,20 +121,37 @@ internal fun NoteDetailPane(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                 )
 
-                GridCanvas(
-                    page = page,
-                    selectedItemId = null,
-                    onItemSelected = {},
-                    onItemMoved = { _, _, _ -> },
-                    onItemResized = { _, _, _, _, _ -> },
-                    onItemTextChanged = { _, _ -> },
-                    onItemDeleted = { _ -> },
-                    onItemRichSpansChanged = { _ , _ -> },
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                    onEditingTextItemChanged = { _, _ -> },
-                    onItemTypographyChanged = { _, _, _, _ -> },
-                    isReadOnly = true
-                )
+                androidx.compose.foundation.layout.Box(modifier = Modifier.padding(horizontal = 24.dp)) {
+                    GridCanvas(
+                        page = page,
+                        selectedItemId = null,
+                        onItemSelected = {},
+                        onItemMoved = { _, _, _ -> },
+                        onItemResized = { _, _, _, _, _ -> },
+                        onItemTextChanged = { _, _ -> },
+                        onItemDeleted = { _ -> },
+                        onItemRichSpansChanged = { _ , _ -> },
+                        modifier = Modifier,
+                        onEditingTextItemChanged = { _, _ -> },
+                        onItemTypographyChanged = { _, _, _, _ -> },
+                        isReadOnly = true
+                    )
+
+                    if (page.drawingData.isNotBlank()) {
+                        val strokes = com.metoly.components.grid.parseDrawingStrokes(page.drawingData)
+                        com.metoly.components.grid.DrawingCanvas(
+                            strokes = strokes,
+                            isActive = false,
+                            isEraserMode = false,
+                            penColorArgb = 0xFF000000L,
+                            strokeWidthFraction = 0f,
+                            eraserWidthFraction = 0f,
+                            onStrokeFinished = {},
+                            onStrokesChanged = {},
+                            modifier = Modifier.matchParentSize()
+                        )
+                    }
+                }
 
                 Spacer(Modifier.height(16.dp))
             }
