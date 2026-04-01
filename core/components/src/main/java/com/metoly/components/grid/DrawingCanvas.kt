@@ -52,13 +52,13 @@ import com.metoly.morganize.core.model.grid.DrawingStroke
 @Composable
 fun DrawingCanvas(
     strokes: List<DrawingStroke>,
-    isActive: Boolean,
-    isEraserMode: Boolean,
-    penColorArgb: Long,
-    strokeWidthFraction: Float,
-    eraserWidthFraction: Float,
-    onStrokeFinished: (DrawingStroke) -> Unit,
-    onStrokesChanged: (List<DrawingStroke>) -> Unit,
+    isActive: Boolean = true,
+    isEraserMode: Boolean = false,
+    penColorArgb: Long = 0xFF000000L,
+    strokeWidthFraction: Float = 0.01f,
+    eraserWidthFraction: Float = 0.05f,
+    onStrokeFinished: (DrawingStroke) -> Unit = {},
+    onStrokesChanged: (List<DrawingStroke>) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
