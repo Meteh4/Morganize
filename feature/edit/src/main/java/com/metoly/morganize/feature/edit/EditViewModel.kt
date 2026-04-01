@@ -155,7 +155,7 @@ class EditViewModel(
             is EditEvent.CategorySelected ->
                 _uiState.update { it.copy(categoryId = event.categoryId) }
 
-            // ---- Rich text toolbar events ----
+            // ── Rich text toolbar events ──────────────────────────────────
 
             is EditEvent.EditingTextItemChanged ->
                 _uiState.update { it.copy(editingTextItemId = event.itemId) }
@@ -163,13 +163,92 @@ class EditViewModel(
             is EditEvent.RichStateUpdated -> {
                 val oldState = _uiState.value.editingRichState
                 _uiState.update { it.copy(editingRichState = event.state) }
-                if (oldState != null && 
-                    (oldState.fontSize != event.state.fontSize || 
-                     oldState.textAlign != event.state.textAlign || 
+                if (oldState != null &&
+                    (oldState.fontSize != event.state.fontSize ||
+                     oldState.textAlign != event.state.textAlign ||
                      oldState.lineHeight != event.state.lineHeight)) {
                     persistTypography()
                 }
             }
+
+            // ── Drawing events ────────────────────────────────────────────
+
+            is EditEvent.DrawingModeToggled ->
+                _uiState.update { state ->
+                    state.copy(
+                        isDrawingMode = !state.isDrawingMode,
+                        // Exit eraser mode whenever we toggle drawing mode off
+                        isEraserMode = if (state.isDrawingMode) false else state.isEraserMode
+                    )
+                }
+
+            is EditEvent.DrawingColorChanged ->
+                _uiState.update { it.copy(drawingPenColorArgb = event.colorArgb, isEraserMode = false) }
+
+            is EditEvent.DrawingStrokeWidthChanged ->
+                _uiState.update { it.copy(drawingStrokeWidthFraction = event.widthFraction) }
+
+            is EditEvent.DrawingEraserWidthChanged ->
+                _uiState.update { it.copy(drawingEraserWidthFraction = event.widthFraction) }
+
+            is EditEvent.DrawingEraserToggled ->
+                _uiState.update { it.copy(isEraserMode = !it.isEraserMode) }
+
+            is EditEvent.DrawingStrokeAdded ->
+                _uiState.update { state ->
+                    val oldData = state.pages.find { it.id == event.pageId }?.drawingData ?: ""
+                    val newStack = state.drawingUndoStack.toMutableMap()
+                    val pageStack = newStack[event.pageId] ?: emptyList()
+                    newStack[event.pageId] = pageStack + oldData
+
+                    state.copy(
+                        drawingUndoStack = newStack,
+                        pages = state.pages.updateDrawingData(event.pageId) { current ->
+                            current + event.stroke
+                        }
+                    )
+                }
+
+            is EditEvent.DrawingStrokeReverted ->
+                _uiState.update { state ->
+                    val newStack = state.drawingUndoStack.toMutableMap()
+                    val pageStack = newStack[event.pageId] ?: emptyList()
+
+                    if (pageStack.isEmpty()) {
+                        return@update state.copy(
+                            pages = state.pages.updateDrawingData(event.pageId) { current ->
+                                if (current.isNotEmpty()) current.dropLast(1) else current
+                            }
+                        )
+                    }
+
+                    val previousData = pageStack.last()
+                    newStack[event.pageId] = pageStack.dropLast(1)
+
+                    state.copy(
+                        drawingUndoStack = newStack,
+                        pages = state.pages.map { page ->
+                            if (page.id == event.pageId) page.copy(drawingData = previousData) else page
+                        }
+                    )
+                }
+
+            is EditEvent.DrawingStrokesUpdated ->
+                _uiState.update { state ->
+                    val oldData = state.pages.find { it.id == event.pageId }?.drawingData ?: ""
+                    val newStack = state.drawingUndoStack.toMutableMap()
+                    val pageStack = newStack[event.pageId] ?: emptyList()
+                    newStack[event.pageId] = pageStack + oldData
+
+                    state.copy(
+                        drawingUndoStack = newStack,
+                        pages = state.pages.updateDrawingData(event.pageId) { _ ->
+                            event.strokes
+                        }
+                    )
+                }
+
+            // ── Lifecycle events ──────────────────────────────────────────
 
             is EditEvent.Save -> saveNote()
 
@@ -296,4 +375,27 @@ class EditViewModel(
             }
             .launchIn(viewModelScope)
     }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Extension helpers
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Updates the drawing stroke list of the page with the given [pageId] by applying
+ * the [transform] function. Pages with other IDs are left unchanged.
+ */
+private fun List<NotePage>.updateDrawingData(
+    pageId: String,
+    transform: (List<com.metoly.morganize.core.model.grid.DrawingStroke>) -> List<com.metoly.morganize.core.model.grid.DrawingStroke>
+): List<NotePage> = map { page ->
+    if (page.id != pageId) return@map page
+    val current = if (page.drawingData.isBlank()) emptyList()
+    else runCatching {
+        Json.decodeFromString<List<com.metoly.morganize.core.model.grid.DrawingStroke>>(page.drawingData)
+    }.getOrDefault(emptyList())
+    val updated = transform(current)
+    val serialized = if (updated.isEmpty()) ""
+    else Json.encodeToString(updated)
+    page.copy(drawingData = serialized)
 }

@@ -43,6 +43,18 @@ internal fun CreateNoteContent(
         selectedCategoryId = uiState.categoryId,
         onCategorySelected = { onEvent(CreateEvent.CategorySelected(it)) },
         onAddPage = { onEvent(CreateEvent.AddPage) },
+        // ── Drawing layer ────────────────────────────────────────────────
+        isDrawingMode = uiState.isDrawingMode,
+        isEraserMode = uiState.isEraserMode,
+        penColorArgb = uiState.drawingPenColorArgb,
+        strokeWidthFraction = uiState.drawingStrokeWidthFraction,
+        eraserWidthFraction = uiState.drawingEraserWidthFraction,
+        onStrokeAdded = { pageId, stroke ->
+            onEvent(CreateEvent.DrawingStrokeAdded(pageId, stroke))
+        },
+        onStrokesUpdated = { pageId, strokes ->
+            onEvent(CreateEvent.DrawingStrokesUpdated(pageId, strokes))
+        },
         modifier = modifier
     )
 }

@@ -29,7 +29,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.Box
+import com.metoly.components.grid.DrawingCanvas
 import com.metoly.components.grid.GridCanvas
+import com.metoly.components.grid.parseDrawingStrokes
 import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.core.model.grid.NotePage
@@ -93,8 +96,8 @@ internal fun NoteDetailPane(
                 .padding(padding)
                 .verticalScroll(scrollState)
         ) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                if (category != null) {
+            if (category != null) {
+                Column(modifier = Modifier.padding(24.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Label,
@@ -111,6 +114,8 @@ internal fun NoteDetailPane(
                     }
                     Spacer(Modifier.height(16.dp))
                 }
+            } else {
+                Spacer(Modifier.height(24.dp))
             }
 
             pages.forEachIndexed { index, page ->
@@ -121,20 +126,22 @@ internal fun NoteDetailPane(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                 )
 
-                GridCanvas(
-                    page = page,
-                    selectedItemId = null,
-                    onItemSelected = {},
-                    onItemMoved = { _, _, _ -> },
-                    onItemResized = { _, _, _, _, _ -> },
-                    onItemTextChanged = { _, _ -> },
-                    onItemDeleted = { _ -> },
-                    onItemRichSpansChanged = { _ , _ -> },
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                    onEditingTextItemChanged = { _, _ -> },
-                    onItemTypographyChanged = { _, _, _, _ -> },
-                    isReadOnly = true
-                )
+                Box(modifier = Modifier.padding(horizontal = 24.dp)) {
+                    GridCanvas(
+                        page = page,
+                        selectedItemId = null,
+                        isReadOnly = true
+                    )
+
+                    if (page.drawingData.isNotBlank()) {
+                        val strokes = parseDrawingStrokes(page.drawingData)
+                        DrawingCanvas(
+                            strokes = strokes,
+                            isActive = false,
+                            modifier = Modifier.matchParentSize()
+                        )
+                    }
+                }
 
                 Spacer(Modifier.height(16.dp))
             }

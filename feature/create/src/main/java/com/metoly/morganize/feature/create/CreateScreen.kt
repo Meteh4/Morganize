@@ -93,7 +93,7 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
                 .fillMaxWidth()) {
                 // Rich text toolbar – slides in above the bottom bar when text editing is active
                 AnimatedVisibility(
-                    visible = activeEditingTextItemId != null && activeRichState != null,
+                    visible = activeEditingTextItemId != null && activeRichState != null && !uiState.isDrawingMode,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
@@ -112,6 +112,35 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
                     }
                 }
 
+                // ── Drawing toolbar (shown when drawing mode is active) ────────
+                AnimatedVisibility(
+                    visible = uiState.isDrawingMode,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    val canUndoDrawing = uiState.pages.any { it.drawingData.isNotBlank() }
+                    
+                    com.metoly.components.DrawingToolbar(
+                        penColorArgb = uiState.drawingPenColorArgb,
+                        strokeWidthFraction = uiState.drawingStrokeWidthFraction,
+                        eraserWidthFraction = uiState.drawingEraserWidthFraction,
+                        isEraserMode = uiState.isEraserMode,
+                        canUndo = canUndoDrawing,
+                        onColorSelected = { viewModel.onEvent(CreateEvent.DrawingColorChanged(it)) },
+                        onStrokeWidthChange = { viewModel.onEvent(CreateEvent.DrawingStrokeWidthChanged(it)) },
+                        onEraserWidthChange = { viewModel.onEvent(CreateEvent.DrawingEraserWidthChanged(it)) },
+                        onToggleEraser = { viewModel.onEvent(CreateEvent.DrawingEraserToggled) },
+                        onUndo = {
+                            uiState.pages
+                                .filter { it.drawingData.isNotBlank() }
+                                .forEach { page ->
+                                    viewModel.onEvent(CreateEvent.DrawingStrokeReverted(page.id))
+                                }
+                        },
+                        onClose = { viewModel.onEvent(CreateEvent.DrawingModeToggled) }
+                    )
+                }
+
                 NoteBottomBar(
                     onAddText = { viewModel.onEvent(CreateEvent.TextGridItemAdded("")) },
                     onAddImage = {
@@ -119,6 +148,7 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
                     },
+                    onStartDrawing = { viewModel.onEvent(CreateEvent.DrawingModeToggled) },
                     onSave = { viewModel.onEvent(CreateEvent.Save) },
                     saveContentDescription = stringResource(R.string.feature_create_save)
                 )

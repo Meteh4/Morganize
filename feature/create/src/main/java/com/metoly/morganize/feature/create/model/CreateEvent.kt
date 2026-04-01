@@ -1,6 +1,7 @@
 package com.metoly.morganize.feature.create.model
 
 import com.metoly.components.RichTextEditorState
+import com.metoly.morganize.core.model.grid.DrawingStroke
 
 sealed interface CreateEvent {
     data class TitleChanged(val value: String) : CreateEvent
@@ -19,6 +20,16 @@ sealed interface CreateEvent {
     // Rich text toolbar actions
     data class EditingTextItemChanged(val itemId: String?) : CreateEvent
     data class RichStateUpdated(val state: RichTextEditorState) : CreateEvent
+
+    // ── Drawing events ──────────────────────────────────────────────────────
+    data object DrawingModeToggled : CreateEvent
+    data class DrawingColorChanged(val colorArgb: Long) : CreateEvent
+    data class DrawingStrokeWidthChanged(val widthFraction: Float) : CreateEvent
+    data class DrawingEraserWidthChanged(val widthFraction: Float) : CreateEvent
+    data object DrawingEraserToggled : CreateEvent
+    data class DrawingStrokeAdded(val pageId: String, val stroke: DrawingStroke) : CreateEvent
+    data class DrawingStrokeReverted(val pageId: String) : CreateEvent
+    data class DrawingStrokesUpdated(val pageId: String, val strokes: List<DrawingStroke>) : CreateEvent
 
     data object Save : CreateEvent
     data object NavigationHandled : CreateEvent

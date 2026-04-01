@@ -27,45 +27,16 @@ internal fun EditNoteContent(
         onItemSelected = { onEvent(EditEvent.ItemSelected(it)) },
         onItemMoved = { pId, iId, nX, nY -> onEvent(EditEvent.ItemMoved(pId, iId, nX, nY)) },
         onItemResized = { pId, iId, nW, nH, nX, nY ->
-            onEvent(
-                EditEvent.ItemResized(
-                    pId,
-                    iId,
-                    nW,
-                    nH,
-                    nX,
-                    nY
-                )
-            )
+            onEvent(EditEvent.ItemResized(pId, iId, nW, nH, nX, nY))
         },
         onItemTextChanged = { pId, iId, text ->
-            onEvent(
-                EditEvent.TextGridItemTextChanged(
-                    pId,
-                    iId,
-                    text
-                )
-            )
+            onEvent(EditEvent.TextGridItemTextChanged(pId, iId, text))
         },
         onItemRichSpansChanged = { pId, iId, spansJson ->
-            onEvent(
-                EditEvent.TextGridItemRichSpansChanged(
-                    pId,
-                    iId,
-                    spansJson
-                )
-            )
+            onEvent(EditEvent.TextGridItemRichSpansChanged(pId, iId, spansJson))
         },
         onItemTypographyChanged = { pId, iId, fs, ta, lh ->
-            onEvent(
-                EditEvent.TextGridItemTypographyChanged(
-                    pId,
-                    iId,
-                    fs,
-                    ta,
-                    lh
-                )
-            )
+            onEvent(EditEvent.TextGridItemTypographyChanged(pId, iId, fs, ta, lh))
         },
         onItemDeleted = { pId, iId -> onEvent(EditEvent.ItemDeleted(pId, iId)) },
         onEditingTextItemChanged = { itemId, richState ->
@@ -81,6 +52,18 @@ internal fun EditNoteContent(
         selectedCategoryId = uiState.categoryId,
         onCategorySelected = { onEvent(EditEvent.CategorySelected(it)) },
         onAddPage = { onEvent(EditEvent.AddPage) },
+        // ── Drawing layer ────────────────────────────────────────────────
+        isDrawingMode = uiState.isDrawingMode,
+        isEraserMode = uiState.isEraserMode,
+        penColorArgb = uiState.drawingPenColorArgb,
+        strokeWidthFraction = uiState.drawingStrokeWidthFraction,
+        eraserWidthFraction = uiState.drawingEraserWidthFraction,
+        onStrokeAdded = { pageId, stroke ->
+            onEvent(EditEvent.DrawingStrokeAdded(pageId, stroke))
+        },
+        onStrokesUpdated = { pageId, strokes ->
+            onEvent(EditEvent.DrawingStrokesUpdated(pageId, strokes))
+        },
         modifier = modifier
     )
 }

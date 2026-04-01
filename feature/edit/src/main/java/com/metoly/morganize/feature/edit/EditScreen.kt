@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.metoly.components.DeleteNoteDialog
+import com.metoly.components.DrawingToolbar
 import com.metoly.components.NoteBottomBar
 import com.metoly.components.RichTextEditorState
 import com.metoly.components.RichTextToolbar
@@ -86,6 +87,11 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
         )
     }
 
+    // Determine the active page ID for undo — use the first page as default
+    val activePageId = uiState.pages.firstOrNull()?.id ?: ""
+    val canUndoDrawing = uiState.isDrawingMode &&
+        uiState.pages.any { it.drawingData.isNotBlank() }
+
     Scaffold(
         topBar = {
             EditTopBar(
@@ -102,8 +108,9 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
                     .imePadding()
                     .fillMaxWidth()
             ) {
+                // ── Rich text toolbar (shown when a text item is being edited) ──
                 AnimatedVisibility(
-                    visible = activeEditingTextItemId != null && activeRichState != null,
+                    visible = activeEditingTextItemId != null && activeRichState != null && !uiState.isDrawingMode,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
@@ -122,6 +129,35 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
                     }
                 }
 
+                // ── Drawing toolbar (shown when drawing mode is active) ────────
+                AnimatedVisibility(
+                    visible = uiState.isDrawingMode,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    DrawingToolbar(
+                        penColorArgb = uiState.drawingPenColorArgb,
+                        strokeWidthFraction = uiState.drawingStrokeWidthFraction,
+                        eraserWidthFraction = uiState.drawingEraserWidthFraction,
+                        isEraserMode = uiState.isEraserMode,
+                        canUndo = canUndoDrawing,
+                        onColorSelected = { viewModel.onEvent(EditEvent.DrawingColorChanged(it)) },
+                        onStrokeWidthChange = { viewModel.onEvent(EditEvent.DrawingStrokeWidthChanged(it)) },
+                        onEraserWidthChange = { viewModel.onEvent(EditEvent.DrawingEraserWidthChanged(it)) },
+                        onToggleEraser = { viewModel.onEvent(EditEvent.DrawingEraserToggled) },
+                        onUndo = {
+                            // Revert the last stroke on every page that has drawing data
+                            uiState.pages
+                                .filter { it.drawingData.isNotBlank() }
+                                .forEach { page ->
+                                    viewModel.onEvent(EditEvent.DrawingStrokeReverted(page.id))
+                                }
+                        },
+                        onClose = { viewModel.onEvent(EditEvent.DrawingModeToggled) }
+                    )
+                }
+
+                // ── Bottom action bar ─────────────────────────────────────────
                 NoteBottomBar(
                     onAddText = { viewModel.onEvent(EditEvent.TextGridItemAdded("")) },
                     onAddImage = {
@@ -129,6 +165,7 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
                     },
+                    onStartDrawing = { viewModel.onEvent(EditEvent.DrawingModeToggled) },
                     onSave = { viewModel.onEvent(EditEvent.Save) },
                     saveContentDescription = stringResource(R.string.feature_edit_save)
                 )
