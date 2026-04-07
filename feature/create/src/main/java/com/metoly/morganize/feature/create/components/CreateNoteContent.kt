@@ -15,7 +15,8 @@ internal fun CreateNoteContent(
     onEvent: (CreateEvent) -> Unit,
     activeEditingTextItemId: String? = null,
     activeRichState: com.metoly.components.RichTextEditorState? = null,
-    onActiveRichStateChange: (com.metoly.components.RichTextEditorState) -> Unit = {}
+    onActiveRichStateChange: (com.metoly.components.RichTextEditorState) -> Unit = {},
+    onEmptyGridAddClicked: () -> Unit = {}
 ) {
     NoteContent(
         title = uiState.title,
@@ -71,6 +72,7 @@ internal fun CreateNoteContent(
         onCheckboxDeleted = { pId, iId, entryId ->
             onEvent(CreateEvent.CheckboxDeleted(pId, iId, entryId))
         },
+        onEmptyGridAddClicked = onEmptyGridAddClicked,
         modifier = modifier
     )
 }

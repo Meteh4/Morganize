@@ -16,7 +16,8 @@ internal fun EditNoteContent(
     onEvent: (EditEvent) -> Unit,
     activeEditingTextItemId: String? = null,
     activeRichState: RichTextEditorState? = null,
-    onActiveRichStateChange: (RichTextEditorState) -> Unit = {}
+    onActiveRichStateChange: (RichTextEditorState) -> Unit = {},
+    onEmptyGridAddClicked: () -> Unit = {}
 ) {
     NoteContent(
         title = uiState.title,
@@ -80,6 +81,7 @@ internal fun EditNoteContent(
         onCheckboxDeleted = { pId, iId, entryId ->
             onEvent(EditEvent.CheckboxDeleted(pId, iId, entryId))
         },
+        onEmptyGridAddClicked = onEmptyGridAddClicked,
         modifier = modifier
     )
 }
