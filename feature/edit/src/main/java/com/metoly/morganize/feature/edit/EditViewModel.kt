@@ -128,7 +128,7 @@ class EditViewModel(
                         pages = state.pages.addItemToLastPage(
                             GridItem.Text(
                                 id = UUID.randomUUID().toString(),
-                                x = 0, y = 0, width = 4, height = 4,
+                                x = 0, y = 0, width = event.width, height = event.height,
                                 textContent = event.text
                             )
                         )
@@ -141,7 +141,7 @@ class EditViewModel(
                         pages = state.pages.addItemToLastPage(
                             GridItem.Image(
                                 id = UUID.randomUUID().toString(),
-                                x = 0, y = 0, width = 6, height = 6,
+                                x = 0, y = 0, width = event.width, height = event.height,
                                 imageUri = event.path
                             )
                         )
@@ -154,7 +154,7 @@ class EditViewModel(
                         pages = state.pages.addItemToLastPage(
                             GridItem.Checklist(
                                 id = UUID.randomUUID().toString(),
-                                x = 0, y = 0, width = 6, height = 6,
+                                x = 0, y = 0, width = event.width, height = event.height,
                                 title = "",
                                 entries = listOf(
                                     CheckboxEntry(id = UUID.randomUUID().toString())

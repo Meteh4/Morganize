@@ -79,6 +79,7 @@ fun NoteContent(
     onCheckboxTextChanged: (pageId: String, itemId: String, entryId: String, text: String) -> Unit = { _, _, _, _ -> },
     onCheckboxAdded: (pageId: String, itemId: String) -> Unit = { _, _ -> },
     onCheckboxDeleted: (pageId: String, itemId: String, entryId: String) -> Unit = { _, _, _ -> },
+    onEmptyGridAddClicked: () -> Unit = {},
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -150,6 +151,7 @@ fun NoteContent(
                         onCheckboxTextChanged = { itemId, entryId, text -> onCheckboxTextChanged(page.id, itemId, entryId, text) },
                         onCheckboxAdded = { itemId -> onCheckboxAdded(page.id, itemId) },
                         onCheckboxDeleted = { itemId, entryId -> onCheckboxDeleted(page.id, itemId, entryId) },
+                        onEmptyGridAddClicked = onEmptyGridAddClicked,
                         modifier = Modifier.padding(horizontal = 0.dp),
                         isReadOnly = isReadOnly || isDrawingMode
                     )

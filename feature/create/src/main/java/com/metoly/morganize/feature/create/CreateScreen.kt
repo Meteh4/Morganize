@@ -8,10 +8,20 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.ui.Alignment
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -60,9 +70,18 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
         viewModel.onEvent(CreateEvent.RichStateUpdated(newState))
     }
 
+    var isPending5x5Image by remember { mutableStateOf(false) }
+
     val imagePickerLauncher = rememberNoteImagePicker {
-        viewModel.onEvent(CreateEvent.ImageGridItemAdded(it))
+        if (isPending5x5Image) {
+            viewModel.onEvent(CreateEvent.ImageGridItemAdded(it, width = 5, height = 5))
+            isPending5x5Image = false
+        } else {
+            viewModel.onEvent(CreateEvent.ImageGridItemAdded(it))
+        }
     }
+
+    var showAddItemSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isDone) {
         if (uiState.isDone) {
@@ -148,7 +167,7 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
                     },
-                    onAddChecklist = { viewModel.onEvent(CreateEvent.ChecklistGridItemAdded) },
+                    onAddChecklist = { viewModel.onEvent(CreateEvent.ChecklistGridItemAdded()) },
                     onStartDrawing = { viewModel.onEvent(CreateEvent.DrawingModeToggled) },
                     onSave = { viewModel.onEvent(CreateEvent.Save) },
                     saveContentDescription = stringResource(R.string.feature_create_save)
@@ -162,10 +181,80 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
             activeEditingTextItemId = activeEditingTextItemId,
             activeRichState = activeRichState,
             onActiveRichStateChange = updateRichState,
+            onEmptyGridAddClicked = { showAddItemSheet = true },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 16.dp)
         )
+    }
+
+    if (showAddItemSheet) {
+        @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+        androidx.compose.material3.ModalBottomSheet(
+            onDismissRequest = { showAddItemSheet = false },
+            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                androidx.compose.material3.Text(
+                    text = "Add Item",
+                    style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                val bottomSheetButtonStyle = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                
+                Row(
+                    modifier = bottomSheetButtonStyle
+                        .clickable {
+                            viewModel.onEvent(CreateEvent.TextGridItemAdded("", width = 5, height = 5))
+                            showAddItemSheet = false
+                        }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    androidx.compose.material3.Icon(Icons.Default.TextFields, contentDescription = null)
+                    Spacer(Modifier.width(16.dp))
+                    androidx.compose.material3.Text("Text", style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
+                }
+
+                Row(
+                    modifier = bottomSheetButtonStyle
+                        .clickable {
+                            isPending5x5Image = true
+                            imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            showAddItemSheet = false
+                        }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    androidx.compose.material3.Icon(Icons.Default.Image, contentDescription = null)
+                    Spacer(Modifier.width(16.dp))
+                    androidx.compose.material3.Text("Image", style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
+                }
+
+                Row(
+                    modifier = bottomSheetButtonStyle
+                        .clickable {
+                            viewModel.onEvent(CreateEvent.ChecklistGridItemAdded(width = 5, height = 5))
+                            showAddItemSheet = false
+                        }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    androidx.compose.material3.Icon(Icons.Default.Checklist, contentDescription = null)
+                    Spacer(Modifier.width(16.dp))
+                    androidx.compose.material3.Text("Checklist", style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
+                }
+
+                Spacer(Modifier.height(32.dp))
+            }
+        }
     }
 }

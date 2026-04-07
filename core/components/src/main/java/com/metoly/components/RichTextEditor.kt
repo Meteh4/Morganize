@@ -5,8 +5,11 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -45,6 +48,15 @@ fun RichTextEditor(
         textAlign = textAlign
     )
 
+    val focusRequester = remember { FocusRequester() }
+
+    // Auto-focus when editing becomes enabled
+    LaunchedEffect(enabled) {
+        if (enabled) {
+            focusRequester.requestFocus()
+        }
+    }
+
     val annotated = remember(state.text, state.spans) {
         buildAnnotatedFromSpans(state.text, state.spans)
     }
@@ -78,7 +90,7 @@ fun RichTextEditor(
             if (state.text.isEmpty() && hint != null) hint()
             innerTextField()
         },
-        modifier = modifier
+        modifier = modifier.focusRequester(focusRequester)
     )
 }
 

@@ -8,13 +8,28 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.ui.Alignment
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -62,9 +77,18 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
         viewModel.onEvent(EditEvent.RichStateUpdated(newState))
     }
 
+    var isPending5x5Image by remember { mutableStateOf(false) }
+
     val imagePickerLauncher = rememberNoteImagePicker {
-        viewModel.onEvent(EditEvent.ImageGridItemAdded(it))
+        if (isPending5x5Image) {
+            viewModel.onEvent(EditEvent.ImageGridItemAdded(it, width = 5, height = 5))
+            isPending5x5Image = false
+        } else {
+            viewModel.onEvent(EditEvent.ImageGridItemAdded(it))
+        }
     }
+
+    var showAddItemSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isDone) {
         if (uiState.isDone) {
@@ -88,7 +112,7 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
     }
 
     // Determine the active page ID for undo — use the first page as default
-    val activePageId = uiState.pages.firstOrNull()?.id ?: ""
+    uiState.pages.firstOrNull()?.id ?: ""
     val canUndoDrawing = uiState.isDrawingMode &&
         uiState.pages.any { it.drawingData.isNotBlank() }
 
@@ -165,7 +189,7 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
                     },
-                    onAddChecklist = { viewModel.onEvent(EditEvent.ChecklistGridItemAdded) },
+                    onAddChecklist = { viewModel.onEvent(EditEvent.ChecklistGridItemAdded()) },
                     onStartDrawing = { viewModel.onEvent(EditEvent.DrawingModeToggled) },
                     onSave = { viewModel.onEvent(EditEvent.Save) },
                     saveContentDescription = stringResource(R.string.feature_edit_save)
@@ -179,10 +203,80 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
             activeEditingTextItemId = activeEditingTextItemId,
             activeRichState = activeRichState,
             onActiveRichStateChange = updateRichState,
+            onEmptyGridAddClicked = { showAddItemSheet = true },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 16.dp)
         )
+    }
+
+    if (showAddItemSheet) {
+        @OptIn(ExperimentalMaterial3Api::class)
+        ModalBottomSheet(
+            onDismissRequest = { showAddItemSheet = false },
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "Add Item",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                val bottomSheetButtonStyle = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                
+                Row(
+                    modifier = bottomSheetButtonStyle
+                        .clickable {
+                            viewModel.onEvent(EditEvent.TextGridItemAdded("", width = 5, height = 5))
+                            showAddItemSheet = false
+                        }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.TextFields, contentDescription = null)
+                    Spacer(Modifier.width(16.dp))
+                    Text("Text", style = MaterialTheme.typography.bodyLarge)
+                }
+
+                Row(
+                    modifier = bottomSheetButtonStyle
+                        .clickable {
+                            isPending5x5Image = true
+                            imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            showAddItemSheet = false
+                        }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Image, contentDescription = null)
+                    Spacer(Modifier.width(16.dp))
+                    Text("Image", style = MaterialTheme.typography.bodyLarge)
+                }
+
+                Row(
+                    modifier = bottomSheetButtonStyle
+                        .clickable {
+                            viewModel.onEvent(EditEvent.ChecklistGridItemAdded(width = 5, height = 5))
+                            showAddItemSheet = false
+                        }
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Checklist, contentDescription = null)
+                    Spacer(Modifier.width(16.dp))
+                    Text("Checklist", style = MaterialTheme.typography.bodyLarge)
+                }
+
+                Spacer(Modifier.height(32.dp))
+            }
+        }
     }
 }
