@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.metoly.components.NoteContent
 import com.metoly.components.RichTextEditorState
+import com.metoly.morganize.core.model.grid.ChecklistActionType
 import com.metoly.morganize.feature.edit.R
 import com.metoly.morganize.feature.edit.model.EditEvent
 import com.metoly.morganize.feature.edit.model.EditUiState
@@ -26,20 +27,24 @@ internal fun EditNoteContent(
         pages = uiState.pages,
         selectedItemId = uiState.selectedItemId,
         onItemSelected = { onEvent(EditEvent.ItemSelected(it)) },
-        onItemMoved = { pId, iId, nX, nY -> onEvent(EditEvent.ItemMoved(pId, iId, nX, nY)) },
-        onItemResized = { pId, iId, nW, nH, nX, nY ->
-            onEvent(EditEvent.ItemResized(pId, iId, nW, nH, nX, nY))
+        onItemMoved = { pageId, itemId, newX, newY ->
+            onEvent(EditEvent.ItemMoved(pageId, itemId, newX, newY))
         },
-        onItemTextChanged = { pId, iId, text ->
-            onEvent(EditEvent.TextGridItemTextChanged(pId, iId, text))
+        onItemResized = { pageId, itemId, newWidth, newHeight, newX, newY ->
+            onEvent(EditEvent.ItemResized(pageId, itemId, newWidth, newHeight, newX, newY))
         },
-        onItemRichSpansChanged = { pId, iId, spansJson ->
-            onEvent(EditEvent.TextGridItemRichSpansChanged(pId, iId, spansJson))
+        onItemTextChanged = { pageId, itemId, text ->
+            onEvent(EditEvent.TextGridItemTextChanged(pageId, itemId, text))
         },
-        onItemTypographyChanged = { pId, iId, fs, ta, lh ->
-            onEvent(EditEvent.TextGridItemTypographyChanged(pId, iId, fs, ta, lh))
+        onItemRichSpansChanged = { pageId, itemId, spansJson ->
+            onEvent(EditEvent.TextGridItemRichSpansChanged(pageId, itemId, spansJson))
         },
-        onItemDeleted = { pId, iId -> onEvent(EditEvent.ItemDeleted(pId, iId)) },
+        onItemTypographyChanged = { pageId, itemId, fontSize, textAlign, lineHeight ->
+            onEvent(EditEvent.TextGridItemTypographyChanged(pageId, itemId, fontSize, textAlign, lineHeight))
+        },
+        onItemDeleted = { pageId, itemId ->
+            onEvent(EditEvent.ItemDeleted(pageId, itemId))
+        },
         onEditingTextItemChanged = { itemId, richState ->
             onEvent(EditEvent.EditingTextItemChanged(itemId))
             if (richState != null) {
@@ -65,21 +70,21 @@ internal fun EditNoteContent(
         onStrokesUpdated = { pageId, strokes ->
             onEvent(EditEvent.DrawingStrokesUpdated(pageId, strokes))
         },
-        // ── Checklist callbacks ──────────────────────────────────────────
-        onChecklistTitleChanged = { pId, iId, title ->
-            onEvent(EditEvent.ChecklistTitleChanged(pId, iId, title))
+        // ── Checklist callbacks (mapped to consolidated ChecklistAction) ──
+        onChecklistTitleChanged = { pageId, itemId, title ->
+            onEvent(EditEvent.ChecklistAction(pageId, itemId, ChecklistActionType.TitleChanged(title)))
         },
-        onCheckboxToggled = { pId, iId, entryId ->
-            onEvent(EditEvent.CheckboxToggled(pId, iId, entryId))
+        onCheckboxToggled = { pageId, itemId, entryId ->
+            onEvent(EditEvent.ChecklistAction(pageId, itemId, ChecklistActionType.EntryToggled(entryId)))
         },
-        onCheckboxTextChanged = { pId, iId, entryId, text ->
-            onEvent(EditEvent.CheckboxTextChanged(pId, iId, entryId, text))
+        onCheckboxTextChanged = { pageId, itemId, entryId, text ->
+            onEvent(EditEvent.ChecklistAction(pageId, itemId, ChecklistActionType.EntryTextChanged(entryId, text)))
         },
-        onCheckboxAdded = { pId, iId ->
-            onEvent(EditEvent.CheckboxAdded(pId, iId))
+        onCheckboxAdded = { pageId, itemId ->
+            onEvent(EditEvent.ChecklistAction(pageId, itemId, ChecklistActionType.EntryAdded))
         },
-        onCheckboxDeleted = { pId, iId, entryId ->
-            onEvent(EditEvent.CheckboxDeleted(pId, iId, entryId))
+        onCheckboxDeleted = { pageId, itemId, entryId ->
+            onEvent(EditEvent.ChecklistAction(pageId, itemId, ChecklistActionType.EntryDeleted(entryId)))
         },
         onEmptyGridAddClicked = onEmptyGridAddClicked,
         modifier = modifier
