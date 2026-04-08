@@ -52,14 +52,52 @@ fun List<NotePage>.removeItem(pageId: String, itemId: String): List<NotePage> =
         else page.copy(items = page.items.filter { it.id != itemId })
     }
 
-/** Adds a grid item to the last page, creating one if none exist. */
-fun List<NotePage>.addItemToLastPage(item: GridItem): List<NotePage> {
+/** Adds a grid item to the nearest available space on the last page. If no space exists, creates a new page. */
+fun List<NotePage>.addItemToLastPage(
+    item: GridItem,
+    columns: Int = 10,
+    rows: Int = 20
+): List<NotePage> {
     val mutable = toMutableList()
-    if (mutable.isEmpty()) {
-        mutable.add(NotePage(id = UUID.randomUUID().toString(), items = listOf(item)))
-    } else {
-        val last = mutable.last()
-        mutable[mutable.lastIndex] = last.copy(items = last.items + item)
+
+    fun findSpace(page: NotePage): Pair<Int, Int>? {
+        if (item.width > columns || item.height > rows) return null
+        for (y in 0 .. rows - item.height) {
+            for (x in 0 .. columns - item.width) {
+                val hasOverlap = page.items.any { existing ->
+                    x < existing.x + existing.width &&
+                    x + item.width > existing.x &&
+                    y < existing.y + existing.height &&
+                    y + item.height > existing.y
+                }
+                if (!hasOverlap) return x to y
+            }
+        }
+        return null
     }
+
+    fun positionItem(x: Int, y: Int): GridItem {
+        return when (item) {
+            is GridItem.Checklist -> item.copy(x = x, y = y)
+            is GridItem.Image -> item.copy(x = x, y = y)
+            is GridItem.Text -> item.copy(x = x, y = y)
+        }
+    }
+
+    if (mutable.isEmpty()) {
+        mutable.add(NotePage(id = UUID.randomUUID().toString(), items = listOf(positionItem(0, 0))))
+        return mutable
+    }
+
+    val last = mutable.last()
+    val space = findSpace(last)
+
+    if (space != null) {
+        val (x, y) = space
+        mutable[mutable.lastIndex] = last.copy(items = last.items + positionItem(x, y))
+    } else {
+        mutable.add(NotePage(id = UUID.randomUUID().toString(), items = listOf(positionItem(0, 0))))
+    }
+
     return mutable
 }

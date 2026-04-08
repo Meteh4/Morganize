@@ -33,8 +33,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -54,6 +56,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -67,8 +70,6 @@ import coil.compose.AsyncImage
 import com.metoly.components.RichTextEditor
 import com.metoly.components.RichTextEditorState
 import com.metoly.components.continueList
-import com.metoly.components.model.GridItemColorScheme
-import com.metoly.components.model.GridItemDefaults
 import com.metoly.components.richTextStateFromPersisted
 import com.metoly.morganize.core.model.RichSpan
 import com.metoly.morganize.core.model.grid.GridItem
@@ -112,7 +113,6 @@ fun GridCanvas(
     rows: Int = 20,
     isReadOnly: Boolean = false
 ) {
-    val gridItemColors = GridItemDefaults.colors()
     var canvasWidth by remember { mutableFloatStateOf(0f) }
     val cellSize = if (columns > 0) canvasWidth / columns else 0f
     val density = LocalDensity.current
@@ -132,6 +132,27 @@ fun GridCanvas(
             .background(MaterialTheme.colorScheme.surface)
     ) {
         if (cellSize > 0f) {
+            if (page.items.isEmpty() && !isReadOnly) {
+                // Empty grid — show a 5×5 "Add Item" button in the top-left corner
+                val addSize = cellSize * 5
+                Box(
+                    modifier = Modifier
+                        .size(with(density) { addSize.toDp() })
+                        .padding(8.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                        .clickable { onEmptyGridAddClicked() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add item",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+
             page.items.forEach { item ->
                 GridDraggableItem(
                     item = item,
@@ -140,7 +161,6 @@ fun GridCanvas(
                     rows = rows,
                     isSelected = selectedItemId == item.id,
                     isReadOnly = isReadOnly,
-                    colors = gridItemColors,
                     onClick = { onItemSelected(item.id) },
                     onMove = { newX, newY -> onItemMoved(item.id, newX, newY) },
                     onResize = { newW, newH, newX, newY ->
@@ -148,7 +168,7 @@ fun GridCanvas(
                     },
                     onTextChanged = { text -> onItemTextChanged(item.id, text) },
                     onRichSpansChanged = { spansJson -> onItemRichSpansChanged(item.id, spansJson) },
-                    onTypographyChanged = { fs, ta, lh -> onItemTypographyChanged(item.id, fs, ta, lh) },
+                    onTypographyChanged = { fontSize, textAlign, lineHeight -> onItemTypographyChanged(item.id, fontSize, textAlign, lineHeight) },
                     onDelete = { onItemDeleted(item.id) },
                     onEditingChanged = { isEditing, richState ->
                         onEditingTextItemChanged(
@@ -166,27 +186,6 @@ fun GridCanvas(
                     onCheckboxDeleted = { entryId -> onCheckboxDeleted(item.id, entryId) }
                 )
             }
-            if (page.items.isEmpty() && !isReadOnly) {
-                Box(
-                    modifier = Modifier
-                        .offset { IntOffset(0, 0) }
-                        .size(
-                            width = with(density) { (cellSize * 5).toDp() },
-                            height = with(density) { (cellSize * 5).toDp() }
-                        )
-                        .padding(4.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                        .clickable { onEmptyGridAddClicked() }
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "AddItem",
-                        modifier = Modifier.align(Alignment.Center).size(32.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
         }
     }
 }
@@ -200,7 +199,6 @@ private fun GridDraggableItem(
     rows: Int,
     isSelected: Boolean,
     isReadOnly: Boolean,
-    colors: GridItemColorScheme,
     onClick: () -> Unit,
     onMove: (Int, Int) -> Unit,
     onResize: (Int, Int, Int, Int) -> Unit,
@@ -261,8 +259,6 @@ private fun GridDraggableItem(
         }
     }
 
-    // When a different item is selected (isSelected becomes false),
-    // exit editing and hide dropdown.
     LaunchedEffect(isSelected) {
         if (!isSelected) {
             isEditingText = false
@@ -307,7 +303,7 @@ private fun GridDraggableItem(
         spring(stiffness = Spring.StiffnessMediumLow)
     )
     val animBorderColor by animateColorAsState(
-        if (isSelected) colors.selectedBorderColor else colors.unselectedBorderColor,
+        if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
         spring(stiffness = Spring.StiffnessMediumLow)
     )
 
@@ -325,24 +321,20 @@ private fun GridDraggableItem(
                 .padding(animPadding)
                 .clip(RoundedCornerShape(8.dp))
                 .border(animBorderWidth, animBorderColor, RoundedCornerShape(8.dp))
-                .background(colors.containerColor)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
                 .then(
                     if (!isReadOnly) {
                         Modifier.combinedClickable(
-                            onClick = {
-                                // Single tap: for Text & Checklist → enter editing mode
+                            onClick = { 
+                                onClick()
                                 if (item is GridItem.Text || item is GridItem.Checklist) {
-                                    onClick()              // select
-                                    isEditingText = true   // enter editing
-                                } else {
-                                    onClick()
+                                    isEditingText = true
                                 }
                             },
-                            onLongClick = {
-                                // Long press: move & resize mode + show delete dropdown
-                                isEditingText = false      // exit editing if active
-                                onClick()                  // select
-                                showDropdown = true
+                            onLongClick = { 
+                                onClick()
+                                isEditingText = false
+                                showDropdown = true 
                             }
                         )
                     } else Modifier
@@ -405,8 +397,8 @@ private fun GridDraggableItem(
                 is GridItem.Checklist -> {
                     ChecklistContent(
                         item = item,
-                        isEditing = isEditingText && !isReadOnly,
-                        colors = colors,
+                        isSelected = isSelected,
+                        isReadOnly = isReadOnly,
                         onTitleChanged = onChecklistTitleChanged,
                         onCheckboxToggled = onCheckboxToggled,
                         onCheckboxTextChanged = onCheckboxTextChanged,
@@ -417,7 +409,7 @@ private fun GridDraggableItem(
                 }
             }
 
-            // Context menu (shown on long press – move & edit mode)
+            // Context menu
             DropdownMenu(
                 expanded = showDropdown,
                 onDismissRequest = { showDropdown = false },
@@ -588,8 +580,8 @@ private fun BoxScope.EdgeResizeHandles(
 @Composable
 private fun ChecklistContent(
     item: GridItem.Checklist,
-    isEditing: Boolean,
-    colors: GridItemColorScheme,
+    isSelected: Boolean,
+    isReadOnly: Boolean,
     onTitleChanged: (String) -> Unit,
     onCheckboxToggled: (entryId: String) -> Unit,
     onCheckboxTextChanged: (entryId: String, text: String) -> Unit,
@@ -603,23 +595,23 @@ private fun ChecklistContent(
             BasicTextField(
                 value = item.title,
                 onValueChange = onTitleChanged,
-                textStyle = MaterialTheme.typography.titleMedium.copy(
-                    color = colors.contentColor
+                textStyle = MaterialTheme.typography.titleSmall.copy(
+                    color = MaterialTheme.colorScheme.onSurface
                 ),
-                enabled = isEditing,
+                enabled = isSelected && !isReadOnly,
                 decorationBox = { innerTextField ->
                     Box {
                         if (item.title.isEmpty()) {
                             Text(
                                 "Checklist title",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = colors.placeholderColor
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                             )
                         }
                         innerTextField()
                     }
                 },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
             )
         }
 
@@ -632,7 +624,7 @@ private fun ChecklistContent(
                 Checkbox(
                     checked = entry.isChecked,
                     onCheckedChange = { onCheckboxToggled(entry.id) },
-                    enabled = isEditing,
+                    enabled = isSelected && !isReadOnly,
                     modifier = Modifier.size(32.dp)
                 )
 
@@ -642,19 +634,19 @@ private fun ChecklistContent(
                     textStyle = TextStyle(
                         fontSize = 13.sp,
                         color = if (entry.isChecked)
-                            colors.dimmedContentColor
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         else
-                            colors.contentColor,
+                            MaterialTheme.colorScheme.onSurface,
                         textDecoration = if (entry.isChecked) TextDecoration.LineThrough else TextDecoration.None
                     ),
-                    enabled = isEditing,
+                    enabled = isSelected && !isReadOnly,
                     decorationBox = { innerTextField ->
                         Box(modifier = Modifier.weight(1f).padding(vertical = 2.dp)) {
                             if (entry.text.isEmpty()) {
                                 Text(
                                     "Checkbox item",
                                     style = TextStyle(fontSize = 13.sp),
-                                    color = colors.placeholderColor
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                                 )
                             }
                             innerTextField()
@@ -663,7 +655,7 @@ private fun ChecklistContent(
                     modifier = Modifier.weight(1f)
                 )
 
-                if (isEditing) {
+                if (isSelected && !isReadOnly) {
                     IconButton(
                         onClick = { onCheckboxDeleted(entry.id) },
                         modifier = Modifier.size(24.dp)
@@ -672,7 +664,7 @@ private fun ChecklistContent(
                             Icons.Default.Close,
                             contentDescription = "Delete checkbox",
                             modifier = Modifier.size(14.dp),
-                            tint = colors.subtleIconColor
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         )
                     }
                 }
@@ -680,7 +672,7 @@ private fun ChecklistContent(
         }
 
         // "Add Checkbox" button – visible only when selected and not read-only
-        if (isEditing) {
+        if (isSelected && !isReadOnly) {
             item(key = "add_checkbox_${item.id}") {
                 TextButton(
                     onClick = onCheckboxAdded,

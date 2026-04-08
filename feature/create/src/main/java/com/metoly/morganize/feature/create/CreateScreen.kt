@@ -1,27 +1,7 @@
 package com.metoly.morganize.feature.create
 
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.TextFields
-import androidx.compose.ui.Alignment
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -32,18 +12,30 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
 import com.metoly.components.RichTextEditorState
-import com.metoly.components.RichTextToolbar
-import com.metoly.components.NoteBottomBar
-import com.metoly.components.clampedFontSize
-import com.metoly.components.nextLineHeight
-import com.metoly.components.nextTextAlign
 import com.metoly.components.rememberNoteImagePicker
-import com.metoly.components.toggleFormat
-import com.metoly.morganize.core.model.SpanFormatType
+import com.metoly.morganize.feature.create.components.CreateBottomBar
 import com.metoly.morganize.feature.create.components.CreateNoteContent
 import com.metoly.morganize.feature.create.components.CreateTopBar
 import com.metoly.morganize.feature.create.model.CreateEvent
@@ -70,18 +62,17 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
         viewModel.onEvent(CreateEvent.RichStateUpdated(newState))
     }
 
+    var showAddItemSheet by remember { mutableStateOf(false) }
     var isPending5x5Image by remember { mutableStateOf(false) }
 
-    val imagePickerLauncher = rememberNoteImagePicker {
+    val imagePickerLauncher = rememberNoteImagePicker { path ->
         if (isPending5x5Image) {
-            viewModel.onEvent(CreateEvent.ImageGridItemAdded(it, width = 5, height = 5))
+            viewModel.onEvent(CreateEvent.ImageGridItemAdded(path, width = 5, height = 5))
             isPending5x5Image = false
         } else {
-            viewModel.onEvent(CreateEvent.ImageGridItemAdded(it))
+            viewModel.onEvent(CreateEvent.ImageGridItemAdded(path = path))
         }
     }
-
-    var showAddItemSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isDone) {
         if (uiState.isDone) {
@@ -102,77 +93,26 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
             CreateTopBar(
                 onBack = onBack,
                 selectedColor = uiState.backgroundColor,
-                onColorSelected = { viewModel.onEvent(CreateEvent.BackgroundColorChanged(it)) }
+                onColorSelected = { colorArgb ->
+                    viewModel.onEvent(CreateEvent.BackgroundColorChanged(colorArgb = colorArgb))
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            Column(modifier = Modifier
-                .imePadding()
-                .fillMaxWidth()) {
-                // Rich text toolbar – slides in above the bottom bar when text editing is active
-                AnimatedVisibility(
-                    visible = activeEditingTextItemId != null && activeRichState != null && !uiState.isDrawingMode,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    activeRichState?.let { richState ->
-                        RichTextToolbar(
-                            state = richState,
-                            onToggleBold = { updateRichState(richState.toggleFormat(SpanFormatType.BOLD)) },
-                            onToggleItalic = { updateRichState(richState.toggleFormat(SpanFormatType.ITALIC)) },
-                            onToggleBulletList = { updateRichState(richState.toggleFormat(SpanFormatType.BULLET_LIST)) },
-                            onToggleNumberedList = { updateRichState(richState.toggleFormat(SpanFormatType.NUMBERED_LIST)) },
-                            onFontSizeIncrease = { updateRichState(richState.copy(fontSize = clampedFontSize(richState.fontSize, 2f))) },
-                            onFontSizeDecrease = { updateRichState(richState.copy(fontSize = clampedFontSize(richState.fontSize, -2f))) },
-                            onTextAlignCycle = { updateRichState(richState.copy(textAlign = nextTextAlign(richState.textAlign))) },
-                            onLineHeightCycle = { updateRichState(richState.copy(lineHeight = nextLineHeight(richState.lineHeight))) }
-                        )
-                    }
-                }
-
-                // ── Drawing toolbar (shown when drawing mode is active) ────────
-                AnimatedVisibility(
-                    visible = uiState.isDrawingMode,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    val canUndoDrawing = uiState.pages.any { it.drawingData.isNotBlank() }
-                    
-                    com.metoly.components.DrawingToolbar(
-                        penColorArgb = uiState.drawingPenColorArgb,
-                        strokeWidthFraction = uiState.drawingStrokeWidthFraction,
-                        eraserWidthFraction = uiState.drawingEraserWidthFraction,
-                        isEraserMode = uiState.isEraserMode,
-                        canUndo = canUndoDrawing,
-                        onColorSelected = { viewModel.onEvent(CreateEvent.DrawingColorChanged(it)) },
-                        onStrokeWidthChange = { viewModel.onEvent(CreateEvent.DrawingStrokeWidthChanged(it)) },
-                        onEraserWidthChange = { viewModel.onEvent(CreateEvent.DrawingEraserWidthChanged(it)) },
-                        onToggleEraser = { viewModel.onEvent(CreateEvent.DrawingEraserToggled) },
-                        onUndo = {
-                            uiState.pages
-                                .filter { it.drawingData.isNotBlank() }
-                                .forEach { page ->
-                                    viewModel.onEvent(CreateEvent.DrawingStrokeReverted(page.id))
-                                }
-                        },
-                        onClose = { viewModel.onEvent(CreateEvent.DrawingModeToggled) }
-                    )
-                }
-
-                NoteBottomBar(
-                    onAddText = { viewModel.onEvent(CreateEvent.TextGridItemAdded("")) },
-                    onAddImage = {
-                        imagePickerLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
-                    },
-                    onAddChecklist = { viewModel.onEvent(CreateEvent.ChecklistGridItemAdded()) },
-                    onStartDrawing = { viewModel.onEvent(CreateEvent.DrawingModeToggled) },
-                    onSave = { viewModel.onEvent(CreateEvent.Save) },
-                    saveContentDescription = stringResource(R.string.feature_create_save)
-                )
-            }
+            CreateBottomBar(
+                pages = uiState.pages,
+                isDrawingMode = uiState.isDrawingMode,
+                isEraserMode = uiState.isEraserMode,
+                drawingPenColorArgb = uiState.drawingPenColorArgb,
+                drawingStrokeWidthFraction = uiState.drawingStrokeWidthFraction,
+                drawingEraserWidthFraction = uiState.drawingEraserWidthFraction,
+                activeEditingTextItemId = activeEditingTextItemId,
+                activeRichState = activeRichState,
+                onRichStateUpdate = updateRichState,
+                onEvent = viewModel::onEvent,
+                imagePickerLauncher = imagePickerLauncher
+            )
         }
     ) { padding ->
         CreateNoteContent(
@@ -190,19 +130,19 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
     }
 
     if (showAddItemSheet) {
-        @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-        androidx.compose.material3.ModalBottomSheet(
+        @OptIn(ExperimentalMaterial3Api::class)
+        ModalBottomSheet(
             onDismissRequest = { showAddItemSheet = false },
-            containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                androidx.compose.material3.Text(
+                Text(
                     text = "Add Item",
-                    style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
@@ -219,9 +159,9 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    androidx.compose.material3.Icon(Icons.Default.TextFields, contentDescription = null)
+                    Icon(Icons.Default.TextFields, contentDescription = null)
                     Spacer(Modifier.width(16.dp))
-                    androidx.compose.material3.Text("Text", style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
+                    Text("Text", style = MaterialTheme.typography.bodyLarge)
                 }
 
                 Row(
@@ -234,9 +174,9 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    androidx.compose.material3.Icon(Icons.Default.Image, contentDescription = null)
+                    Icon(Icons.Default.Image, contentDescription = null)
                     Spacer(Modifier.width(16.dp))
-                    androidx.compose.material3.Text("Image", style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
+                    Text("Image", style = MaterialTheme.typography.bodyLarge)
                 }
 
                 Row(
@@ -248,9 +188,9 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    androidx.compose.material3.Icon(Icons.Default.Checklist, contentDescription = null)
+                    Icon(Icons.Default.Checklist, contentDescription = null)
                     Spacer(Modifier.width(16.dp))
-                    androidx.compose.material3.Text("Checklist", style = androidx.compose.material3.MaterialTheme.typography.bodyLarge)
+                    Text("Checklist", style = MaterialTheme.typography.bodyLarge)
                 }
 
                 Spacer(Modifier.height(32.dp))

@@ -138,8 +138,8 @@ fun NoteContent(
                         onItemRichSpansChanged = { itemId, spansJson ->
                             onItemRichSpansChanged(page.id, itemId, spansJson)
                         },
-                        onItemTypographyChanged = { itemId, fs, ta, lh ->
-                            onItemTypographyChanged(page.id, itemId, fs, ta, lh)
+                        onItemTypographyChanged = { itemId, fontSize, textAlign, lineHeight ->
+                            onItemTypographyChanged(page.id, itemId, fontSize, textAlign, lineHeight)
                         },
                         onItemDeleted = { itemId -> onItemDeleted(page.id, itemId) },
                         onEditingTextItemChanged = onEditingTextItemChanged,
