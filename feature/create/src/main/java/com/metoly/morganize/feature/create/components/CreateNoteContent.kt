@@ -37,8 +37,8 @@ internal fun CreateNoteContent(
         onItemTextChanged = { pageId, itemId, text ->
             onEvent(CreateEvent.TextGridItemTextChanged(pageId, itemId, text))
         },
-        onItemRichSpansChanged = { pageId, itemId, spansJson ->
-            onEvent(CreateEvent.TextGridItemRichSpansChanged(pageId, itemId, spansJson))
+        onItemRichSpansChanged = { pageId, itemId, spans ->
+            onEvent(CreateEvent.TextGridItemRichSpansChanged(pageId, itemId, spans))
         },
         onItemTypographyChanged = { pageId, itemId, fontSize, textAlign, lineHeight ->
             onEvent(CreateEvent.TextGridItemTypographyChanged(pageId, itemId, fontSize, textAlign, lineHeight))

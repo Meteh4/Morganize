@@ -1,5 +1,6 @@
 package com.metoly.morganize.core.model.grid
 
+import com.metoly.morganize.core.model.RichSpan
 import kotlinx.serialization.Serializable
 
 /**
@@ -21,7 +22,7 @@ sealed class GridItem {
         override val width: Int,
         override val height: Int,
         val textContent: String,
-        val richSpansJson: String = "",
+        val richSpans: List<RichSpan> = emptyList(),
         val fontSize: Float = 14f,        // sp
         val textAlign: String = "Start",  // "Start" | "Center" | "End"
         val lineHeight: Float = 1.4f      // multiplier

@@ -211,20 +211,6 @@ private fun DrawScope.drawStrokePath(stroke: DrawingStroke, canvasW: Float, canv
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Utility: parse / serialize strokes from JSON
-// ────────────────────────────────────────────────────────────────────────────
-
-fun parseDrawingStrokes(json: String): List<DrawingStroke> =
-    if (json.isBlank()) emptyList()
-    else runCatching {
-        kotlinx.serialization.json.Json.decodeFromString<List<DrawingStroke>>(json)
-    }.getOrDefault(emptyList())
-
-fun serializeDrawingStrokes(strokes: List<DrawingStroke>): String =
-    if (strokes.isEmpty()) ""
-    else kotlinx.serialization.json.Json.encodeToString(strokes)
-
-// ────────────────────────────────────────────────────────────────────────────
 // Eraser logic helper: remove strokes that overlap an eraser position
 // Returns (clearedStrokes, updatedStroke?) where updatedStroke is a trimmed stroke
 // if only part of the stroke was erased.

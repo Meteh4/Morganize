@@ -26,7 +26,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.AutoFixNormal
 import androidx.compose.material.icons.filled.AutoFixOff
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -94,7 +93,6 @@ private val ERASER_WIDTH_RANGE = 0.01f..0.12f    // canvas-fraction
  * @param onEraserWidthChange Called as the user drags the eraser slider.
  * @param onToggleEraser      Called when the user taps the eraser / pen toggle.
  * @param onUndo              Called when the user taps the undo button.
- * @param onClose             Called when the user taps the done / close button.
  * @param modifier            Standard Compose modifier.
  */
 @Composable
@@ -109,7 +107,6 @@ fun DrawingToolbar(
     onEraserWidthChange: (Float) -> Unit,
     onToggleEraser: () -> Unit,
     onUndo: () -> Unit,
-    onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showEraserSlider by remember(isEraserMode) { mutableStateOf(isEraserMode) }
@@ -166,16 +163,6 @@ fun DrawingToolbar(
                     label = "Undo",
                     enabled = canUndo,
                     onClick = onUndo
-                )
-
-                DrawingToolbarDivider()
-
-                // Close drawing mode
-                DrawingIconButton(
-                    icon = Icons.Default.Close,
-                    label = "Done",
-                    enabled = true,
-                    onClick = onClose
                 )
             }
 

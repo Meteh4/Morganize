@@ -52,8 +52,8 @@ import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.metoly.components.grid.DrawingCanvas
 import com.metoly.components.grid.GridCanvas
-import com.metoly.components.grid.parseDrawingStrokes
 import com.metoly.morganize.core.model.Category
+import com.metoly.morganize.core.model.RichSpan
 import com.metoly.morganize.core.model.grid.DrawingStroke
 import com.metoly.morganize.core.model.grid.NotePage
 import kotlinx.coroutines.launch
@@ -79,7 +79,7 @@ fun NoteContent(
     onItemMoved: (pageId: String, itemId: String, newX: Int, newY: Int) -> Unit,
     onItemResized: (pageId: String, itemId: String, newWidth: Int, newHeight: Int, newX: Int, newY: Int) -> Unit,
     onItemTextChanged: (pageId: String, itemId: String, text: String) -> Unit,
-    onItemRichSpansChanged: (pageId: String, itemId: String, richSpansJson: String) -> Unit,
+    onItemRichSpansChanged: (pageId: String, itemId: String, richSpans: List<RichSpan>) -> Unit,
     onItemTypographyChanged: (pageId: String, itemId: String, fontSize: Float, textAlign: String, lineHeight: Float) -> Unit,
     onItemDeleted: (pageId: String, itemId: String) -> Unit,
     onEditingTextItemChanged: (itemId: String?, richState: RichTextEditorState?) -> Unit,
@@ -257,10 +257,9 @@ fun NoteContent(
                         showEmptyGridPlaceholder = index == 0
                     )
 
-                    if (isDrawingMode || page.drawingData.isNotBlank()) {
-                        val strokes = parseDrawingStrokes(page.drawingData)
+                    if (isDrawingMode || page.strokes.isNotEmpty()) {
                         DrawingCanvas(
-                            strokes = strokes,
+                            strokes = page.strokes,
                             isActive = isDrawingMode,
                             isEraserMode = isEraserMode,
                             penColorArgb = penColorArgb,

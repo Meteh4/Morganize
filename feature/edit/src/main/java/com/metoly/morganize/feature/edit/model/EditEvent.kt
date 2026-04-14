@@ -1,6 +1,7 @@
 package com.metoly.morganize.feature.edit.model
 
 import com.metoly.components.RichTextEditorState
+import com.metoly.morganize.core.model.RichSpan
 import com.metoly.morganize.core.model.grid.ChecklistActionType
 import com.metoly.morganize.core.model.grid.DrawingStroke
 
@@ -36,7 +37,7 @@ sealed interface EditEvent {
     data object Save : EditEvent
     data object SnackbarDismissed : EditEvent
     data class TextGridItemAdded(val text: String, val targetPageIndex: Int, val width: Int = 4, val height: Int = 4) : EditEvent
-    data class TextGridItemRichSpansChanged(val pageId: String, val itemId: String, val richSpansJson: String) : EditEvent
+    data class TextGridItemRichSpansChanged(val pageId: String, val itemId: String, val richSpans: List<RichSpan>) : EditEvent
     data class TextGridItemTextChanged(val pageId: String, val itemId: String, val text: String) : EditEvent
     data class TextGridItemTypographyChanged(val pageId: String, val itemId: String, val fontSize: Float, val textAlign: String, val lineHeight: Float) : EditEvent
     data class TitleChanged(val value: String) : EditEvent

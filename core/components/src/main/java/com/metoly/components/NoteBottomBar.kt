@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun NoteBottomBar(
+    isDrawingMode: Boolean = false,
     onAddText: () -> Unit,
     onAddImage: () -> Unit,
     onAddChecklist: () -> Unit,
@@ -25,7 +26,17 @@ fun NoteBottomBar(
             IconButton(onClick = onAddChecklist) {
                 Icon(Icons.Default.Checklist, contentDescription = "Add Checklist")
             }
-            IconButton(onClick = onStartDrawing) {
+            IconButton(
+                onClick = onStartDrawing,
+                colors = if (isDrawingMode) {
+                    IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                } else {
+                    IconButtonDefaults.iconButtonColors()
+                }
+            ) {
                 Icon(Icons.Default.Create, contentDescription = "Start Drawing")
             }
         },

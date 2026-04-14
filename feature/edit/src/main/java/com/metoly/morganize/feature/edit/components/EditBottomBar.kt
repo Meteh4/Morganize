@@ -65,6 +65,7 @@ internal fun EditBottomBar(
         )
 
         NoteBottomBar(
+            isDrawingMode = isDrawingMode,
             onAddText = { onEvent(EditEvent.TextGridItemAdded("", activePageIndex)) },
             onAddImage = {
                 imagePickerLauncher.launch(
@@ -122,7 +123,7 @@ private fun DrawingToolbarSection(
         enter = fadeIn() + expandVertically(),
         exit = fadeOut() + shrinkVertically()
     ) {
-        val canUndoDrawing = pages.any { it.drawingData.isNotBlank() }
+        val canUndoDrawing = pages.any { it.strokes.isNotEmpty() }
 
         DrawingToolbar(
             penColorArgb = drawingPenColorArgb,
@@ -140,12 +141,11 @@ private fun DrawingToolbarSection(
             onToggleEraser = { onEvent(EditEvent.DrawingEraserToggled) },
             onUndo = {
                 pages
-                    .filter { it.drawingData.isNotBlank() }
+                    .filter { it.strokes.isNotEmpty() }
                     .forEach { page ->
                         onEvent(EditEvent.DrawingStrokeReverted(pageId = page.id))
                     }
-            },
-            onClose = { onEvent(EditEvent.DrawingModeToggled) }
+            }
         )
     }
 }
