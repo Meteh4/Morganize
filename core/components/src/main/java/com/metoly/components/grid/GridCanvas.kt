@@ -81,6 +81,22 @@ import kotlin.math.roundToInt
 
 private val json = Json { ignoreUnknownKeys = true }
 
+object GridItemDefaults {
+    val DefaultPadding = 8.dp
+    val SelectedPadding = 8.dp
+    val CornerRadius = 12.dp
+    val SelectedBorderWidth = 2.dp
+    val UnselectedBorderWidth = 0.dp
+    val BackgroundAlpha = 0.6f
+    val InnerPadding = 8.dp
+
+    val Shape: RoundedCornerShape
+        get() = RoundedCornerShape(CornerRadius)
+
+    @Composable
+    fun backgroundColor(): Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = BackgroundAlpha)
+}
+
 private fun parseRichSpans(richSpansJson: String): List<RichSpan> =
     if (richSpansJson.isBlank()) emptyList()
     else runCatching { json.decodeFromString<List<RichSpan>>(richSpansJson) }.getOrDefault(emptyList())
@@ -112,7 +128,8 @@ fun GridCanvas(
     onEmptyGridAddClicked: () -> Unit = {},
     columns: Int = 10,
     rows: Int = 20,
-    isReadOnly: Boolean = false
+    isReadOnly: Boolean = false,
+    showEmptyGridPlaceholder: Boolean = true
 ) {
     var canvasWidth by remember { mutableFloatStateOf(0f) }
     val cellSize = if (columns > 0) canvasWidth / columns else 0f
@@ -120,6 +137,7 @@ fun GridCanvas(
 
     Box(
         modifier = modifier
+            .clip(shape = RoundedCornerShape(16.dp))
             .fillMaxWidth()
             .onSizeChanged { canvasWidth = it.width.toFloat() }
             .then(
@@ -130,18 +148,18 @@ fun GridCanvas(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             ) { onItemSelected(null) }
-            .background(MaterialTheme.colorScheme.surface)
+            .background(Color.White)
     ) {
         if (cellSize > 0f) {
-            if (page.items.isEmpty() && !isReadOnly) {
+            if (page.items.isEmpty() && !isReadOnly && showEmptyGridPlaceholder) {
                 // Empty grid — show a 5×5 "Add Item" button in the top-left corner
                 val addSize = cellSize * 5
                 Box(
                     modifier = Modifier
                         .size(with(density) { addSize.toDp() })
-                        .padding(8.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                        .padding(GridItemDefaults.DefaultPadding)
+                        .clip(GridItemDefaults.Shape)
+                        .background(GridItemDefaults.backgroundColor())
                         .clickable { onEmptyGridAddClicked() },
                     contentAlignment = Alignment.Center
                 ) {
@@ -304,11 +322,11 @@ private fun GridDraggableItem(
     val currentOnResize by rememberUpdatedState(onResize)
 
     val animPadding by animateDpAsState(
-        if (isSelected) 10.dp else 4.dp,
+        if (isSelected) GridItemDefaults.SelectedPadding else GridItemDefaults.DefaultPadding,
         spring(stiffness = Spring.StiffnessMediumLow)
     )
     val animBorderWidth by animateDpAsState(
-        if (isSelected) 2.dp else 0.dp,
+        if (isSelected) GridItemDefaults.SelectedBorderWidth else GridItemDefaults.UnselectedBorderWidth,
         spring(stiffness = Spring.StiffnessMediumLow)
     )
     val animBorderColor by animateColorAsState(
@@ -341,9 +359,9 @@ private fun GridDraggableItem(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(animPadding)
-                .clip(RoundedCornerShape(8.dp))
-                .border(animBorderWidth, animBorderColor, RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clip(GridItemDefaults.Shape)
+                .border(animBorderWidth, animBorderColor, GridItemDefaults.Shape)
+                .background(GridItemDefaults.backgroundColor())
                 .then(
                     if (!isReadOnly) {
                         Modifier.combinedClickable(
@@ -404,7 +422,7 @@ private fun GridDraggableItem(
                             onRichSpansChanged(serializeRichSpans(next.spans))
                         },
                         enabled = isEditingText && !isReadOnly,
-                        modifier = Modifier.fillMaxSize().padding(8.dp)
+                        modifier = Modifier.fillMaxSize().padding(GridItemDefaults.InnerPadding)
                     )
                 }
                 is GridItem.Image -> {
@@ -425,7 +443,7 @@ private fun GridDraggableItem(
                         onCheckboxTextChanged = onCheckboxTextChanged,
                         onCheckboxAdded = onCheckboxAdded,
                         onCheckboxDeleted = onCheckboxDeleted,
-                        modifier = Modifier.fillMaxSize().padding(8.dp)
+                        modifier = Modifier.fillMaxSize().padding(GridItemDefaults.InnerPadding)
                     )
                 }
             }

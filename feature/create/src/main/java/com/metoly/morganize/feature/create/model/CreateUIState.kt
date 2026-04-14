@@ -24,4 +24,5 @@ data class CreateUiState(
     val selectedItemId: String? = null,
     val title: String = "",
     val userMessage: String? = null,
+    val targetScrollPageIndex: Int? = null,
 )

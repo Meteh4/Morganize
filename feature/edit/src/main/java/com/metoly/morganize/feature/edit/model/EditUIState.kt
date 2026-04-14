@@ -26,4 +26,5 @@ data class EditUiState(
     val showDeleteDialog: Boolean = false,
     val title: String = "",
     val userMessage: String? = null,
+    val targetScrollPageIndex: Int? = null,
 )

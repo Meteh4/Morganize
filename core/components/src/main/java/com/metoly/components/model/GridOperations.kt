@@ -52,12 +52,13 @@ fun List<NotePage>.removeItem(pageId: String, itemId: String): List<NotePage> =
         else page.copy(items = page.items.filter { it.id != itemId })
     }
 
-/** Adds a grid item to the nearest available space on the last page. If no space exists, creates a new page. */
-fun List<NotePage>.addItemToLastPage(
+/** Adds a grid item to the specified page index or falls back to creating a new page if full. */
+fun List<NotePage>.addItemToPage(
+    pageIndex: Int,
     item: GridItem,
     columns: Int = 10,
     rows: Int = 20
-): List<NotePage> {
+): Pair<List<NotePage>, Int> {
     val mutable = toMutableList()
 
     fun findSpace(page: NotePage): Pair<Int, Int>? {
@@ -86,18 +87,29 @@ fun List<NotePage>.addItemToLastPage(
 
     if (mutable.isEmpty()) {
         mutable.add(NotePage(id = UUID.randomUUID().toString(), items = listOf(positionItem(0, 0))))
-        return mutable
+        return mutable to 0
     }
 
-    val last = mutable.last()
-    val space = findSpace(last)
+    val startIndex = pageIndex.coerceIn(0, mutable.lastIndex)
+    var space: Pair<Int, Int>? = null
+    var foundIndex = -1
+
+    for (i in startIndex..mutable.lastIndex) {
+        val pageSpace = findSpace(mutable[i])
+        if (pageSpace != null) {
+            space = pageSpace
+            foundIndex = i
+            break
+        }
+    }
 
     if (space != null) {
         val (x, y) = space
-        mutable[mutable.lastIndex] = last.copy(items = last.items + positionItem(x, y))
+        val targetPage = mutable[foundIndex]
+        mutable[foundIndex] = targetPage.copy(items = targetPage.items + positionItem(x, y))
+        return mutable to foundIndex
     } else {
         mutable.add(NotePage(id = UUID.randomUUID().toString(), items = listOf(positionItem(0, 0))))
+        return mutable to mutable.lastIndex
     }
-
-    return mutable
 }

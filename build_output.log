@@ -1,0 +1,45 @@
+> Task :core:components:preBuild UP-TO-DATE
+> Task :core:components:preDebugBuild UP-TO-DATE
+> Task :core:components:generateDebugResources UP-TO-DATE
+> Task :core:components:packageDebugResources UP-TO-DATE
+> Task :core:components:processDebugNavigationResources UP-TO-DATE
+> Task :core:components:parseDebugLocalResources UP-TO-DATE
+> Task :core:components:generateDebugRFile UP-TO-DATE
+> Task :core:model:preBuild UP-TO-DATE
+> Task :core:model:preDebugBuild UP-TO-DATE
+> Task :core:model:generateDebugResources UP-TO-DATE
+> Task :core:model:packageDebugResources UP-TO-DATE
+> Task :core:model:processDebugNavigationResources UP-TO-DATE
+> Task :core:model:parseDebugLocalResources UP-TO-DATE
+> Task :core:model:generateDebugRFile UP-TO-DATE
+> Task :core:model:javaPreCompileDebug UP-TO-DATE
+> Task :core:model:kspDebugKotlin
+> Task :core:model:compileDebugKotlin UP-TO-DATE
+> Task :core:model:compileDebugJavaWithJavac NO-SOURCE
+> Task :core:model:copyRoomSchemas NO-SOURCE
+> Task :core:model:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :core:components:compileDebugKotlin FAILED
+e: file:///Users/bordo/StudioProjects/Morganize/core/components/src/main/java/com/metoly/components/NoteContent.kt:122:31 Property delegate must have a 'getValue(Nothing?, KProperty0<*>)' method. None of the following functions is applicable:
+fun <T> Lazy<T>.getValue(thisRef: Any?, property: KProperty<*>): T
+fun <V> KProperty0<V>.getValue(thisRef: Any?, property: KProperty<*>): V
+fun <T, V> KProperty1<T, V>.getValue(thisRef: T, property: KProperty<*>): V
+fun <K, V> Map<K, V>.getValue(key: K): V
+fun <V, V1 : V> Map<in String, V>.getValue(thisRef: Any?, property: KProperty<*>): V1
+fun <V, V1 : V> MutableMap<in String, out V>.getValue(thisRef: Any?, property: KProperty<*>): V1
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':core:components:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 3s
+15 actionable tasks: 2 executed, 13 up-to-date

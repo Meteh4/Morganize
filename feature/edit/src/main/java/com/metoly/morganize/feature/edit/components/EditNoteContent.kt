@@ -18,7 +18,8 @@ internal fun EditNoteContent(
     activeEditingTextItemId: String? = null,
     activeRichState: RichTextEditorState? = null,
     onActiveRichStateChange: (RichTextEditorState) -> Unit = {},
-    onEmptyGridAddClicked: () -> Unit = {}
+    onEmptyGridAddClicked: () -> Unit = {},
+    onActivePageChanged: (Int) -> Unit = {}
 ) {
     NoteContent(
         title = uiState.title,
@@ -70,7 +71,6 @@ internal fun EditNoteContent(
         onStrokesUpdated = { pageId, strokes ->
             onEvent(EditEvent.DrawingStrokesUpdated(pageId, strokes))
         },
-        // ── Checklist callbacks (mapped to consolidated ChecklistAction) ──
         onChecklistTitleChanged = { pageId, itemId, title ->
             onEvent(EditEvent.ChecklistAction(pageId, itemId, ChecklistActionType.TitleChanged(title)))
         },
@@ -87,6 +87,9 @@ internal fun EditNoteContent(
             onEvent(EditEvent.ChecklistAction(pageId, itemId, ChecklistActionType.EntryDeleted(entryId)))
         },
         onEmptyGridAddClicked = onEmptyGridAddClicked,
+        onActivePageChanged = onActivePageChanged,
+        targetScrollPageIndex = uiState.targetScrollPageIndex,
+        onScrollTargetHandled = { onEvent(EditEvent.ScrollTargetHandled) },
         modifier = modifier
     )
 }
