@@ -18,7 +18,8 @@ internal fun CreateNoteContent(
     activeEditingTextItemId: String? = null,
     activeRichState: RichTextEditorState? = null,
     onActiveRichStateChange: (RichTextEditorState) -> Unit = {},
-    onEmptyGridAddClicked: () -> Unit = {}
+    onEmptyGridAddClicked: () -> Unit = {},
+    onActivePageChanged: (Int) -> Unit = {}
 ) {
     NoteContent(
         title = uiState.title,
@@ -86,6 +87,9 @@ internal fun CreateNoteContent(
             onEvent(CreateEvent.ChecklistAction(pageId, itemId, ChecklistActionType.EntryDeleted(entryId)))
         },
         onEmptyGridAddClicked = onEmptyGridAddClicked,
+        onActivePageChanged = onActivePageChanged,
+        targetScrollPageIndex = uiState.targetScrollPageIndex,
+        onScrollTargetHandled = { onEvent(CreateEvent.ScrollTargetHandled) },
         modifier = modifier
     )
 }

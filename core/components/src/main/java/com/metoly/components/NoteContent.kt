@@ -1,6 +1,9 @@
 // NoteContent.kt
 package com.metoly.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,23 +11,44 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.metoly.components.grid.DrawingCanvas
 import com.metoly.components.grid.GridCanvas
@@ -32,6 +56,8 @@ import com.metoly.components.grid.parseDrawingStrokes
 import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.grid.DrawingStroke
 import com.metoly.morganize.core.model.grid.NotePage
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 private val TransparentFieldColors
     @Composable get() = OutlinedTextFieldDefaults.colors(
@@ -65,7 +91,6 @@ fun NoteContent(
     onCategorySelected: (Long?) -> Unit,
     onAddPage: () -> Unit,
     isReadOnly: Boolean = false,
-    // ── Drawing layer ────────────────────────────────────────────────────────
     isDrawingMode: Boolean = false,
     isEraserMode: Boolean = false,
     penColorArgb: Long = 0xFF000000L,
@@ -73,20 +98,95 @@ fun NoteContent(
     eraserWidthFraction: Float = 0.04f,
     onStrokeAdded: (pageId: String, stroke: DrawingStroke) -> Unit = { _, _ -> },
     onStrokesUpdated: (pageId: String, strokes: List<DrawingStroke>) -> Unit = { _, _ -> },
-    // ── Checklist callbacks ─────────────────────────────────────────────────
     onChecklistTitleChanged: (pageId: String, itemId: String, title: String) -> Unit = { _, _, _ -> },
     onCheckboxToggled: (pageId: String, itemId: String, entryId: String) -> Unit = { _, _, _ -> },
     onCheckboxTextChanged: (pageId: String, itemId: String, entryId: String, text: String) -> Unit = { _, _, _, _ -> },
     onCheckboxAdded: (pageId: String, itemId: String) -> Unit = { _, _ -> },
     onCheckboxDeleted: (pageId: String, itemId: String, entryId: String) -> Unit = { _, _, _ -> },
     onEmptyGridAddClicked: () -> Unit = {},
+    onActivePageChanged: (Int) -> Unit = {},
+    targetScrollPageIndex: Int? = null,
+    onScrollTargetHandled: () -> Unit = {}
 ) {
     val focusManager = LocalFocusManager.current
+    val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
+    val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
+    val thresholdPx = screenHeightPx * 0.2f
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 80.dp)
-    ) {
+    val overscrollPx = remember { mutableFloatStateOf(0f) }
+    val coroutineScope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+
+    val firstVisibleItemIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
+    val activePageIndex = maxOf(0, firstVisibleItemIndex - 1)
+    val containerColor by remember { mutableStateOf(Color(0xFFF5F5F7)) }
+
+    LaunchedEffect(activePageIndex) {
+        onActivePageChanged(activePageIndex)
+    }
+
+    LaunchedEffect(targetScrollPageIndex) {
+        if (targetScrollPageIndex != null) {
+            listState.animateScrollToItem(targetScrollPageIndex + 1)
+            onScrollTargetHandled()
+        }
+    }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (overscrollPx.floatValue < 0f && source == NestedScrollSource.UserInput) {
+                    val newVal = overscrollPx.floatValue + available.y
+                    if (newVal > 0f) {
+                        val consumed = -overscrollPx.floatValue
+                        overscrollPx.floatValue = 0f
+                        return Offset(0f, consumed)
+                    } else {
+                        overscrollPx.floatValue = newVal
+                        return available
+                    }
+                }
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                if (source == NestedScrollSource.UserInput && available.y < 0) {
+                    overscrollPx.floatValue += available.y
+                    return Offset(0f, available.y)
+                }
+                return Offset.Zero
+            }
+
+            override suspend fun onPreFling(available: Velocity): Velocity {
+                if (overscrollPx.floatValue < 0f) {
+                    if (overscrollPx.floatValue <= -thresholdPx) {
+                        onAddPage()
+                    }
+                    coroutineScope.launch {
+                        Animatable(overscrollPx.floatValue).animateTo(0f) {
+                            overscrollPx.floatValue = value
+                        }
+                    }
+                    return available
+                }
+                return Velocity.Zero
+            }
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize().background(containerColor).nestedScroll(nestedScrollConnection)) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .offset { IntOffset(0, overscrollPx.floatValue.roundToInt()) },
+            contentPadding = PaddingValues(bottom = 80.dp)
+        ) {
         item(key = "header") {
             Spacer(Modifier.height(16.dp))
 
@@ -153,7 +253,8 @@ fun NoteContent(
                         onCheckboxDeleted = { itemId, entryId -> onCheckboxDeleted(page.id, itemId, entryId) },
                         onEmptyGridAddClicked = onEmptyGridAddClicked,
                         modifier = Modifier.padding(horizontal = 0.dp),
-                        isReadOnly = isReadOnly || isDrawingMode
+                        isReadOnly = isReadOnly || isDrawingMode,
+                        showEmptyGridPlaceholder = index == 0
                     )
 
                     if (isDrawingMode || page.drawingData.isNotBlank()) {
@@ -175,22 +276,38 @@ fun NoteContent(
                         )
                     }
                 }
-
-                Spacer(Modifier.height(24.dp))
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 32.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-                Spacer(Modifier.height(24.dp))
-            }
-        }
-
-        item(key = "add_page") {
-            Box(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                Button(onClick = onAddPage, modifier = Modifier.fillMaxWidth()) {
-                    Text("Add Note Page")
-                }
             }
         }
     }
+
+    // Indicator at the bottom
+    if (overscrollPx.floatValue < 0f) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(containerColor)
+                .height(with(density) { (-overscrollPx.floatValue).toDp() }),
+            contentAlignment = Alignment.Center
+        ) {
+            val progress = (-overscrollPx.floatValue / thresholdPx).coerceIn(0f, 1f)
+            val isReady = progress >= 1f
+            
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                AnimatedContent(targetState = isReady, label = "add_icon") { ready ->
+                    if (ready) {
+                        Icon(Icons.Default.Add, contentDescription = "Add page", modifier = Modifier.size(32.dp))
+                    } else {
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Drag up", modifier = Modifier.size(32.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (isReady) "release to add page" else "(drag for new page)",
+                    style = MaterialTheme.typography.labelMedium
+                )
+            }
+        }
+    }
+}
 }

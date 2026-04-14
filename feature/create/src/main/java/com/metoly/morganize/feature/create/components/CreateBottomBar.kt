@@ -30,6 +30,7 @@ import com.metoly.morganize.feature.create.model.CreateEvent
 @Composable
 internal fun CreateBottomBar(
     pages: List<NotePage>,
+    activePageIndex: Int,
     isDrawingMode: Boolean,
     isEraserMode: Boolean,
     drawingPenColorArgb: Long,
@@ -64,13 +65,13 @@ internal fun CreateBottomBar(
         )
 
         NoteBottomBar(
-            onAddText = { onEvent(CreateEvent.TextGridItemAdded("")) },
+            onAddText = { onEvent(CreateEvent.TextGridItemAdded("", activePageIndex)) },
             onAddImage = {
                 imagePickerLauncher.launch(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                 )
             },
-            onAddChecklist = { onEvent(CreateEvent.ChecklistGridItemAdded()) },
+            onAddChecklist = { onEvent(CreateEvent.ChecklistGridItemAdded(activePageIndex)) },
             onStartDrawing = { onEvent(CreateEvent.DrawingModeToggled) },
             onSave = { onEvent(CreateEvent.Save) },
             saveContentDescription = stringResource(R.string.feature_create_save)

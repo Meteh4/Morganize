@@ -2,7 +2,7 @@ package com.metoly.morganize.feature.edit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.metoly.components.model.addItemToLastPage
+import com.metoly.components.model.addItemToPage
 import com.metoly.components.model.removeItem
 import com.metoly.components.model.updateItem
 import com.metoly.components.model.updateItemSimple
@@ -103,6 +103,9 @@ class EditViewModel(
 
             is EditEvent.TitleChanged ->
                 _uiState.update { it.copy(title = event.value) }
+
+            is EditEvent.ScrollTargetHandled ->
+                _uiState.update { it.copy(targetScrollPageIndex = null) }
         }
     }
 
@@ -175,14 +178,17 @@ class EditViewModel(
         when (event) {
             is EditEvent.TextGridItemAdded ->
                 _uiState.update { state ->
-                    state.copy(
-                        pages = state.pages.addItemToLastPage(
-                            GridItem.Text(
-                                id = UUID.randomUUID().toString(),
-                                x = 0, y = 0, width = event.width, height = event.height,
-                                textContent = event.text
-                            )
+                    val (newPages, addedIndex) = state.pages.addItemToPage(
+                        event.targetPageIndex,
+                        GridItem.Text(
+                            id = UUID.randomUUID().toString(),
+                            x = 0, y = 0, width = event.width, height = event.height,
+                            textContent = event.text
                         )
+                    )
+                    state.copy(
+                        pages = newPages,
+                        targetScrollPageIndex = addedIndex
                     )
                 }
 
@@ -223,14 +229,17 @@ class EditViewModel(
 
     private fun handleImageGridItem(event: EditEvent.ImageGridItemAdded) {
         _uiState.update { state ->
-            state.copy(
-                pages = state.pages.addItemToLastPage(
-                    GridItem.Image(
-                        id = UUID.randomUUID().toString(),
-                        x = 0, y = 0, width = event.width, height = event.height,
-                        imageUri = event.path
-                    )
+            val (newPages, addedIndex) = state.pages.addItemToPage(
+                event.targetPageIndex,
+                GridItem.Image(
+                    id = UUID.randomUUID().toString(),
+                    x = 0, y = 0, width = event.width, height = event.height,
+                    imageUri = event.path
                 )
+            )
+            state.copy(
+                pages = newPages,
+                targetScrollPageIndex = addedIndex
             )
         }
     }
@@ -250,17 +259,20 @@ class EditViewModel(
 
             is EditEvent.ChecklistGridItemAdded ->
                 _uiState.update { state ->
-                    state.copy(
-                        pages = state.pages.addItemToLastPage(
-                            GridItem.Checklist(
-                                id = UUID.randomUUID().toString(),
-                                x = 0, y = 0, width = event.width, height = event.height,
-                                title = "",
-                                entries = listOf(
-                                    CheckboxEntry(id = UUID.randomUUID().toString())
-                                )
+                    val (newPages, addedIndex) = state.pages.addItemToPage(
+                        event.targetPageIndex,
+                        GridItem.Checklist(
+                            id = UUID.randomUUID().toString(),
+                            x = 0, y = 0, width = event.width, height = event.height,
+                            title = "",
+                            entries = listOf(
+                                CheckboxEntry(id = UUID.randomUUID().toString())
                             )
                         )
+                    )
+                    state.copy(
+                        pages = newPages,
+                        targetScrollPageIndex = addedIndex
                     )
                 }
 

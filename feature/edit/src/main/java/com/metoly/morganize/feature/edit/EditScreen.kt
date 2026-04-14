@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
+import androidx.compose.ui.graphics.Color
 import com.metoly.components.DeleteNoteDialog
 import com.metoly.components.RichTextEditorState
 import com.metoly.components.rememberNoteImagePicker
@@ -65,13 +66,14 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
 
     var showAddItemSheet by remember { mutableStateOf(false) }
     var isPending5x5Image by remember { mutableStateOf(false) }
+    var activePageIndex by remember { mutableStateOf(0) }
 
     val imagePickerLauncher = rememberNoteImagePicker { path ->
         if (isPending5x5Image) {
-            viewModel.onEvent(EditEvent.ImageGridItemAdded(path, width = 5, height = 5))
+            viewModel.onEvent(EditEvent.ImageGridItemAdded(path, targetPageIndex = activePageIndex, width = 5, height = 5))
             isPending5x5Image = false
         } else {
-            viewModel.onEvent(EditEvent.ImageGridItemAdded(path))
+            viewModel.onEvent(EditEvent.ImageGridItemAdded(path = path, targetPageIndex = activePageIndex))
         }
     }
 
@@ -97,6 +99,7 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
     }
 
     Scaffold(
+        containerColor = Color(0xFFF5F5F7),
         topBar = {
             EditTopBar(
                 onBack = onBack,
@@ -109,6 +112,7 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
         bottomBar = {
             EditBottomBar(
                 pages = uiState.pages,
+                activePageIndex = activePageIndex,
                 isDrawingMode = uiState.isDrawingMode,
                 isEraserMode = uiState.isEraserMode,
                 drawingPenColorArgb = uiState.drawingPenColorArgb,
@@ -129,6 +133,7 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
             activeRichState = activeRichState,
             onActiveRichStateChange = updateRichState,
             onEmptyGridAddClicked = { showAddItemSheet = true },
+            onActivePageChanged = { activePageIndex = it },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
@@ -160,7 +165,7 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
                 Row(
                     modifier = bottomSheetButtonStyle
                         .clickable {
-                            viewModel.onEvent(EditEvent.TextGridItemAdded("", width = 5, height = 5))
+                            viewModel.onEvent(EditEvent.TextGridItemAdded("", activePageIndex, width = 5, height = 5))
                             showAddItemSheet = false
                         }
                         .padding(16.dp),
@@ -189,7 +194,7 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
                 Row(
                     modifier = bottomSheetButtonStyle
                         .clickable {
-                            viewModel.onEvent(EditEvent.ChecklistGridItemAdded(width = 5, height = 5))
+                            viewModel.onEvent(EditEvent.ChecklistGridItemAdded(activePageIndex, width = 5, height = 5))
                             showAddItemSheet = false
                         }
                         .padding(16.dp),
