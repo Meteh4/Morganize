@@ -12,7 +12,6 @@ import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.core.model.ResponseState
 import com.metoly.morganize.core.model.grid.CheckboxEntry
 import com.metoly.morganize.core.model.grid.ChecklistActionType
-import com.metoly.morganize.core.model.grid.DrawingStroke
 import com.metoly.morganize.core.model.grid.GridItem
 import com.metoly.morganize.core.model.grid.NotePage
 import com.metoly.morganize.feature.create.model.CreateEvent
@@ -23,7 +22,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import kotlinx.serialization.json.Json
 import java.util.UUID
 
 class CreateViewModel(
@@ -156,7 +154,7 @@ class CreateViewModel(
                 _uiState.update { state ->
                     state.copy(
                         pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
-                            if (item is GridItem.Text) item.copy(richSpansJson = event.richSpansJson) else item
+                            if (item is GridItem.Text) item.copy(richSpans = event.richSpans) else item
                         }
                     )
                 }
@@ -305,14 +303,15 @@ class CreateViewModel(
 
             is CreateEvent.DrawingStrokeAdded ->
                 _uiState.update { state ->
-                    val currentStrokes = state.pages.decodeStrokes(event.pageId)
+                    val page = state.pages.find { it.id == event.pageId }
+                    val currentStrokes = page?.strokes ?: emptyList()
                     val newStack = state.drawingUndoStack.toMutableMap()
                     val pageStack = newStack[event.pageId] ?: emptyList()
                     newStack[event.pageId] = pageStack + listOf(currentStrokes)
                     state.copy(
                         drawingUndoStack = newStack,
-                        pages = state.pages.updateDrawingData(event.pageId) { current ->
-                            current + event.stroke
+                        pages = state.pages.map { p ->
+                            if (p.id == event.pageId) p.copy(strokes = currentStrokes + event.stroke) else p
                         }
                     )
                 }
@@ -324,25 +323,25 @@ class CreateViewModel(
                     if (pageStack.isEmpty()) return@update state
                     val previousStrokes = pageStack.last()
                     newStack[event.pageId] = pageStack.dropLast(1)
-                    val serialized = if (previousStrokes.isEmpty()) "" else Json.encodeToString(previousStrokes)
                     state.copy(
                         drawingUndoStack = newStack,
                         pages = state.pages.map { page ->
-                            if (page.id == event.pageId) page.copy(drawingData = serialized) else page
+                            if (page.id == event.pageId) page.copy(strokes = previousStrokes) else page
                         }
                     )
                 }
 
             is CreateEvent.DrawingStrokesUpdated ->
                 _uiState.update { state ->
-                    val currentStrokes = state.pages.decodeStrokes(event.pageId)
+                    val page = state.pages.find { it.id == event.pageId }
+                    val currentStrokes = page?.strokes ?: emptyList()
                     val newStack = state.drawingUndoStack.toMutableMap()
                     val pageStack = newStack[event.pageId] ?: emptyList()
                     newStack[event.pageId] = pageStack + listOf(currentStrokes)
                     state.copy(
                         drawingUndoStack = newStack,
-                        pages = state.pages.updateDrawingData(event.pageId) { _ ->
-                            event.strokes
+                        pages = state.pages.map { p ->
+                            if (p.id == event.pageId) p.copy(strokes = event.strokes) else p
                         }
                     )
                 }
@@ -392,7 +391,7 @@ class CreateViewModel(
         if (state.title.isBlank() && state.pages.all { it.items.isEmpty() }) return
         val note = Note(
             title = state.title.trim(),
-            pagesJson = Json.encodeToString(state.pages),
+            pagesJson = kotlinx.serialization.json.Json.encodeToString(state.pages),
             backgroundColor = state.backgroundColor,
             categoryId = state.categoryId
         )
@@ -406,26 +405,4 @@ class CreateViewModel(
             }
             .launchIn(viewModelScope)
     }
-}
-
-private fun List<NotePage>.decodeStrokes(pageId: String): List<DrawingStroke> {
-    val page = find { it.id == pageId } ?: return emptyList()
-    if (page.drawingData.isBlank()) return emptyList()
-    return runCatching {
-        Json.decodeFromString<List<DrawingStroke>>(page.drawingData)
-    }.getOrDefault(emptyList())
-}
-
-private fun List<NotePage>.updateDrawingData(
-    pageId: String,
-    transform: (List<DrawingStroke>) -> List<DrawingStroke>
-): List<NotePage> = map { page ->
-    if (page.id != pageId) return@map page
-    val current = if (page.drawingData.isBlank()) emptyList()
-    else runCatching {
-        Json.decodeFromString<List<DrawingStroke>>(page.drawingData)
-    }.getOrDefault(emptyList())
-    val updated = transform(current)
-    val serialized = if (updated.isEmpty()) "" else Json.encodeToString(updated)
-    page.copy(drawingData = serialized)
 }

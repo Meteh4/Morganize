@@ -76,10 +76,9 @@ import com.metoly.components.richTextStateFromPersisted
 import com.metoly.morganize.core.model.RichSpan
 import com.metoly.morganize.core.model.grid.GridItem
 import com.metoly.morganize.core.model.grid.NotePage
-import kotlinx.serialization.json.Json
 import kotlin.math.roundToInt
 
-private val json = Json { ignoreUnknownKeys = true }
+
 
 object GridItemDefaults {
     val DefaultPadding = 8.dp
@@ -97,13 +96,6 @@ object GridItemDefaults {
     fun backgroundColor(): Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = BackgroundAlpha)
 }
 
-private fun parseRichSpans(richSpansJson: String): List<RichSpan> =
-    if (richSpansJson.isBlank()) emptyList()
-    else runCatching { json.decodeFromString<List<RichSpan>>(richSpansJson) }.getOrDefault(emptyList())
-
-private fun serializeRichSpans(spans: List<RichSpan>): String =
-    if (spans.isEmpty()) "" else json.encodeToString(spans)
-
 @Composable
 fun GridCanvas(
     modifier: Modifier = Modifier,
@@ -113,7 +105,7 @@ fun GridCanvas(
     onItemMoved: (itemId: String, newX: Int, newY: Int) -> Unit = { _, _, _ -> },
     onItemResized: (itemId: String, newWidth: Int, newHeight: Int, newX: Int, newY: Int) -> Unit = { _, _, _, _, _ -> },
     onItemTextChanged: (itemId: String, newText: String) -> Unit = { _, _ -> },
-    onItemRichSpansChanged: (itemId: String, richSpansJson: String) -> Unit = { _, _ -> },
+    onItemRichSpansChanged: (itemId: String, richSpans: List<RichSpan>) -> Unit = { _, _ -> },
     onItemTypographyChanged: (itemId: String, fontSize: Float, textAlign: String, lineHeight: Float) -> Unit = { _, _, _, _ -> },
     onItemDeleted: (itemId: String) -> Unit = {},
     onEditingTextItemChanged: (itemId: String?, richState: RichTextEditorState?) -> Unit = { _, _ -> },
@@ -186,7 +178,7 @@ fun GridCanvas(
                         onItemResized(item.id, newW, newH, newX, newY)
                     },
                     onTextChanged = { text -> onItemTextChanged(item.id, text) },
-                    onRichSpansChanged = { spansJson -> onItemRichSpansChanged(item.id, spansJson) },
+                    onRichSpansChanged = { spans -> onItemRichSpansChanged(item.id, spans) },
                     onTypographyChanged = { fontSize, textAlign, lineHeight -> onItemTypographyChanged(item.id, fontSize, textAlign, lineHeight) },
                     onDelete = { onItemDeleted(item.id) },
                     onEditingChanged = { isEditing, richState ->
@@ -222,7 +214,7 @@ private fun GridDraggableItem(
     onMove: (Int, Int) -> Unit,
     onResize: (Int, Int, Int, Int) -> Unit,
     onTextChanged: (String) -> Unit,
-    onRichSpansChanged: (String) -> Unit,
+    onRichSpansChanged: (List<RichSpan>) -> Unit,
     onTypographyChanged: (Float, String, Float) -> Unit,
     onDelete: () -> Unit,
     onEditingChanged: (Boolean, RichTextEditorState) -> Unit,
@@ -260,9 +252,9 @@ private fun GridDraggableItem(
     var richState by remember(item.id) {
         mutableStateOf(
             if (item is GridItem.Text) {
-                richTextStateFromPersisted(
+            richTextStateFromPersisted(
                     text = item.textContent,
-                    spans = parseRichSpans(item.richSpansJson),
+                    spans = item.richSpans,
                     fontSize = item.fontSize,
                     textAlign = item.textAlign,
                     lineHeight = item.lineHeight
@@ -278,7 +270,7 @@ private fun GridDraggableItem(
         if (item is GridItem.Text && item.textContent != richState.text) {
             richState = richTextStateFromPersisted(
                 text = item.textContent,
-                spans = parseRichSpans(item.richSpansJson),
+                spans = item.richSpans,
                 fontSize = item.fontSize,
                 textAlign = item.textAlign,
                 lineHeight = item.lineHeight
@@ -408,7 +400,7 @@ private fun GridDraggableItem(
                                 richState = newState
                             }
                             onTextChanged(newState.text)
-                            onRichSpansChanged(serializeRichSpans(newState.spans))
+                            onRichSpansChanged(newState.spans)
                             onTypographyChanged(newState.fontSize, newState.textAlign, newState.lineHeight)
                         },
                         onEnterPressed = {
@@ -419,7 +411,7 @@ private fun GridDraggableItem(
                                 richState = next
                             }
                             onTextChanged(next.text)
-                            onRichSpansChanged(serializeRichSpans(next.spans))
+                            onRichSpansChanged(next.spans)
                         },
                         enabled = isEditingText && !isReadOnly,
                         modifier = Modifier.fillMaxSize().padding(GridItemDefaults.InnerPadding)

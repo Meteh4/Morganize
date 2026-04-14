@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Box
 import com.metoly.components.grid.DrawingCanvas
 import com.metoly.components.grid.GridCanvas
-import com.metoly.components.grid.parseDrawingStrokes
 import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.core.model.grid.NotePage
@@ -133,10 +132,9 @@ internal fun NoteDetailPane(
                         isReadOnly = true
                     )
 
-                    if (page.drawingData.isNotBlank()) {
-                        val strokes = parseDrawingStrokes(page.drawingData)
+                    if (page.strokes.isNotEmpty()) {
                         DrawingCanvas(
-                            strokes = strokes,
+                            strokes = page.strokes,
                             isActive = false,
                             modifier = Modifier.matchParentSize()
                         )
