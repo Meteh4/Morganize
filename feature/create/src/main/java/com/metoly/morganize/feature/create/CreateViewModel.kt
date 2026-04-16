@@ -21,6 +21,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.channels.Channel
+
+sealed interface CreateUiEvent {
+    data object SaveSuccess : CreateUiEvent
+    data class ShowSnackbar(val message: String) : CreateUiEvent
+    data class ScrollToPage(val pageIndex: Int) : CreateUiEvent
+}
 
 class CreateViewModel(
     private val noteRepository: NoteRepository,
@@ -29,6 +37,9 @@ class CreateViewModel(
 
     private val _uiState = MutableStateFlow(CreateUiState())
     val uiState: StateFlow<CreateUiState> = _uiState.asStateFlow()
+
+    private val _uiEvent = Channel<CreateUiEvent>()
+    val uiEvent = _uiEvent.receiveAsFlow()
 
     init {
         observeCategories()
@@ -69,13 +80,7 @@ class CreateViewModel(
             is CreateEvent.ItemResized,
             is CreateEvent.ItemDeleted -> handleGridItem(event)
 
-            is CreateEvent.NavigationHandled ->
-                _uiState.update { it.copy(isDone = false) }
-
             is CreateEvent.Save -> saveNote()
-
-            is CreateEvent.SnackbarDismissed ->
-                _uiState.update { it.copy(userMessage = null) }
 
             is CreateEvent.TextGridItemTextChanged,
             is CreateEvent.TextGridItemRichSpansChanged,
@@ -85,8 +90,6 @@ class CreateViewModel(
             is CreateEvent.TitleChanged ->
                 _uiState.update { it.copy(title = event.value) }
 
-            is CreateEvent.ScrollTargetHandled ->
-                _uiState.update { it.copy(targetScrollPageIndex = null) }
         }
     }
 
@@ -141,10 +144,8 @@ class CreateViewModel(
                             textContent = event.text
                         )
                     )
-                    state.copy(
-                        pages = newPages,
-                        targetScrollPageIndex = addedIndex
-                    )
+                    _uiEvent.trySend(CreateUiEvent.ScrollToPage(addedIndex))
+                    state.copy(pages = newPages)
                 }
 
             is CreateEvent.TextGridItemRichSpansChanged ->
@@ -191,10 +192,8 @@ class CreateViewModel(
                     imageUri = event.path
                 )
             )
-            state.copy(
-                pages = newPages,
-                targetScrollPageIndex = addedIndex
-            )
+            _uiEvent.trySend(CreateUiEvent.ScrollToPage(addedIndex))
+            state.copy(pages = newPages)
         }
     }
 
@@ -219,10 +218,8 @@ class CreateViewModel(
                             width = event.width, height = event.height
                         )
                     )
-                    state.copy(
-                        pages = newPages,
-                        targetScrollPageIndex = addedIndex
-                    )
+                    _uiEvent.trySend(CreateUiEvent.ScrollToPage(addedIndex))
+                    state.copy(pages = newPages)
                 }
 
             else -> Unit
@@ -389,8 +386,8 @@ class CreateViewModel(
         noteRepository.insertNote(note)
             .onEach { result ->
                 when (result) {
-                    is ResponseState.Success -> _uiState.update { it.copy(isDone = true) }
-                    is ResponseState.Error -> _uiState.update { it.copy(userMessage = result.message) }
+                    is ResponseState.Success -> _uiEvent.trySend(CreateUiEvent.SaveSuccess)
+                    is ResponseState.Error -> _uiEvent.trySend(CreateUiEvent.ShowSnackbar(result.message))
                     else -> Unit
                 }
             }

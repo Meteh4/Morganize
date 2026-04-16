@@ -18,11 +18,8 @@ data class CreateUiState(
     val editingRichState: RichTextEditorState? = null,
     val editingTextItemId: String? = null,
     val isDrawingMode: Boolean = false,
-    val isDone: Boolean = false,
     val isEraserMode: Boolean = false,
     val pages: List<NotePage> = listOf(GridItemFactory.createNotePage()),
     val selectedItemId: String? = null,
-    val title: String = "",
-    val userMessage: String? = null,
-    val targetScrollPageIndex: Int? = null,
+    val title: String = ""
 )

@@ -29,15 +29,12 @@ sealed interface CreateEvent {
     data class ItemMoved(val pageId: String, val itemId: String, val newX: Int, val newY: Int) : CreateEvent
     data class ItemResized(val pageId: String, val itemId: String, val newWidth: Int, val newHeight: Int, val newX: Int, val newY: Int) : CreateEvent
     data class ItemSelected(val itemId: String?) : CreateEvent
-    data object NavigationHandled : CreateEvent
     data object AddPage : CreateEvent
     data class RichStateUpdated(val state: RichTextEditorState) : CreateEvent
     data object Save : CreateEvent
-    data object SnackbarDismissed : CreateEvent
     data class TextGridItemAdded(val text: String, val targetPageIndex: Int, val width: Int = 4, val height: Int = 4) : CreateEvent
     data class TextGridItemRichSpansChanged(val pageId: String, val itemId: String, val richSpans: List<RichSpan>) : CreateEvent
     data class TextGridItemTextChanged(val pageId: String, val itemId: String, val text: String) : CreateEvent
     data class TextGridItemTypographyChanged(val pageId: String, val itemId: String, val fontSize: Float, val textAlign: TextAlignment, val lineHeight: Float) : CreateEvent
     data class TitleChanged(val value: String) : CreateEvent
-    data object ScrollTargetHandled : CreateEvent
 }

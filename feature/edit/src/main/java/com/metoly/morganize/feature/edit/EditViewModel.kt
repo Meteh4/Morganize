@@ -21,6 +21,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.channels.Channel
+
+sealed interface EditUiEvent {
+    data object SaveSuccess : EditUiEvent
+    data class ShowSnackbar(val message: String) : EditUiEvent
+    data class ScrollToPage(val pageIndex: Int) : EditUiEvent
+}
 
 class EditViewModel(
     private val noteId: Long,
@@ -30,6 +38,9 @@ class EditViewModel(
 
     private val _uiState = MutableStateFlow(EditUiState())
     val uiState: StateFlow<EditUiState> = _uiState.asStateFlow()
+
+    private val _uiEvent = Channel<EditUiEvent>()
+    val uiEvent = _uiEvent.receiveAsFlow()
 
     private var originalNote: Note? = null
 
@@ -84,13 +95,7 @@ class EditViewModel(
             is EditEvent.ItemResized,
             is EditEvent.ItemDeleted -> handleGridItem(event)
 
-            is EditEvent.NavigationHandled ->
-                _uiState.update { it.copy(isDone = false) }
-
             is EditEvent.Save -> saveNote()
-
-            is EditEvent.SnackbarDismissed ->
-                _uiState.update { it.copy(userMessage = null) }
 
             is EditEvent.TextGridItemTextChanged,
             is EditEvent.TextGridItemRichSpansChanged,
@@ -100,8 +105,6 @@ class EditViewModel(
             is EditEvent.TitleChanged ->
                 _uiState.update { it.copy(title = event.value) }
 
-            is EditEvent.ScrollTargetHandled ->
-                _uiState.update { it.copy(targetScrollPageIndex = null) }
         }
     }
 
@@ -181,10 +184,8 @@ class EditViewModel(
                             textContent = event.text
                         )
                     )
-                    state.copy(
-                        pages = newPages,
-                        targetScrollPageIndex = addedIndex
-                    )
+                    _uiEvent.trySend(EditUiEvent.ScrollToPage(addedIndex))
+                    state.copy(pages = newPages)
                 }
 
             is EditEvent.TextGridItemRichSpansChanged ->
@@ -231,10 +232,8 @@ class EditViewModel(
                     imageUri = event.path
                 )
             )
-            state.copy(
-                pages = newPages,
-                targetScrollPageIndex = addedIndex
-            )
+            _uiEvent.trySend(EditUiEvent.ScrollToPage(addedIndex))
+            state.copy(pages = newPages)
         }
     }
 
@@ -259,10 +258,8 @@ class EditViewModel(
                             width = event.width, height = event.height
                         )
                     )
-                    state.copy(
-                        pages = newPages,
-                        targetScrollPageIndex = addedIndex
-                    )
+                    _uiEvent.trySend(EditUiEvent.ScrollToPage(addedIndex))
+                    state.copy(pages = newPages)
                 }
 
             else -> Unit
@@ -473,8 +470,8 @@ class EditViewModel(
         noteRepository.updateNote(updatedNote)
             .onEach { result ->
                 when (result) {
-                    is ResponseState.Success -> _uiState.update { it.copy(isDone = true) }
-                    is ResponseState.Error -> _uiState.update { it.copy(userMessage = result.message) }
+                    is ResponseState.Success -> _uiEvent.trySend(EditUiEvent.SaveSuccess)
+                    is ResponseState.Error -> _uiEvent.trySend(EditUiEvent.ShowSnackbar(result.message))
                     else -> Unit
                 }
             }
@@ -486,8 +483,8 @@ class EditViewModel(
         noteRepository.deleteNote(current)
             .onEach { result ->
                 when (result) {
-                    is ResponseState.Success -> _uiState.update { it.copy(isDone = true) }
-                    is ResponseState.Error -> _uiState.update { it.copy(userMessage = result.message) }
+                    is ResponseState.Success -> _uiEvent.trySend(EditUiEvent.SaveSuccess)
+                    is ResponseState.Error -> _uiEvent.trySend(EditUiEvent.ShowSnackbar(result.message ?: "Error"))
                     else -> Unit
                 }
             }
