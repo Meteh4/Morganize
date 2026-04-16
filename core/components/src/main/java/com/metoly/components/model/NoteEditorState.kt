@@ -1,5 +1,4 @@
-// CreateUiState.kt
-package com.metoly.morganize.feature.create.model
+package com.metoly.components.model
 
 import com.metoly.components.RichTextEditorState
 import com.metoly.morganize.core.model.Category
@@ -7,7 +6,7 @@ import com.metoly.morganize.core.model.grid.DrawingStroke
 import com.metoly.morganize.core.model.grid.GridItemFactory
 import com.metoly.morganize.core.model.grid.NotePage
 
-data class CreateUiState(
+data class NoteEditorState(
     val backgroundColor: Int? = null,
     val categories: List<Category> = emptyList(),
     val categoryId: Long? = null,
