@@ -5,6 +5,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import com.metoly.morganize.core.model.RichSpan
 import com.metoly.morganize.core.model.SpanFormatType
+import com.metoly.morganize.core.model.grid.TextAlignment
 
 /**
  * State for the rich text editor.
@@ -25,7 +26,7 @@ data class RichTextEditorState(
     val isNumberedListActive: Boolean = false,
     // Typography
     val fontSize: Float = 14f,
-    val textAlign: String = "Start",
+    val textAlign: TextAlignment = TextAlignment.Start,
     val lineHeight: Float = 1.4f,
 ) {
     val text: String get() = textFieldValue.text
@@ -235,7 +236,7 @@ fun richTextStateFromPersisted(
     text: String,
     spans: List<RichSpan>,
     fontSize: Float = 14f,
-    textAlign: String = "Start",
+    textAlign: TextAlignment = TextAlignment.Start,
     lineHeight: Float = 1.4f,
 ): RichTextEditorState =
     RichTextEditorState(

@@ -1,8 +1,8 @@
 package com.metoly.components.model
 
 import com.metoly.morganize.core.model.grid.GridItem
+import com.metoly.morganize.core.model.grid.GridItemFactory
 import com.metoly.morganize.core.model.grid.NotePage
-import java.util.UUID
 
 /** Checks AABB overlap between [candidate] and every other item on [page]. */
 fun isOverlapping(candidate: GridItem, page: NotePage): Boolean =
@@ -86,7 +86,7 @@ fun List<NotePage>.addItemToPage(
     }
 
     if (mutable.isEmpty()) {
-        mutable.add(NotePage(id = UUID.randomUUID().toString(), items = listOf(positionItem(0, 0))))
+        mutable.add(GridItemFactory.createNotePage().copy(items = listOf(positionItem(0, 0))))
         return mutable to 0
     }
 
@@ -109,7 +109,7 @@ fun List<NotePage>.addItemToPage(
         mutable[foundIndex] = targetPage.copy(items = targetPage.items + positionItem(x, y))
         return mutable to foundIndex
     } else {
-        mutable.add(NotePage(id = UUID.randomUUID().toString(), items = listOf(positionItem(0, 0))))
+        mutable.add(GridItemFactory.createNotePage().copy(items = listOf(positionItem(0, 0))))
         return mutable to mutable.lastIndex
     }
 }

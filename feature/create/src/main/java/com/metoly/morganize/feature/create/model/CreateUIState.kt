@@ -4,8 +4,8 @@ package com.metoly.morganize.feature.create.model
 import com.metoly.components.RichTextEditorState
 import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.grid.DrawingStroke
+import com.metoly.morganize.core.model.grid.GridItemFactory
 import com.metoly.morganize.core.model.grid.NotePage
-import java.util.UUID
 
 data class CreateUiState(
     val backgroundColor: Int? = null,
@@ -20,7 +20,7 @@ data class CreateUiState(
     val isDrawingMode: Boolean = false,
     val isDone: Boolean = false,
     val isEraserMode: Boolean = false,
-    val pages: List<NotePage> = listOf(NotePage(id = UUID.randomUUID().toString())),
+    val pages: List<NotePage> = listOf(GridItemFactory.createNotePage()),
     val selectedItemId: String? = null,
     val title: String = "",
     val userMessage: String? = null,

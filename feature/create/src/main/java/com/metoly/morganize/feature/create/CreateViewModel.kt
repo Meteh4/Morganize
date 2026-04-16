@@ -10,10 +10,9 @@ import com.metoly.morganize.core.data.CategoryRepository
 import com.metoly.morganize.core.data.NoteRepository
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.core.model.ResponseState
-import com.metoly.morganize.core.model.grid.CheckboxEntry
 import com.metoly.morganize.core.model.grid.ChecklistActionType
 import com.metoly.morganize.core.model.grid.GridItem
-import com.metoly.morganize.core.model.grid.NotePage
+import com.metoly.morganize.core.model.grid.GridItemFactory
 import com.metoly.morganize.feature.create.model.CreateEvent
 import com.metoly.morganize.feature.create.model.CreateUiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +21,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import java.util.UUID
 
 class CreateViewModel(
     private val noteRepository: NoteRepository,
@@ -40,7 +38,7 @@ class CreateViewModel(
         when (event) {
             is CreateEvent.AddPage ->
                 _uiState.update { state ->
-                    state.copy(pages = state.pages + NotePage(id = UUID.randomUUID().toString()))
+                    state.copy(pages = state.pages + GridItemFactory.createNotePage())
                 }
 
             is CreateEvent.BackgroundColorChanged ->
@@ -138,9 +136,8 @@ class CreateViewModel(
                 _uiState.update { state ->
                     val (newPages, addedIndex) = state.pages.addItemToPage(
                         event.targetPageIndex,
-                        GridItem.Text(
-                            id = UUID.randomUUID().toString(),
-                            x = 0, y = 0, width = event.width, height = event.height,
+                        GridItemFactory.createTextItem(
+                            width = event.width, height = event.height,
                             textContent = event.text
                         )
                     )
@@ -189,9 +186,8 @@ class CreateViewModel(
         _uiState.update { state ->
             val (newPages, addedIndex) = state.pages.addItemToPage(
                 event.targetPageIndex,
-                GridItem.Image(
-                    id = UUID.randomUUID().toString(),
-                    x = 0, y = 0, width = event.width, height = event.height,
+                GridItemFactory.createImageItem(
+                    width = event.width, height = event.height,
                     imageUri = event.path
                 )
             )
@@ -219,13 +215,8 @@ class CreateViewModel(
                 _uiState.update { state ->
                     val (newPages, addedIndex) = state.pages.addItemToPage(
                         event.targetPageIndex,
-                        GridItem.Checklist(
-                            id = UUID.randomUUID().toString(),
-                            x = 0, y = 0, width = event.width, height = event.height,
-                            title = "",
-                            entries = listOf(
-                                CheckboxEntry(id = UUID.randomUUID().toString())
-                            )
+                        GridItemFactory.createChecklistItem(
+                            width = event.width, height = event.height
                         )
                     )
                     state.copy(
@@ -243,7 +234,7 @@ class CreateViewModel(
         action: ChecklistActionType
     ): GridItem.Checklist = when (action) {
         is ChecklistActionType.EntryAdded ->
-            item.copy(entries = item.entries + CheckboxEntry(id = UUID.randomUUID().toString()))
+            item.copy(entries = item.entries + GridItemFactory.createCheckboxEntry())
 
         is ChecklistActionType.EntryDeleted ->
             item.copy(entries = item.entries.filter { it.id != action.entryId })
@@ -391,7 +382,7 @@ class CreateViewModel(
         if (state.title.isBlank() && state.pages.all { it.items.isEmpty() }) return
         val note = Note(
             title = state.title.trim(),
-            pagesJson = kotlinx.serialization.json.Json.encodeToString(state.pages),
+            pages = state.pages,
             backgroundColor = state.backgroundColor,
             categoryId = state.categoryId
         )

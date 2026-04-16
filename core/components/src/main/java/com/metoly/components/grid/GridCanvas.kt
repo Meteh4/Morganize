@@ -76,6 +76,7 @@ import com.metoly.components.richTextStateFromPersisted
 import com.metoly.morganize.core.model.RichSpan
 import com.metoly.morganize.core.model.grid.GridItem
 import com.metoly.morganize.core.model.grid.NotePage
+import com.metoly.morganize.core.model.grid.TextAlignment
 import kotlin.math.roundToInt
 
 
@@ -106,7 +107,7 @@ fun GridCanvas(
     onItemResized: (itemId: String, newWidth: Int, newHeight: Int, newX: Int, newY: Int) -> Unit = { _, _, _, _, _ -> },
     onItemTextChanged: (itemId: String, newText: String) -> Unit = { _, _ -> },
     onItemRichSpansChanged: (itemId: String, richSpans: List<RichSpan>) -> Unit = { _, _ -> },
-    onItemTypographyChanged: (itemId: String, fontSize: Float, textAlign: String, lineHeight: Float) -> Unit = { _, _, _, _ -> },
+    onItemTypographyChanged: (itemId: String, fontSize: Float, textAlign: TextAlignment, lineHeight: Float) -> Unit = { _, _, _, _ -> },
     onItemDeleted: (itemId: String) -> Unit = {},
     onEditingTextItemChanged: (itemId: String?, richState: RichTextEditorState?) -> Unit = { _, _ -> },
     editingTextItemId: String? = null,
@@ -215,7 +216,7 @@ private fun GridDraggableItem(
     onResize: (Int, Int, Int, Int) -> Unit,
     onTextChanged: (String) -> Unit,
     onRichSpansChanged: (List<RichSpan>) -> Unit,
-    onTypographyChanged: (Float, String, Float) -> Unit,
+    onTypographyChanged: (Float, TextAlignment, Float) -> Unit,
     onDelete: () -> Unit,
     onEditingChanged: (Boolean, RichTextEditorState) -> Unit,
     editingTextItemId: String?,
