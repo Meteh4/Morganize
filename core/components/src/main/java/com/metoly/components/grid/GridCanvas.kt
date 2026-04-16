@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,13 +36,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.zIndex
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -238,7 +237,7 @@ private fun GridDraggableItem(
     var resizeX by remember(item.x) { mutableFloatStateOf(0f) }
     var resizeY by remember(item.y) { mutableFloatStateOf(0f) }
 
-    var showDropdown by remember { mutableStateOf(false) }
+
     var isEditingText by remember { mutableStateOf(false) }
 
     val visibleState = remember { MutableTransitionState(false).apply { targetState = true } }
@@ -254,7 +253,6 @@ private fun GridDraggableItem(
     LaunchedEffect(isSelected) {
         if (!isSelected) {
             isEditingText = false
-            showDropdown = false
         }
     }
 
@@ -361,7 +359,6 @@ private fun GridDraggableItem(
                             onLongClick = { 
                                 onClick()
                                 isEditingText = false
-                                showDropdown = true 
                             }
                         )
                     } else Modifier
@@ -431,21 +428,7 @@ private fun GridDraggableItem(
                 }
             }
 
-            // Context menu
-            DropdownMenu(
-                expanded = showDropdown,
-                onDismissRequest = { showDropdown = false },
-                shape = RoundedCornerShape(24.dp)
-            ) {
-                DropdownMenuItem(
-                    text = { Text("Delete") },
-                    onClick = { 
-                        showDropdown = false
-                        visibleState.targetState = false 
-                    },
-                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }
-                )
-            }
+
         }
 
                 AnimatedVisibility(
@@ -467,6 +450,45 @@ private fun GridDraggableItem(
                                 )
                                 resizeW = 0f; resizeH = 0f; resizeX = 0f; resizeY = 0f
                             }
+                        )
+                    }
+                }
+
+                // Delete button — top-right corner, visible in move/resize mode
+                AnimatedVisibility(
+                    visible = isSelected && !isReadOnly && !isEditingText,
+                    enter = scaleIn(
+                        initialScale = 0.6f,
+                        animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMedium)
+                    ) + fadeIn(spring(stiffness = Spring.StiffnessMedium)),
+                    exit = scaleOut(
+                        targetScale = 0.6f,
+                        animationSpec = spring(stiffness = Spring.StiffnessMedium)
+                    ) + fadeOut(spring(stiffness = Spring.StiffnessMedium)),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .zIndex(10f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.error,
+                                shape = CircleShape
+                            )
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                visibleState.targetState = false
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Delete item",
+                            tint = MaterialTheme.colorScheme.onError,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 }
