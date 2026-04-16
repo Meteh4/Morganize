@@ -249,11 +249,28 @@ private fun GridDraggableItem(
         }
     }
 
-    // Rich text state for text items
-    var richState by remember(item.id) {
-        mutableStateOf(
+    // Removed unused richState state
+
+    LaunchedEffect(isSelected) {
+        if (!isSelected) {
+            isEditingText = false
+            showDropdown = false
+        }
+    }
+
+    val isEditorActive = (editingTextItemId == item.id)
+    val currentRichState = if (isEditorActive && activeRichState != null) {
+        activeRichState
+    } else {
+        remember(
+            if (item is GridItem.Text) item.textContent else "",
+            if (item is GridItem.Text) item.richSpans else emptyList(),
+            if (item is GridItem.Text) item.fontSize else 16f,
+            if (item is GridItem.Text) item.textAlign else TextAlignment.Start,
+            if (item is GridItem.Text) item.lineHeight else 1.5f
+        ) {
             if (item is GridItem.Text) {
-            richTextStateFromPersisted(
+                richTextStateFromPersisted(
                     text = item.textContent,
                     spans = item.richSpans,
                     fontSize = item.fontSize,
@@ -263,38 +280,15 @@ private fun GridDraggableItem(
             } else {
                 RichTextEditorState()
             }
-        )
-    }
-
-    // Sync rich state when item text changes externally (e.g., undo/redo)
-    LaunchedEffect(item) {
-        if (item is GridItem.Text && item.textContent != richState.text) {
-            richState = richTextStateFromPersisted(
-                text = item.textContent,
-                spans = item.richSpans,
-                fontSize = item.fontSize,
-                textAlign = item.textAlign,
-                lineHeight = item.lineHeight
-            )
-        }
-    }
-
-    LaunchedEffect(isSelected) {
-        if (!isSelected) {
-            isEditingText = false
-            showDropdown = false
         }
     }
 
     // Report editing state to parent whenever it changes
-    LaunchedEffect(isEditingText, richState) {
+    LaunchedEffect(isEditingText) {
         if (item is GridItem.Text) {
-            onEditingChanged(isEditingText && !isReadOnly, richState)
+            onEditingChanged(isEditingText && !isReadOnly, currentRichState)
         }
     }
-
-    val isEditorActive = (editingTextItemId == item.id)
-    val currentRichState = if (isEditorActive && activeRichState != null) activeRichState else richState
 
     val preview = remember(
         item.x, item.y, item.width, item.height,
@@ -397,8 +391,6 @@ private fun GridDraggableItem(
                         onStateChange = { newState ->
                             if (isEditorActive) {
                                 onActiveRichStateChange(newState)
-                            } else {
-                                richState = newState
                             }
                             onTextChanged(newState.text)
                             onRichSpansChanged(newState.spans)
@@ -408,8 +400,6 @@ private fun GridDraggableItem(
                             val next = currentRichState.continueList()
                             if (isEditorActive) {
                                 onActiveRichStateChange(next)
-                            } else {
-                                richState = next
                             }
                             onTextChanged(next.text)
                             onRichSpansChanged(next.spans)

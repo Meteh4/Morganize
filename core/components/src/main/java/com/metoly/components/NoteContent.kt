@@ -106,8 +106,7 @@ fun NoteContent(
     onCheckboxDeleted: (pageId: String, itemId: String, entryId: String) -> Unit = { _, _, _ -> },
     onEmptyGridAddClicked: () -> Unit = {},
     onActivePageChanged: (Int) -> Unit = {},
-    targetScrollPageIndex: Int? = null,
-    onScrollTargetHandled: () -> Unit = {}
+    lazyListState: androidx.compose.foundation.lazy.LazyListState = rememberLazyListState()
 ) {
     val focusManager = LocalFocusManager.current
     val density = LocalDensity.current
@@ -117,21 +116,13 @@ fun NoteContent(
 
     val overscrollPx = remember { mutableFloatStateOf(0f) }
     val coroutineScope = rememberCoroutineScope()
-    val listState = rememberLazyListState()
-
-    val firstVisibleItemIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
+    
+    val firstVisibleItemIndex by remember { derivedStateOf { lazyListState.firstVisibleItemIndex } }
     val activePageIndex = maxOf(0, firstVisibleItemIndex - 1)
     val containerColor by remember { mutableStateOf(Color(0xFFF5F5F7)) }
 
     LaunchedEffect(activePageIndex) {
         onActivePageChanged(activePageIndex)
-    }
-
-    LaunchedEffect(targetScrollPageIndex) {
-        if (targetScrollPageIndex != null) {
-            listState.animateScrollToItem(targetScrollPageIndex + 1)
-            onScrollTargetHandled()
-        }
     }
 
     val nestedScrollConnection = remember {
@@ -182,7 +173,7 @@ fun NoteContent(
 
     Box(modifier = modifier.fillMaxSize().background(containerColor).nestedScroll(nestedScrollConnection)) {
         LazyColumn(
-            state = listState,
+            state = lazyListState,
             modifier = Modifier
                 .fillMaxSize()
                 .offset { IntOffset(0, overscrollPx.floatValue.roundToInt()) },

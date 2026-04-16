@@ -19,7 +19,8 @@ internal fun CreateNoteContent(
     activeRichState: RichTextEditorState? = null,
     onActiveRichStateChange: (RichTextEditorState) -> Unit = {},
     onEmptyGridAddClicked: () -> Unit = {},
-    onActivePageChanged: (Int) -> Unit = {}
+    onActivePageChanged: (Int) -> Unit = {},
+    lazyListState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState()
 ) {
     NoteContent(
         title = uiState.title,
@@ -88,8 +89,7 @@ internal fun CreateNoteContent(
         },
         onEmptyGridAddClicked = onEmptyGridAddClicked,
         onActivePageChanged = onActivePageChanged,
-        targetScrollPageIndex = uiState.targetScrollPageIndex,
-        onScrollTargetHandled = { onEvent(CreateEvent.ScrollTargetHandled) },
+        lazyListState = lazyListState,
         modifier = modifier
     )
 }

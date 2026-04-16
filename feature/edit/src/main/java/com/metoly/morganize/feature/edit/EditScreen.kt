@@ -1,26 +1,17 @@
 package com.metoly.morganize.feature.edit
 
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Image
@@ -29,11 +20,21 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.PickVisualMediaRequest
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.metoly.components.DeleteNoteDialog
 import com.metoly.components.RichTextEditorState
 import com.metoly.components.rememberNoteImagePicker
@@ -41,11 +42,13 @@ import com.metoly.morganize.feature.edit.components.EditBottomBar
 import com.metoly.morganize.feature.edit.components.EditNoteContent
 import com.metoly.morganize.feature.edit.components.EditTopBar
 import com.metoly.morganize.feature.edit.model.EditEvent
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val lazyListState = rememberLazyListState()
 
     var activeRichState by remember { mutableStateOf<RichTextEditorState?>(null) }
     var activeEditingTextItemId by remember { mutableStateOf<String?>(null) }
@@ -77,17 +80,19 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
         }
     }
 
-    LaunchedEffect(uiState.isDone) {
-        if (uiState.isDone) {
-            onDone()
-            viewModel.onEvent(EditEvent.NavigationHandled)
-        }
-    }
-
-    LaunchedEffect(uiState.userMessage) {
-        uiState.userMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.onEvent(EditEvent.SnackbarDismissed)
+    LaunchedEffect(viewModel.uiEvent) {
+        viewModel.uiEvent.collectLatest { event ->
+            when (event) {
+                is EditUiEvent.SaveSuccess -> {
+                    onDone()
+                }
+                is EditUiEvent.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+                is EditUiEvent.ScrollToPage -> {
+                    lazyListState.animateScrollToItem(event.pageIndex + 1)
+                }
+            }
         }
     }
 
@@ -134,6 +139,7 @@ fun EditScreen(viewModel: EditViewModel, onBack: () -> Unit, onDone: () -> Unit)
             onActiveRichStateChange = updateRichState,
             onEmptyGridAddClicked = { showAddItemSheet = true },
             onActivePageChanged = { activePageIndex = it },
+            lazyListState = lazyListState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
