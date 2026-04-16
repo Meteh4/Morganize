@@ -41,12 +41,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metoly.morganize.core.model.SpanFormatType
+import com.metoly.morganize.core.model.grid.TextAlignment
 
 private const val FONT_SIZE_MIN = 8f
 private const val FONT_SIZE_MAX = 36f
 
 private val LINE_HEIGHT_OPTIONS = listOf(1.2f, 1.4f, 1.8f)
-private val TEXT_ALIGN_OPTIONS = listOf("Start", "Center", "End")
 
 @Composable
 fun RichTextToolbar(
@@ -130,9 +130,9 @@ fun RichTextToolbar(
 
             // ---- Text alignment ----
             val alignIcon = when (state.textAlign) {
-                "Center" -> Icons.Default.FormatAlignCenter
-                "End" -> Icons.AutoMirrored.Filled.FormatAlignRight
-                else -> Icons.AutoMirrored.Filled.FormatAlignLeft
+                TextAlignment.Center -> Icons.Default.FormatAlignCenter
+                TextAlignment.End -> Icons.AutoMirrored.Filled.FormatAlignRight
+                TextAlignment.Start -> Icons.AutoMirrored.Filled.FormatAlignLeft
             }
             ToolbarIconButton(
                 icon = alignIcon,
@@ -236,9 +236,10 @@ private fun ToolbarIconButton(
 }
 
 // Exposed helpers used by callers to cycle values
-fun nextTextAlign(current: String): String {
-    val idx = TEXT_ALIGN_OPTIONS.indexOf(current)
-    return TEXT_ALIGN_OPTIONS[(idx + 1) % TEXT_ALIGN_OPTIONS.size]
+fun nextTextAlign(current: TextAlignment): TextAlignment = when (current) {
+    TextAlignment.Start -> TextAlignment.Center
+    TextAlignment.Center -> TextAlignment.End
+    TextAlignment.End -> TextAlignment.Start
 }
 
 fun nextLineHeight(current: Float): Float {

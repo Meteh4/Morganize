@@ -1,4 +1,3 @@
-// DrawingCanvas.kt
 package com.metoly.components.grid
 
 import androidx.compose.foundation.Canvas
@@ -51,6 +50,7 @@ import com.metoly.morganize.core.model.grid.DrawingStroke
  */
 @Composable
 fun DrawingCanvas(
+    modifier: Modifier = Modifier,
     strokes: List<DrawingStroke>,
     isActive: Boolean = true,
     isEraserMode: Boolean = false,
@@ -58,17 +58,11 @@ fun DrawingCanvas(
     strokeWidthFraction: Float = 0.01f,
     eraserWidthFraction: Float = 0.05f,
     onStrokeFinished: (DrawingStroke) -> Unit = {},
-    onStrokesChanged: (List<DrawingStroke>) -> Unit = {},
-    modifier: Modifier = Modifier,
+    onStrokesChanged: (List<DrawingStroke>) -> Unit = {}
 ) {
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
-
-    // Points of the stroke currently being drawn (not yet committed)
     var currentPoints by remember { mutableStateOf<List<DrawingPoint>>(emptyList()) }
-    
-    // Strokes currently being erased (held locally during gesture)
     var localErasedStrokes by remember { mutableStateOf<List<DrawingStroke>?>(null) }
-    
     val currentStrokes by rememberUpdatedState(strokes)
     
     val displayStrokes = localErasedStrokes ?: strokes
@@ -99,17 +93,14 @@ fun DrawingCanvas(
                                     change = awaitPointerEvent().changes.firstOrNull() ?: break
                                     if (!change.pressed) break
                                     change.consume()
-                                    
-                                    // Native fast-path eraser execution locally!
+
                                     currentSegments = applyEraser(currentSegments, change.position.x / w, change.position.y / h, radius)
                                     localErasedStrokes = currentSegments
                                 }
-                                
-                                // Gesture ended, commit erasure to parent
+
                                 onStrokesChanged(currentSegments)
                                 localErasedStrokes = null
                             } else {
-                                // Drawing: accumulate points into a stroke
                                 val points = mutableListOf(
                                     DrawingPoint(down.position.x / w, down.position.y / h)
                                 )
@@ -141,13 +132,11 @@ fun DrawingCanvas(
         val w = size.width
         val h = size.height
 
-        // Render persisted/live strokes
         for (stroke in displayStrokes) {
             if (stroke.points.size < 2) continue
             drawStrokePath(stroke, w, h)
         }
 
-        // Render the live stroke being drawn
         if (currentPoints.size >= 2) {
             val liveStroke = DrawingStroke(
                 colorArgb = penColorArgb,
@@ -159,10 +148,6 @@ fun DrawingCanvas(
     }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Private drawing helpers
-// ────────────────────────────────────────────────────────────────────────────
-
 private fun DrawScope.drawStrokePath(stroke: DrawingStroke, canvasW: Float, canvasH: Float) {
     if (stroke.points.size < 2) return
 
@@ -172,7 +157,6 @@ private fun DrawScope.drawStrokePath(stroke: DrawingStroke, canvasW: Float, canv
         for (i in 1 until stroke.points.size) {
             val prev = stroke.points[i - 1]
             val curr = stroke.points[i]
-            // Smooth curve via quadratic bezier midpoints
             val midX = ((prev.xFraction + curr.xFraction) / 2f) * canvasW
             val midY = ((prev.yFraction + curr.yFraction) / 2f) * canvasH
             quadraticTo(
@@ -210,12 +194,6 @@ private fun DrawScope.drawStrokePath(stroke: DrawingStroke, canvasW: Float, canv
     }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Eraser logic helper: remove strokes that overlap an eraser position
-// Returns (clearedStrokes, updatedStroke?) where updatedStroke is a trimmed stroke
-// if only part of the stroke was erased.
-// ────────────────────────────────────────────────────────────────────────────
-
 /**
  * Applies a circular eraser at position ([xFrac], [yFrac]) with radius [eraserRadiusFrac]
  * (all as canvas fractions) against [strokes].
@@ -248,7 +226,6 @@ private fun splitStrokeAtEraser(
     val currentSegment = mutableListOf<DrawingPoint>()
     val r2 = radius * radius
 
-    // Estimate A4 aspect ratio (height / width) so eraser hit-box isn't a squished ellipse
     val aspect = 1.414f 
 
     if (stroke.points.size == 1) {
@@ -271,15 +248,13 @@ private fun splitStrokeAtEraser(
         )
 
         if (d2 <= r2) {
-            // Segment intersects the eraser. Finish the current segment if it has enough points.
             if (currentSegment.size >= 2) {
                 segments.add(stroke.copy(points = currentSegment.toList()))
             }
             currentSegment.clear()
         } else {
-            // Segment does NOT intersect.
             if (currentSegment.isEmpty()) {
-                currentSegment.add(p1) // start new valid segment
+                currentSegment.add(p1)
             }
             currentSegment.add(p2)
         }

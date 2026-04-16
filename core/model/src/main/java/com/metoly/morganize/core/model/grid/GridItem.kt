@@ -24,7 +24,7 @@ sealed class GridItem {
         val textContent: String,
         val richSpans: List<RichSpan> = emptyList(),
         val fontSize: Float = 14f,        // sp
-        val textAlign: String = "Start",  // "Start" | "Center" | "End"
+        val textAlign: TextAlignment = TextAlignment.Start,
         val lineHeight: Float = 1.4f      // multiplier
     ) : GridItem()
 

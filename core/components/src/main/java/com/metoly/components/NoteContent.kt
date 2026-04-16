@@ -56,6 +56,7 @@ import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.RichSpan
 import com.metoly.morganize.core.model.grid.DrawingStroke
 import com.metoly.morganize.core.model.grid.NotePage
+import com.metoly.morganize.core.model.grid.TextAlignment
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -80,7 +81,7 @@ fun NoteContent(
     onItemResized: (pageId: String, itemId: String, newWidth: Int, newHeight: Int, newX: Int, newY: Int) -> Unit,
     onItemTextChanged: (pageId: String, itemId: String, text: String) -> Unit,
     onItemRichSpansChanged: (pageId: String, itemId: String, richSpans: List<RichSpan>) -> Unit,
-    onItemTypographyChanged: (pageId: String, itemId: String, fontSize: Float, textAlign: String, lineHeight: Float) -> Unit,
+    onItemTypographyChanged: (pageId: String, itemId: String, fontSize: Float, textAlign: TextAlignment, lineHeight: Float) -> Unit,
     onItemDeleted: (pageId: String, itemId: String) -> Unit,
     onEditingTextItemChanged: (itemId: String?, richState: RichTextEditorState?) -> Unit,
     editingTextItemId: String? = null,

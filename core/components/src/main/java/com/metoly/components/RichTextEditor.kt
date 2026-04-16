@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import com.metoly.morganize.core.model.RichSpan
 import com.metoly.morganize.core.model.SpanFormatType
 
+import com.metoly.morganize.core.model.grid.TextAlignment
+
 @Composable
 fun RichTextEditor(
     state: RichTextEditorState,
@@ -36,9 +38,9 @@ fun RichTextEditor(
     hint: @Composable (() -> Unit)? = null
 ) {
     val textAlign = when (state.textAlign) {
-        "Center" -> TextAlign.Center
-        "End" -> TextAlign.End
-        else -> TextAlign.Start
+        TextAlignment.Center -> TextAlign.Center
+        TextAlignment.End -> TextAlign.End
+        TextAlignment.Start -> TextAlign.Start
     }
 
     val textStyle = baseTextStyle.copy(
@@ -50,7 +52,6 @@ fun RichTextEditor(
 
     val focusRequester = remember { FocusRequester() }
 
-    // Auto-focus when editing becomes enabled
     LaunchedEffect(enabled) {
         if (enabled) {
             focusRequester.requestFocus()

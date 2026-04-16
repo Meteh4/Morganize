@@ -12,10 +12,12 @@ import kotlinx.serialization.json.Json
  */
 class Converters {
 
-    @TypeConverter fun fromStringList(list: List<String>): String = Json.encodeToString(list)
+    @TypeConverter
+    fun fromNotePageList(pages: List<com.metoly.morganize.core.model.grid.NotePage>): String =
+            if (pages.isEmpty()) "[]" else Json.encodeToString(pages)
 
     @TypeConverter
-    fun toStringList(json: String): List<String> =
+    fun toNotePageList(json: String): List<com.metoly.morganize.core.model.grid.NotePage> =
             if (json.isBlank()) emptyList() else Json.decodeFromString(json)
 
 }
