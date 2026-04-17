@@ -6,8 +6,10 @@ import com.metoly.components.model.NoteEditorDelegate
 import com.metoly.components.model.NoteEditorUiEvent
 import com.metoly.morganize.core.data.CategoryRepository
 import com.metoly.morganize.core.data.NoteRepository
+import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.core.model.ResponseState
+import com.metoly.morganize.core.model.grid.GridItemFactory
 import com.metoly.morganize.feature.edit.model.EditSpecificState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +24,13 @@ class EditViewModel(
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
-    val delegate = NoteEditorDelegate()
+    val delegate = NoteEditorDelegate(
+        onCategoryCreate = { name, colorArgb ->
+            categoryRepository.insertCategory(
+                Category(name = name, colorArgb = colorArgb)
+            ).launchIn(viewModelScope)
+        }
+    )
 
     val uiState = delegate.state
     val uiEvent = delegate.uiEvent
@@ -93,7 +101,7 @@ class EditViewModel(
                         if (note != null) {
                             originalNote = note
                             val loadedPages = note.pages.ifEmpty { 
-                                listOf(com.metoly.morganize.core.model.grid.GridItemFactory.createNotePage()) 
+                                listOf(GridItemFactory.createNotePage()) 
                             }
                             delegate.updateState {
                                 it.copy(

@@ -3,6 +3,10 @@ package com.metoly.components
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.metoly.components.model.NoteEditorEvent
 import com.metoly.components.model.NoteEditorState
@@ -25,6 +29,8 @@ fun NoteEditorContent(
     onActivePageChanged: (Int) -> Unit = {},
     lazyListState: LazyListState = rememberLazyListState()
 ) {
+    var showAddCategorySheet by remember { mutableStateOf(false) }
+
     NoteContent(
         title = state.title,
         onTitleChange = { onEvent(NoteEditorEvent.TitleChanged(it)) },
@@ -62,6 +68,7 @@ fun NoteEditorContent(
         categories = state.categories,
         selectedCategoryId = state.categoryId,
         onCategorySelected = { onEvent(NoteEditorEvent.CategorySelected(it)) },
+        onAddCategory = { showAddCategorySheet = true },
         onAddPage = { onEvent(NoteEditorEvent.AddPage) },
         // ── Drawing layer ────────────────────────────────────────────────
         isDrawingMode = state.isDrawingMode,
@@ -95,4 +102,13 @@ fun NoteEditorContent(
         lazyListState = lazyListState,
         modifier = modifier
     )
+
+    if (showAddCategorySheet) {
+        AddCategoryBottomSheet(
+            onDismiss = { showAddCategorySheet = false },
+            onSave = { name, colorArgb ->
+                onEvent(NoteEditorEvent.CreateCategory(name, colorArgb))
+            }
+        )
+    }
 }

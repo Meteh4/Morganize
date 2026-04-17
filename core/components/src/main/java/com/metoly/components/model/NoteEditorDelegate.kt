@@ -14,7 +14,9 @@ import kotlinx.coroutines.flow.update
  * UI'dan bağımsız state holder. Grid, Drawing, Text, Checklist ve RichText
  * işlemlerinin tümünü yönetir. ViewModel'lar bu sınıfı delegation ile kullanır.
  */
-class NoteEditorDelegate {
+class NoteEditorDelegate(
+    private val onCategoryCreate: (name: String, colorArgb: Int) -> Unit = { _, _ -> }
+) {
 
     private val _state = MutableStateFlow(NoteEditorState())
     val state: StateFlow<NoteEditorState> = _state.asStateFlow()
@@ -75,6 +77,10 @@ class NoteEditorDelegate {
 
             is NoteEditorEvent.TitleChanged ->
                 _state.update { it.copy(title = event.value) }
+
+            is NoteEditorEvent.CreateCategory -> {
+                onCategoryCreate(event.name, event.colorArgb)
+            }
         }
     }
 

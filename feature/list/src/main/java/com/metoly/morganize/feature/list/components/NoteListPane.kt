@@ -5,6 +5,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -37,6 +38,8 @@ internal fun NoteListPane(
     onNoteClick: (Note) -> Unit,
     onDeleteNote: (Note) -> Unit,
     onCreateNote: () -> Unit,
+    onAddCategory: (() -> Unit)? = null,
+    isLoading: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -62,7 +65,7 @@ internal fun NoteListPane(
             }
         }
     ) { padding ->
-        if (notes.isEmpty() && categories.isEmpty()) {
+        if (notes.isEmpty() && categories.isEmpty() && !isLoading) {
             EmptyListContent(
                 modifier = Modifier
                     .fillMaxSize()
@@ -79,11 +82,25 @@ internal fun NoteListPane(
                         categories = categories,
                         selectedCategoryId = selectedCategoryId,
                         onCategorySelected = onCategorySelected,
+                        onAddCategory = onAddCategory,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
-                if (notes.isEmpty()) {
-                    EmptyListContent(modifier = Modifier.weight(1f))
+                if (isLoading && notes.isEmpty()) {
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(), 
+                        contentAlignment = androidx.compose.ui.Alignment.Center
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator()
+                    }
+                } else if (notes.isEmpty()) {
+                    EmptyListContent(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    )
                 } else {
                     LazyColumn(
                         modifier = Modifier.weight(1f),

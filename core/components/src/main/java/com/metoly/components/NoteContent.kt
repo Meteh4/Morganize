@@ -90,6 +90,7 @@ fun NoteContent(
     categories: List<Category>,
     selectedCategoryId: Long?,
     onCategorySelected: (Long?) -> Unit,
+    onAddCategory: () -> Unit = {},
     onAddPage: () -> Unit,
     isReadOnly: Boolean = false,
     isDrawingMode: Boolean = false,
@@ -185,7 +186,8 @@ fun NoteContent(
             CategoryChipRow(
                 categories = categories,
                 selectedCategoryId = selectedCategoryId,
-                onCategorySelected = onCategorySelected
+                onCategorySelected = onCategorySelected,
+                onAddCategory = onAddCategory
             )
 
             Spacer(Modifier.height(16.dp))
