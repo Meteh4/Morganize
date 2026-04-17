@@ -51,4 +51,5 @@ sealed interface NoteEditorEvent {
     data class TitleChanged(val value: String) : NoteEditorEvent
     data class BackgroundColorChanged(val colorArgb: Int?) : NoteEditorEvent
     data class CategorySelected(val categoryId: Long?) : NoteEditorEvent
+    data class CreateCategory(val name: String, val colorArgb: Int) : NoteEditorEvent
 }

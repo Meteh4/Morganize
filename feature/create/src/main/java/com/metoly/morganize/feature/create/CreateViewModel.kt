@@ -6,6 +6,7 @@ import com.metoly.components.model.NoteEditorDelegate
 import com.metoly.components.model.NoteEditorUiEvent
 import com.metoly.morganize.core.data.CategoryRepository
 import com.metoly.morganize.core.data.NoteRepository
+import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.core.model.ResponseState
 import kotlinx.coroutines.flow.launchIn
@@ -16,7 +17,13 @@ class CreateViewModel(
     private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
-    val delegate = NoteEditorDelegate()
+    val delegate = NoteEditorDelegate(
+        onCategoryCreate = { name, colorArgb ->
+            categoryRepository.insertCategory(
+                Category(name = name, colorArgb = colorArgb)
+            ).launchIn(viewModelScope)
+        }
+    )
 
     val uiState = delegate.state
     val uiEvent = delegate.uiEvent

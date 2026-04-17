@@ -44,7 +44,7 @@ fun CategoryChipRow(
             FilterChip(
                     selected = selectedCategoryId == null,
                     onClick = { onCategorySelected(null) },
-                    label = { Text("Tümü") }
+                    label = { Text("All") }
             )
         }
 
@@ -69,11 +69,11 @@ fun CategoryChipRow(
                 FilterChip(
                         selected = false,
                         onClick = onAddCategory,
-                        label = { Text("Yeni") },
+                        label = { Text("New") },
                         leadingIcon = {
                             Icon(
                                     imageVector = Icons.Default.Add,
-                                    contentDescription = "Kategori ekle"
+                                    contentDescription = "Add category"
                             )
                         }
                 )

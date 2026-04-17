@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.metoly.morganize.core.data.CategoryRepository
 import com.metoly.morganize.core.data.NoteRepository
+import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.ResponseState
 import com.metoly.morganize.feature.list.model.ListEvent
 import com.metoly.morganize.feature.list.model.ListUiState
@@ -16,8 +17,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 
 class ListViewModel(
-        private val noteRepository: NoteRepository,
-        private val categoryRepository: CategoryRepository
+    private val noteRepository: NoteRepository,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ListUiState())
@@ -34,34 +35,35 @@ class ListViewModel(
         when (event) {
             is ListEvent.DeleteNote -> deleteNote(event)
             is ListEvent.FilterByCategory -> filterByCategory(event.categoryId)
+            is ListEvent.CreateCategory -> createCategory(event)
             is ListEvent.SnackbarDismissed -> clearUserMessage()
         }
     }
 
     private fun observeCategories() {
         categoryRepository
-                .getAllCategories()
-                .onEach { state ->
-                    if (state is ResponseState.Success) {
-                        _uiState.update { it.copy(categories = state.data) }
-                    }
+            .getAllCategories()
+            .onEach { state ->
+                if (state is ResponseState.Success) {
+                    _uiState.update { it.copy(categories = state.data) }
                 }
-                .launchIn(viewModelScope)
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun observeNotes() {
         notesJob?.cancel()
         val categoryId = _uiState.value.selectedCategoryId
         val flow =
-                if (categoryId == null) {
-                    noteRepository.getAllNotes()
-                } else {
-                    noteRepository.getNotesByCategory(categoryId)
-                }
+            if (categoryId == null) {
+                noteRepository.getAllNotes()
+            } else {
+                noteRepository.getNotesByCategory(categoryId)
+            }
         notesJob =
-                flow
-                        .onEach { state -> _uiState.update { it.copy(notesState = state) } }
-                        .launchIn(viewModelScope)
+            flow
+                .onEach { state -> _uiState.update { it.copy(notesState = state) } }
+                .launchIn(viewModelScope)
     }
 
     private fun filterByCategory(categoryId: Long?) {
@@ -71,16 +73,27 @@ class ListViewModel(
 
     private fun deleteNote(event: ListEvent.DeleteNote) {
         noteRepository
-                .deleteNote(event.note)
-                .onEach { state ->
-                    if (state is ResponseState.Error) {
-                        _uiState.update { it.copy(userMessage = state.message) }
-                    }
+            .deleteNote(event.note)
+            .onEach { state ->
+                if (state is ResponseState.Error) {
+                    _uiState.update { it.copy(userMessage = state.message) }
                 }
-                .launchIn(viewModelScope)
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun clearUserMessage() {
         _uiState.update { it.copy(userMessage = null) }
+    }
+
+    private fun createCategory(event: ListEvent.CreateCategory) {
+        categoryRepository
+            .insertCategory(Category(name = event.name, colorArgb = event.colorArgb))
+            .onEach { state ->
+                if (state is ResponseState.Error) {
+                    _uiState.update { it.copy(userMessage = state.message) }
+                }
+            }
+            .launchIn(viewModelScope)
     }
 }
