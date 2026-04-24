@@ -82,6 +82,7 @@ fun List<NotePage>.addItemToPage(
             is GridItem.Checklist -> item.copy(x = x, y = y)
             is GridItem.Image -> item.copy(x = x, y = y)
             is GridItem.Text -> item.copy(x = x, y = y)
+            is GridItem.SecretItem -> item.copy(x = x, y = y)
         }
     }
 

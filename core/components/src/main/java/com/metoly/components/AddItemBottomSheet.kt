@@ -25,8 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.material.icons.filled.Lock
+
 /**
- * Shared bottom sheet for adding grid items (Text, Image, Checklist).
+ * Shared bottom sheet for adding grid items (Text, Image, Checklist, Secret Item).
  * Replaces duplicated bottom sheet code in both CreateScreen and EditScreen.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,6 +38,7 @@ fun AddItemBottomSheet(
     onAddText: () -> Unit,
     onAddImage: () -> Unit,
     onAddChecklist: () -> Unit,
+    onAddSecretItem: () -> Unit = {},
     imagePickerLauncher: ManagedActivityResultLauncher<PickVisualMediaRequest, *>
 ) {
     ModalBottomSheet(
@@ -98,6 +101,20 @@ fun AddItemBottomSheet(
                 Icon(Icons.Default.Checklist, contentDescription = null)
                 Spacer(Modifier.width(16.dp))
                 Text("Checklist", style = MaterialTheme.typography.bodyLarge)
+            }
+
+            Row(
+                modifier = bottomSheetButtonStyle
+                    .clickable {
+                        onAddSecretItem()
+                        onDismiss()
+                    }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.Lock, contentDescription = null)
+                Spacer(Modifier.width(16.dp))
+                Text("Secret Item", style = MaterialTheme.typography.bodyLarge)
             }
 
             Spacer(Modifier.height(32.dp))

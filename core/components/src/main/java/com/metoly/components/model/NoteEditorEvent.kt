@@ -52,4 +52,33 @@ sealed interface NoteEditorEvent {
     data class BackgroundColorChanged(val colorArgb: Int?) : NoteEditorEvent
     data class CategorySelected(val categoryId: Long?) : NoteEditorEvent
     data class CreateCategory(val name: String, val colorArgb: Int) : NoteEditorEvent
+    
+    // ── Secret Item ─────────────────────────────────────────────────
+    data class SecretItemAdded(
+        val targetPageIndex: Int,
+        val innerType: SecretItemInnerType,
+        val password: String,
+        val useBiometric: Boolean,
+        val width: Int = 5, val height: Int = 5
+    ) : NoteEditorEvent
+    data class SecretItemUnlockRequested(val pageId: String, val itemId: String) : NoteEditorEvent
+    data class SecretItemUnlockWithPassword(val pageId: String, val itemId: String, val password: String) : NoteEditorEvent
+    data class SecretItemUnlockWithBiometric(val pageId: String, val itemId: String, val decryptedKey: javax.crypto.SecretKey) : NoteEditorEvent
+    data class SecretItemLock(val itemId: String) : NoteEditorEvent
+    data object LockAllSecretItems : NoteEditorEvent
+    data class SecretItemBiometricFailed(val pageId: String, val itemId: String) : NoteEditorEvent
+
+    // ── Secret Note ─────────────────────────────────────────────────
+    data class ToggleSecretNote(val password: String, val useBiometric: Boolean) : NoteEditorEvent
+    data class SecretNoteUnlockWithPassword(val password: String) : NoteEditorEvent
+    data object SecretNoteLock : NoteEditorEvent
+}
+
+/**
+ * Describes what type of inner item to create inside a [GridItem.SecretItem].
+ */
+sealed interface SecretItemInnerType {
+    data object Text : SecretItemInnerType
+    data object Checklist : SecretItemInnerType
+    data class Image(val imageUri: String) : SecretItemInnerType
 }

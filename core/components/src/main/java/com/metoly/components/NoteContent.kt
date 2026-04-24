@@ -107,7 +107,10 @@ fun NoteContent(
     onCheckboxDeleted: (pageId: String, itemId: String, entryId: String) -> Unit = { _, _, _ -> },
     onEmptyGridAddClicked: () -> Unit = {},
     onActivePageChanged: (Int) -> Unit = {},
-    lazyListState: androidx.compose.foundation.lazy.LazyListState = rememberLazyListState()
+    lazyListState: androidx.compose.foundation.lazy.LazyListState = rememberLazyListState(),
+    unlockedItemIds: Set<String> = emptySet(),
+    transientDecryptedItems: Map<String, com.metoly.morganize.core.model.grid.GridItem> = emptyMap(),
+    onSecretItemUnlockRequested: (pageId: String, itemId: String) -> Unit = { _, _ -> }
 ) {
     val focusManager = LocalFocusManager.current
     val density = LocalDensity.current
@@ -248,7 +251,10 @@ fun NoteContent(
                         onEmptyGridAddClicked = onEmptyGridAddClicked,
                         modifier = Modifier.padding(horizontal = 0.dp),
                         isReadOnly = isReadOnly || isDrawingMode,
-                        showEmptyGridPlaceholder = index == 0
+                        showEmptyGridPlaceholder = index == 0,
+                        unlockedItemIds = unlockedItemIds,
+                        transientDecryptedItems = transientDecryptedItems,
+                        onSecretItemUnlockRequested = { itemId -> onSecretItemUnlockRequested(page.id, itemId) }
                     )
 
                     if (isDrawingMode || page.strokes.isNotEmpty()) {

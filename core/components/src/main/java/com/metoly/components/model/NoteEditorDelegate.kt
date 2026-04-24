@@ -10,11 +10,23 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import com.metoly.morganize.core.model.security.EncryptionManager
+import com.metoly.morganize.core.model.security.KeyManager
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+
 /**
  * UI'dan bağımsız state holder. Grid, Drawing, Text, Checklist ve RichText
  * işlemlerinin tümünü yönetir. ViewModel'lar bu sınıfı delegation ile kullanır.
  */
 class NoteEditorDelegate(
+    val encryptionManager: EncryptionManager? = null,
+    val keyManager: KeyManager? = null,
+    val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
     private val onCategoryCreate: (name: String, colorArgb: Int) -> Unit = { _, _ -> }
 ) {
 
@@ -81,6 +93,19 @@ class NoteEditorDelegate(
             is NoteEditorEvent.CreateCategory -> {
                 onCategoryCreate(event.name, event.colorArgb)
             }
+            
+            // ── Security ────────────────────────────────────────────────────────
+            is NoteEditorEvent.SecretItemAdded,
+            is NoteEditorEvent.SecretItemUnlockRequested,
+            is NoteEditorEvent.SecretItemUnlockWithPassword,
+            is NoteEditorEvent.SecretItemUnlockWithBiometric,
+            is NoteEditorEvent.SecretItemLock,
+            is NoteEditorEvent.LockAllSecretItems,
+            is NoteEditorEvent.SecretItemBiometricFailed -> handleSecretItem(event)
+
+            is NoteEditorEvent.ToggleSecretNote,
+            is NoteEditorEvent.SecretNoteUnlockWithPassword,
+            is NoteEditorEvent.SecretNoteLock -> handleSecretNote(event)
         }
     }
 
@@ -103,6 +128,7 @@ class NoteEditorDelegate(
                                 is GridItem.Checklist -> item.copy(x = event.newX, y = event.newY)
                                 is GridItem.Image -> item.copy(x = event.newX, y = event.newY)
                                 is GridItem.Text -> item.copy(x = event.newX, y = event.newY)
+                                is GridItem.SecretItem -> item.copy(x = event.newX, y = event.newY)
                             }
                         }
                     )
@@ -124,6 +150,10 @@ class NoteEditorDelegate(
                                     x = event.newX, y = event.newY
                                 )
                                 is GridItem.Text -> item.copy(
+                                    width = event.newWidth, height = event.newHeight,
+                                    x = event.newX, y = event.newY
+                                )
+                                is GridItem.SecretItem -> item.copy(
                                     width = event.newWidth, height = event.newHeight,
                                     x = event.newX, y = event.newY
                                 )
@@ -157,34 +187,56 @@ class NoteEditorDelegate(
                 }
 
             is NoteEditorEvent.TextGridItemRichSpansChanged ->
-                _state.update { state ->
-                    state.copy(
-                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
-                            if (item is GridItem.Text) item.copy(richSpans = event.richSpans) else item
-                        }
-                    )
+                if (state.value.transientDecryptedItems.containsKey(event.itemId)) {
+                    updateTransientItem(event.itemId) { item ->
+                        if (item is GridItem.Text) item.copy(richSpans = event.richSpans) else item
+                    }
+                } else {
+                    _state.update { state ->
+                        state.copy(
+                            pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                                if (item is GridItem.Text) item.copy(richSpans = event.richSpans) else item
+                            }
+                        )
+                    }
                 }
 
             is NoteEditorEvent.TextGridItemTextChanged ->
-                _state.update { state ->
-                    state.copy(
-                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
-                            if (item is GridItem.Text) item.copy(textContent = event.text) else item
-                        }
-                    )
+                if (state.value.transientDecryptedItems.containsKey(event.itemId)) {
+                    updateTransientItem(event.itemId) { item ->
+                        if (item is GridItem.Text) item.copy(textContent = event.text) else item
+                    }
+                } else {
+                    _state.update { state ->
+                        state.copy(
+                            pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                                if (item is GridItem.Text) item.copy(textContent = event.text) else item
+                            }
+                        )
+                    }
                 }
 
             is NoteEditorEvent.TextGridItemTypographyChanged ->
-                _state.update { state ->
-                    state.copy(
-                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
-                            if (item is GridItem.Text) item.copy(
-                                fontSize = event.fontSize,
-                                textAlign = event.textAlign,
-                                lineHeight = event.lineHeight
-                            ) else item
-                        }
-                    )
+                if (state.value.transientDecryptedItems.containsKey(event.itemId)) {
+                    updateTransientItem(event.itemId) { item ->
+                        if (item is GridItem.Text) item.copy(
+                            fontSize = event.fontSize,
+                            textAlign = event.textAlign,
+                            lineHeight = event.lineHeight
+                        ) else item
+                    }
+                } else {
+                    _state.update { state ->
+                        state.copy(
+                            pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                                if (item is GridItem.Text) item.copy(
+                                    fontSize = event.fontSize,
+                                    textAlign = event.textAlign,
+                                    lineHeight = event.lineHeight
+                                ) else item
+                            }
+                        )
+                    }
                 }
 
             else -> Unit
@@ -212,14 +264,22 @@ class NoteEditorDelegate(
     private fun handleChecklist(event: NoteEditorEvent) {
         when (event) {
             is NoteEditorEvent.ChecklistAction ->
-                _state.update { state ->
-                    state.copy(
-                        pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
-                            if (item is GridItem.Checklist) {
-                                applyChecklistAction(item, event.action)
-                            } else item
-                        }
-                    )
+                if (state.value.transientDecryptedItems.containsKey(event.itemId)) {
+                    updateTransientItem(event.itemId) { item ->
+                        if (item is GridItem.Checklist) {
+                            applyChecklistAction(item, event.action)
+                        } else item
+                    }
+                } else {
+                    _state.update { state ->
+                        state.copy(
+                            pages = state.pages.updateItemSimple(event.pageId, event.itemId) { item ->
+                                if (item is GridItem.Checklist) {
+                                    applyChecklistAction(item, event.action)
+                                } else item
+                            }
+                        )
+                    }
                 }
 
             is NoteEditorEvent.ChecklistGridItemAdded ->
@@ -364,22 +424,229 @@ class NoteEditorDelegate(
         val state = _state.value
         val itemId = state.editingTextItemId ?: return
         val richState = state.editingRichState ?: return
-        _state.update { currentState ->
-            currentState.copy(
-                pages = currentState.pages.map { page ->
-                    page.copy(
-                        items = page.items.map { item ->
-                            if (item is GridItem.Text && item.id == itemId) {
-                                item.copy(
-                                    fontSize = richState.fontSize,
-                                    textAlign = richState.textAlign,
-                                    lineHeight = richState.lineHeight
-                                )
-                            } else item
-                        }
-                    )
-                }
+        
+        if (state.transientDecryptedItems.containsKey(itemId)) {
+            updateTransientItem(itemId) { item ->
+                if (item is GridItem.Text) item.copy(
+                    fontSize = richState.fontSize,
+                    textAlign = richState.textAlign,
+                    lineHeight = richState.lineHeight
+                ) else item
+            }
+        } else {
+            _state.update { currentState ->
+                currentState.copy(
+                    pages = currentState.pages.map { page ->
+                        page.copy(
+                            items = page.items.map { item ->
+                                if (item is GridItem.Text && item.id == itemId) {
+                                    item.copy(
+                                        fontSize = richState.fontSize,
+                                        textAlign = richState.textAlign,
+                                        lineHeight = richState.lineHeight
+                                    )
+                                } else item
+                            }
+                        )
+                    }
+                )
+            }
+        }
+    }
+
+    /** Updates a transient decrypted item in-place. */
+    private fun updateTransientItem(itemId: String, transform: (GridItem) -> GridItem) {
+        _state.update { state ->
+            val current = state.transientDecryptedItems[itemId] ?: return@update state
+            state.copy(
+                transientDecryptedItems = state.transientDecryptedItems + (itemId to transform(current))
             )
         }
+    }
+
+    // ── Secret Item ──────────────────────────────────────────────────────
+
+    private fun handleSecretItem(event: NoteEditorEvent) {
+        when (event) {
+            is NoteEditorEvent.SecretItemAdded -> {
+                if (encryptionManager == null || keyManager == null) return
+                coroutineScope.launch {
+                    try {
+                        // Create the inner item based on the chosen type
+                        val innerItem: GridItem = when (event.innerType) {
+                            is SecretItemInnerType.Text -> GridItemFactory.createTextItem(
+                                width = event.width, height = event.height
+                            )
+                            is SecretItemInnerType.Checklist -> GridItemFactory.createChecklistItem(
+                                width = event.width, height = event.height
+                            )
+                            is SecretItemInnerType.Image -> GridItemFactory.createImageItem(
+                                width = event.width, height = event.height,
+                                imageUri = event.innerType.imageUri
+                            )
+                        }
+                        val innerJson = Json.encodeToString(GridItem.serializer(), innerItem)
+                        val salt = keyManager.generateSalt()
+                        val secretKey = keyManager.deriveKeyFromPassword(event.password, salt)
+                        val (ciphertextParams, ivParams, _) = encryptionManager.encryptString(innerJson, secretKey)
+                        
+                        val (newPages, addedIndex) = state.value.pages.addItemToPage(
+                            event.targetPageIndex,
+                            GridItemFactory.createSecretItem(
+                                width = event.width, height = event.height,
+                                encryptedPayload = ciphertextParams,
+                                salt = android.util.Base64.encodeToString(salt, android.util.Base64.NO_WRAP),
+                                iv = ivParams,
+                                hasBiometric = event.useBiometric
+                            )
+                        )
+                        _state.update { it.copy(pages = newPages) }
+                        sendUiEvent(NoteEditorUiEvent.ScrollToPage(addedIndex))
+                    } catch (e: Exception) {
+                        sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Encryption failed: ${e.message}"))
+                    }
+                }
+            }
+            is NoteEditorEvent.SecretItemUnlockRequested -> {
+                val item = findGridItem(event.pageId, event.itemId) as? GridItem.SecretItem ?: return
+                if (item.hasBiometric && !item.isBiometricDisabled) {
+                    val alias = "secret_item_${item.id}"
+                    sendUiEvent(NoteEditorUiEvent.ShowBiometricPrompt(itemId = item.id, keystoreAlias = alias))
+                } else {
+                    _state.update { it.copy(showUnlockDialog = true, unlockTargetItemId = item.id) }
+                }
+            }
+            is NoteEditorEvent.SecretItemUnlockWithPassword -> {
+                if (encryptionManager == null || keyManager == null) return
+                val item = findGridItem(event.pageId, event.itemId) as? GridItem.SecretItem ?: return
+                coroutineScope.launch {
+                    try {
+                        val saltBytes = android.util.Base64.decode(item.salt, android.util.Base64.NO_WRAP)
+                        val secretKey = keyManager.deriveKeyFromPassword(event.password, saltBytes)
+                        val decryptedJson = encryptionManager.decryptString(item.encryptedPayload, item.iv, secretKey)
+                        val decryptedItem = Json.decodeFromString(GridItem.serializer(), decryptedJson)
+                        
+                        _state.update { it.copy(
+                            unlockedItemIds = it.unlockedItemIds + item.id,
+                            transientDecryptedItems = it.transientDecryptedItems + (item.id to decryptedItem),
+                            transientSecretItemKeys = it.transientSecretItemKeys + (item.id to secretKey),
+                            showUnlockDialog = false,
+                            unlockTargetItemId = null
+                        ) }
+                    } catch (e: Exception) {
+                        sendUiEvent(NoteEditorUiEvent.UnlockFailed("Incorrect password", 0, 0))
+                    }
+                }
+            }
+            is NoteEditorEvent.SecretItemUnlockWithBiometric -> {
+                if (encryptionManager == null) return
+                val item = findGridItem(event.pageId, event.itemId) as? GridItem.SecretItem ?: return
+                coroutineScope.launch {
+                    try {
+                        val decryptedJson = encryptionManager.decryptString(item.encryptedPayload, item.iv, event.decryptedKey)
+                        val decryptedItem = Json.decodeFromString(GridItem.serializer(), decryptedJson)
+                        
+                        _state.update { it.copy(
+                            unlockedItemIds = it.unlockedItemIds + item.id,
+                            transientDecryptedItems = it.transientDecryptedItems + (item.id to decryptedItem),
+                            transientSecretItemKeys = it.transientSecretItemKeys + (item.id to event.decryptedKey)
+                        ) }
+                    } catch (e: Exception) {
+                        sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Biometric decryption failed"))
+                    }
+                }
+            }
+            is NoteEditorEvent.SecretItemLock -> {
+                reEncryptSecretItem(event.itemId)
+            }
+            is NoteEditorEvent.LockAllSecretItems -> {
+                // Re-encrypt all unlocked items before clearing
+                val currentState = state.value
+                for (itemId in currentState.unlockedItemIds) {
+                    reEncryptSecretItem(itemId)
+                }
+                _state.update { it.copy(
+                    unlockedItemIds = emptySet(),
+                    transientDecryptedItems = emptyMap(),
+                    transientSecretItemKeys = emptyMap(),
+                    isSecretNoteUnlocked = if (it.isSecretNote) false else it.isSecretNoteUnlocked,
+                    title = if (it.isSecretNote) "" else it.title,
+                    pages = if (it.isSecretNote) emptyList() else it.pages
+                ) }
+            }
+            is NoteEditorEvent.SecretItemBiometricFailed -> {
+                _state.update { it.copy(showUnlockDialog = true, unlockTargetItemId = event.itemId) }
+            }
+            else -> Unit
+        }
+    }
+
+    /** Re-encrypts the (possibly modified) transient inner item back into the SecretItem on the page. */
+    private fun reEncryptSecretItem(itemId: String) {
+        if (encryptionManager == null) return
+        val currentState = state.value
+        val modifiedInner = currentState.transientDecryptedItems[itemId] ?: return
+        val secretKey = currentState.transientSecretItemKeys[itemId] ?: return
+        
+        coroutineScope.launch {
+            try {
+                val innerJson = Json.encodeToString(GridItem.serializer(), modifiedInner)
+                val (cipherBase64, ivBase64, _) = encryptionManager.encryptString(innerJson, secretKey)
+                
+                _state.update { state ->
+                    state.copy(
+                        pages = state.pages.map { page ->
+                            page.copy(
+                                items = page.items.map { item ->
+                                    if (item is GridItem.SecretItem && item.id == itemId) {
+                                        item.copy(
+                                            encryptedPayload = cipherBase64,
+                                            iv = ivBase64
+                                        )
+                                    } else item
+                                }
+                            )
+                        },
+                        unlockedItemIds = state.unlockedItemIds - itemId,
+                        transientDecryptedItems = state.transientDecryptedItems - itemId,
+                        transientSecretItemKeys = state.transientSecretItemKeys - itemId
+                    )
+                }
+            } catch (e: Exception) {
+                sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Failed to re-encrypt: ${e.message}"))
+            }
+        }
+    }
+
+    // ── Secret Note ──────────────────────────────────────────────────────
+    private fun handleSecretNote(event: NoteEditorEvent) {
+        // Will be called by viewmodel when saving/loading based on full state.
+        when (event) {
+            is NoteEditorEvent.ToggleSecretNote -> {
+                _state.update { it.copy(
+                    isSecretNote = true,
+                    isSecretNoteUnlocked = true, // creator has it unlocked
+                    transientSecretNotePassword = event.password,
+                    transientSecretNoteBiometric = event.useBiometric
+                ) }
+            }
+            is NoteEditorEvent.SecretNoteUnlockWithPassword -> {
+                // The ViewModel handles the actual decryption and populates state.pages because
+                // encrypted content exists on the Note entity, not in NoteEditorState.
+            }
+            is NoteEditorEvent.SecretNoteLock -> {
+                _state.update { it.copy(
+                    isSecretNoteUnlocked = false,
+                    pages = emptyList(),
+                    title = ""
+                ) }
+            }
+            else -> Unit
+        }
+    }
+
+    private fun findGridItem(pageId: String, itemId: String): GridItem? {
+        val page = state.value.pages.find { it.id == pageId } ?: return null
+        return page.items.find { it.id == itemId }
     }
 }

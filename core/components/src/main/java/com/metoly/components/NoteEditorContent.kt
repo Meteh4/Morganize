@@ -27,7 +27,10 @@ fun NoteEditorContent(
     onActiveRichStateChange: (RichTextEditorState) -> Unit = {},
     onEmptyGridAddClicked: () -> Unit = {},
     onActivePageChanged: (Int) -> Unit = {},
-    lazyListState: LazyListState = rememberLazyListState()
+    lazyListState: LazyListState = rememberLazyListState(),
+    unlockedItemIds: Set<String> = emptySet(),
+    transientDecryptedItems: Map<String, com.metoly.morganize.core.model.grid.GridItem> = emptyMap(),
+    onSecretItemUnlockRequested: (pageId: String, itemId: String) -> Unit = { _, _ -> }
 ) {
     var showAddCategorySheet by remember { mutableStateOf(false) }
 
@@ -100,6 +103,9 @@ fun NoteEditorContent(
         onEmptyGridAddClicked = onEmptyGridAddClicked,
         onActivePageChanged = onActivePageChanged,
         lazyListState = lazyListState,
+        unlockedItemIds = unlockedItemIds,
+        transientDecryptedItems = transientDecryptedItems,
+        onSecretItemUnlockRequested = onSecretItemUnlockRequested,
         modifier = modifier
     )
 

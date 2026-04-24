@@ -19,7 +19,9 @@ internal fun EditTopBar(
     onBack: () -> Unit,
     onDeleteClick: () -> Unit,
     selectedColor: Int?,
-    onColorSelected: (Int?) -> Unit
+    onColorSelected: (Int?) -> Unit,
+    isSecretNote: Boolean,
+    onToggleSecretNote: () -> Unit
 ) {
     NoteTopBar(
         title = stringResource(R.string.feature_edit_screen_title),
@@ -27,6 +29,8 @@ internal fun EditTopBar(
         backContentDescription = stringResource(R.string.feature_edit_back),
         selectedColor = selectedColor,
         onColorSelected = onColorSelected,
+        isSecretNote = isSecretNote,
+        onToggleSecretNote = onToggleSecretNote,
         extraActions = { resolvedColor ->
             val deleteIconColor by animateColorAsState(
                 targetValue = if (resolvedColor != null) {

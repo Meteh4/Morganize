@@ -13,6 +13,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -37,6 +39,8 @@ fun NoteTopBar(
     backContentDescription: String,
     selectedColor: Int?,
     onColorSelected: (Int?) -> Unit,
+    isSecretNote: Boolean? = null,
+    onToggleSecretNote: (() -> Unit)? = null,
     extraActions: @Composable RowScope.(resolvedColor: Color?) -> Unit = {}
 ) {
     var showColorPicker by remember { mutableStateOf(false) }
@@ -80,6 +84,14 @@ fun NoteTopBar(
                             onColorSelected(color)
                             showColorPicker = false
                         }
+                    )
+                }
+            }
+            if (isSecretNote != null && onToggleSecretNote != null) {
+                IconButton(onClick = onToggleSecretNote) {
+                    Icon(
+                        imageVector = if (isSecretNote) Icons.Default.Lock else Icons.Default.LockOpen,
+                        contentDescription = "Toggle Secret Note"
                     )
                 }
             }

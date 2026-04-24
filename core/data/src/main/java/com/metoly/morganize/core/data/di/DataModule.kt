@@ -10,4 +10,7 @@ import org.koin.dsl.module
 val dataModule = module {
     single<NoteRepository> { NoteRepositoryImpl(noteDao = get()) }
     single<CategoryRepository> { CategoryRepositoryImpl(categoryDao = get()) }
+    
+    single { com.metoly.morganize.core.model.security.KeyManager() }
+    single { com.metoly.morganize.core.model.security.EncryptionManager() }
 }

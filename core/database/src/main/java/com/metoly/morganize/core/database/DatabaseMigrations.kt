@@ -45,3 +45,20 @@ val MIGRATION_2_3 =
                 db.execSQL("ALTER TABLE notes ADD COLUMN richSpansJson TEXT NOT NULL DEFAULT ''")
             }
         }
+
+/**
+ * MIGRATION_4_5 — adds SecretNote encryption support:
+ * - isSecret: flag indicating the note is password/biometric-protected
+ * - encryptedContent: Base64-encoded AES-256-GCM ciphertext of pages JSON
+ * - salt: Base64-encoded PBKDF2 salt
+ * - iv: Base64-encoded GCM nonce (initialization vector)
+ */
+val MIGRATION_4_5 =
+        object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE notes ADD COLUMN isSecret INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE notes ADD COLUMN encryptedContent TEXT")
+                db.execSQL("ALTER TABLE notes ADD COLUMN salt TEXT")
+                db.execSQL("ALTER TABLE notes ADD COLUMN iv TEXT")
+            }
+        }

@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -110,31 +111,58 @@ internal fun NoteDetailPane(
                 Spacer(Modifier.height(24.dp))
             }
 
-            pages.forEachIndexed { index, page ->
-                Text(
-                    text = "Page ${index + 1}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-                )
-
-                Box(modifier = Modifier.padding(horizontal = 24.dp)) {
-                    GridCanvas(
-                        page = page,
-                        selectedItemId = null,
-                        isReadOnly = true
+            if (note.isSecret) {
+                Spacer(Modifier.height(48.dp))
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        text = "This note is locked",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Edit note to unlock",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
+            } else {
+                pages.forEachIndexed { index, page ->
+                    Text(
+                        text = "Page ${index + 1}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
                     )
 
-                    if (page.strokes.isNotEmpty()) {
-                        DrawingCanvas(
-                            strokes = page.strokes,
-                            isActive = false,
-                            modifier = Modifier.matchParentSize()
+                    Box(modifier = Modifier.padding(horizontal = 24.dp)) {
+                        GridCanvas(
+                            page = page,
+                            selectedItemId = null,
+                            isReadOnly = true
                         )
-                    }
-                }
 
-                Spacer(Modifier.height(16.dp))
+                        if (page.strokes.isNotEmpty()) {
+                            DrawingCanvas(
+                                strokes = page.strokes,
+                                isActive = false,
+                                modifier = Modifier.matchParentSize()
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+                }
             }
 
             Spacer(Modifier.height(24.dp))

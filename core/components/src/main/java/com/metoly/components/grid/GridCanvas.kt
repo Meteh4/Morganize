@@ -118,6 +118,9 @@ fun GridCanvas(
     onCheckboxAdded: (itemId: String) -> Unit = {},
     onCheckboxDeleted: (itemId: String, entryId: String) -> Unit = { _, _ -> },
     onEmptyGridAddClicked: () -> Unit = {},
+    unlockedItemIds: Set<String> = emptySet(),
+    transientDecryptedItems: Map<String, GridItem> = emptyMap(),
+    onSecretItemUnlockRequested: (itemId: String) -> Unit = {},
     columns: Int = 10,
     rows: Int = 20,
     isReadOnly: Boolean = false,
@@ -194,7 +197,10 @@ fun GridCanvas(
                     onCheckboxToggled = { entryId -> onCheckboxToggled(item.id, entryId) },
                     onCheckboxTextChanged = { entryId, text -> onCheckboxTextChanged(item.id, entryId, text) },
                     onCheckboxAdded = { onCheckboxAdded(item.id) },
-                    onCheckboxDeleted = { entryId -> onCheckboxDeleted(item.id, entryId) }
+                    onCheckboxDeleted = { entryId -> onCheckboxDeleted(item.id, entryId) },
+                    isUnlocked = unlockedItemIds.contains(item.id),
+                    decryptedItem = transientDecryptedItems[item.id],
+                    onSecretItemUnlockRequested = { onSecretItemUnlockRequested(item.id) }
                 )
             }
         }
@@ -226,6 +232,9 @@ private fun GridDraggableItem(
     onCheckboxTextChanged: (String, String) -> Unit = { _, _ -> },
     onCheckboxAdded: () -> Unit = {},
     onCheckboxDeleted: (String) -> Unit = {},
+    isUnlocked: Boolean = false,
+    decryptedItem: GridItem? = null,
+    onSecretItemUnlockRequested: (String) -> Unit = {}
 ) {
     val density = LocalDensity.current
 
@@ -257,23 +266,24 @@ private fun GridDraggableItem(
     }
 
     val isEditorActive = (editingTextItemId == item.id)
+    val effectiveItem = decryptedItem ?: item
     val currentRichState = if (isEditorActive && activeRichState != null) {
         activeRichState
     } else {
         remember(
-            if (item is GridItem.Text) item.textContent else "",
-            if (item is GridItem.Text) item.richSpans else emptyList(),
-            if (item is GridItem.Text) item.fontSize else 16f,
-            if (item is GridItem.Text) item.textAlign else TextAlignment.Start,
-            if (item is GridItem.Text) item.lineHeight else 1.5f
+            if (effectiveItem is GridItem.Text) effectiveItem.textContent else "",
+            if (effectiveItem is GridItem.Text) effectiveItem.richSpans else emptyList(),
+            if (effectiveItem is GridItem.Text) effectiveItem.fontSize else 16f,
+            if (effectiveItem is GridItem.Text) effectiveItem.textAlign else TextAlignment.Start,
+            if (effectiveItem is GridItem.Text) effectiveItem.lineHeight else 1.5f
         ) {
-            if (item is GridItem.Text) {
+            if (effectiveItem is GridItem.Text) {
                 richTextStateFromPersisted(
-                    text = item.textContent,
-                    spans = item.richSpans,
-                    fontSize = item.fontSize,
-                    textAlign = item.textAlign,
-                    lineHeight = item.lineHeight
+                    text = effectiveItem.textContent,
+                    spans = effectiveItem.richSpans,
+                    fontSize = effectiveItem.fontSize,
+                    textAlign = effectiveItem.textAlign,
+                    lineHeight = effectiveItem.lineHeight
                 )
             } else {
                 RichTextEditorState()
@@ -283,7 +293,7 @@ private fun GridDraggableItem(
 
     // Report editing state to parent whenever it changes
     LaunchedEffect(isEditingText) {
-        if (item is GridItem.Text) {
+        if (effectiveItem is GridItem.Text || effectiveItem is GridItem.Checklist) {
             onEditingChanged(isEditingText && !isReadOnly, currentRichState)
         }
     }
@@ -352,7 +362,8 @@ private fun GridDraggableItem(
                         Modifier.combinedClickable(
                             onClick = { 
                                 onClick()
-                                if (item is GridItem.Text || item is GridItem.Checklist) {
+                                val effectiveItem = decryptedItem ?: item
+                                if (effectiveItem is GridItem.Text || effectiveItem is GridItem.Checklist) {
                                     isEditingText = true
                                 }
                             },
@@ -381,7 +392,10 @@ private fun GridDraggableItem(
                     }
                 }
         ) {
-            when (item) {
+            val renderItem = decryptedItem ?: item
+            val effectiveReadOnly = isReadOnly
+
+            when (renderItem) {
                 is GridItem.Text -> {
                     RichTextEditor(
                         state = currentRichState,
@@ -401,13 +415,13 @@ private fun GridDraggableItem(
                             onTextChanged(next.text)
                             onRichSpansChanged(next.spans)
                         },
-                        enabled = isEditingText && !isReadOnly,
+                        enabled = isEditingText && !effectiveReadOnly,
                         modifier = Modifier.fillMaxSize().padding(GridItemDefaults.InnerPadding)
                     )
                 }
                 is GridItem.Image -> {
                     AsyncImage(
-                        model = item.imageUri,
+                        model = renderItem.imageUri,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
@@ -415,15 +429,23 @@ private fun GridDraggableItem(
                 }
                 is GridItem.Checklist -> {
                     ChecklistContent(
-                        item = item,
+                        item = renderItem,
                         isSelected = isSelected,
-                        isReadOnly = isReadOnly,
+                        isReadOnly = effectiveReadOnly,
                         onTitleChanged = onChecklistTitleChanged,
                         onCheckboxToggled = onCheckboxToggled,
                         onCheckboxTextChanged = onCheckboxTextChanged,
                         onCheckboxAdded = onCheckboxAdded,
                         onCheckboxDeleted = onCheckboxDeleted,
                         modifier = Modifier.fillMaxSize().padding(GridItemDefaults.InnerPadding)
+                    )
+                }
+                is GridItem.SecretItem -> {
+                    SecretItemContent(
+                        isBiometricDisabled = renderItem.isBiometricDisabled,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable { onSecretItemUnlockRequested(item.id) }
                     )
                 }
             }

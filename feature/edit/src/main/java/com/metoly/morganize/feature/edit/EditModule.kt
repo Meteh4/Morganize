@@ -5,6 +5,12 @@ import org.koin.dsl.module
 
 val editModule = module {
     viewModel { parameters ->
-        EditViewModel(noteId = parameters.get(), noteRepository = get(), categoryRepository = get())
+        EditViewModel(
+            noteId = parameters.get(),
+            noteRepository = get(),
+            categoryRepository = get(),
+            encryptionManager = get(),
+            keyManager = get()
+        )
     }
 }

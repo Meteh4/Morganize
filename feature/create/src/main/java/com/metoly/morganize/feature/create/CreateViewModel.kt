@@ -11,13 +11,24 @@ import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.core.model.ResponseState
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import android.util.Base64
+import com.metoly.morganize.core.model.security.EncryptionManager
+import com.metoly.morganize.core.model.security.KeyManager
 
 class CreateViewModel(
     private val noteRepository: NoteRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val encryptionManager: EncryptionManager,
+    private val keyManager: KeyManager
 ) : ViewModel() {
 
     val delegate = NoteEditorDelegate(
+        encryptionManager = encryptionManager,
+        keyManager = keyManager,
+        coroutineScope = viewModelScope,
         onCategoryCreate = { name, colorArgb ->
             categoryRepository.insertCategory(
                 Category(name = name, colorArgb = colorArgb)
@@ -35,21 +46,51 @@ class CreateViewModel(
     fun save() {
         val state = delegate.state.value
         if (state.title.isBlank() && state.pages.all { it.items.isEmpty() }) return
-        val note = Note(
-            title = state.title.trim(),
-            pages = state.pages,
-            backgroundColor = state.backgroundColor,
-            categoryId = state.categoryId
-        )
-        noteRepository.insertNote(note)
-            .onEach { result ->
-                when (result) {
-                    is ResponseState.Success -> delegate.sendUiEvent(NoteEditorUiEvent.SaveSuccess)
-                    is ResponseState.Error -> delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar(result.message))
-                    else -> Unit
+        
+        viewModelScope.launch {
+            try {
+                var finalPages = state.pages
+                var encryptedContent: String? = null
+                var saltBase64: String? = null
+                var ivBase64: String? = null
+
+                val password = state.transientSecretNotePassword
+                if (state.isSecretNote && password != null) {
+                    val pagesJson = Json.encodeToString(finalPages)
+                    val salt = keyManager.generateSalt()
+                    val secretKey = keyManager.deriveKeyFromPassword(password, salt)
+                    val (cipherBase64, currentIvBase64, _) = encryptionManager.encryptString(pagesJson, secretKey)
+                    
+                    finalPages = emptyList() // Clear pages to prevent unencrypted storage
+                    encryptedContent = cipherBase64
+                    saltBase64 = Base64.encodeToString(salt, Base64.NO_WRAP)
+                    ivBase64 = currentIvBase64
                 }
+
+                val note = Note(
+                    title = state.title.trim(),
+                    pages = finalPages,
+                    backgroundColor = state.backgroundColor,
+                    categoryId = state.categoryId,
+                    isSecret = state.isSecretNote,
+                    encryptedContent = encryptedContent,
+                    salt = saltBase64,
+                    iv = ivBase64
+                )
+                
+                noteRepository.insertNote(note)
+                    .onEach { result ->
+                        when (result) {
+                            is ResponseState.Success -> delegate.sendUiEvent(NoteEditorUiEvent.SaveSuccess)
+                            is ResponseState.Error -> delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar(result.message))
+                            else -> Unit
+                        }
+                    }
+                    .launchIn(viewModelScope)
+            } catch (e: Exception) {
+                delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Failed to encrypt note: ${e.message}"))
             }
-            .launchIn(viewModelScope)
+        }
     }
 
     private fun observeCategories() {

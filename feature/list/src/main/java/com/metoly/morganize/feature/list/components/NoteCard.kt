@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -119,13 +120,29 @@ internal fun NoteCard(
                     Spacer(Modifier.height(4.dp))
                 }
 
-                Text(
-                    text = note.title.ifBlank { stringResource(R.string.feature_list_untitled) },
-                    style = MaterialTheme.typography.titleMedium,
-                    color = textColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = if (note.isSecret && note.title.isBlank()) "Secret Note" else note.title.ifBlank { stringResource(R.string.feature_list_untitled) },
+                        style = MaterialTheme.typography.titleMedium,
+                        color = textColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    if (note.isSecret) {
+                        Spacer(Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = "Secret Note",
+                            modifier = Modifier.size(16.dp),
+                            tint = textColor.copy(alpha = 0.8f)
+                        )
+                    }
+                }
 
                 Spacer(Modifier.height(8.dp))
 

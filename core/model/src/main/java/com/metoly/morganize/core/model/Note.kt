@@ -25,5 +25,10 @@ data class Note(
         val createdAt: Long = System.currentTimeMillis(),
         val updatedAt: Long = System.currentTimeMillis(),
         val backgroundColor: Int? = null,
-        val categoryId: Long? = null
+        val categoryId: Long? = null,
+        // ── Secret Note fields ──────────────────────────────────────────
+        val isSecret: Boolean = false,
+        val encryptedContent: String? = null,   // Base64 AES-256-GCM ciphertext of pages JSON
+        val salt: String? = null,               // Base64 PBKDF2 salt
+        val iv: String? = null                  // Base64 GCM nonce
 )
