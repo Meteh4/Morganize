@@ -76,26 +76,66 @@ import com.metoly.morganize.core.model.RichSpan
 import com.metoly.morganize.core.model.grid.GridItem
 import com.metoly.morganize.core.model.grid.NotePage
 import com.metoly.morganize.core.model.grid.TextAlignment
+import com.metoly.morganize.core.ui.theme.MorgAnimation
+import com.metoly.morganize.core.ui.theme.MorgColors
+import com.metoly.morganize.core.ui.theme.MorgDimens
+import com.metoly.morganize.core.ui.theme.MorgShapes
 import kotlin.math.roundToInt
 
 
-
+/**
+ * Standard visual properties for rendering any grid item on the canvas.
+ * Consolidates paddings, borders, shapes, and semi-transparent backgrounds.
+ */
 object GridItemDefaults {
-    val DefaultPadding = 8.dp
-    val SelectedPadding = 8.dp
-    val CornerRadius = 12.dp
-    val SelectedBorderWidth = 2.dp
+    val DefaultPadding = MorgDimens.gridItemPadding
+    val SelectedPadding = MorgDimens.gridItemPadding
+    val CornerRadius = MorgDimens.gridItemCorner
+    val SelectedBorderWidth = MorgDimens.gridItemSelectedBorder
     val UnselectedBorderWidth = 0.dp
-    val BackgroundAlpha = 0.6f
-    val InnerPadding = 8.dp
+    val BackgroundAlpha = MorgColors.GridItemBackgroundAlpha
+    val InnerPadding = MorgDimens.gridItemInnerPadding
 
     val Shape: RoundedCornerShape
-        get() = RoundedCornerShape(CornerRadius)
+        get() = MorgShapes.gridItem
 
     @Composable
     fun backgroundColor(): Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = BackgroundAlpha)
 }
 
+/**
+ * An interactive 2D grid responsible for rendering and positioning Note items.
+ * Allows items (Text, Checklists, Images, SecretItems) to be dragged, resized, and modified.
+ * Also handles coordinating between locked/unlocked states for Secret Items via the [transientDecryptedItems].
+ *
+ * @param modifier Compose modifier.
+ * @param page The specific note page data model this canvas renders.
+ * @param selectedItemId The ID of the currently focused grid item.
+ * @param onItemSelected Callback when an item is tapped.
+ * @param onItemMoved Callback when an item's position changes via drag.
+ * @param onItemResized Callback when an item's dimension changes via drag handle.
+ * @param onItemTextChanged Callback for text mutations inside an item.
+ * @param onItemRichSpansChanged Callback for formatted range updates.
+ * @param onItemTypographyChanged Callback for structural typography changes.
+ * @param onItemDeleted Callback to remove an item.
+ * @param onEditingTextItemChanged Callback indicating which text field is focused.
+ * @param editingTextItemId The ID of the currently focused text field.
+ * @param activeRichState The underlying formatting state of the active text field.
+ * @param onActiveRichStateChange Sink for formatting state.
+ * @param onChecklistTitleChanged Callback for checklist header changes.
+ * @param onCheckboxToggled Callback to toggle a checklist entry.
+ * @param onCheckboxTextChanged Callback for editing a checklist entry label.
+ * @param onCheckboxAdded Callback to append a new entry to a checklist.
+ * @param onCheckboxDeleted Callback to remove an entry from a checklist.
+ * @param onEmptyGridAddClicked Callback triggered when tapping the center of an empty grid.
+ * @param unlockedItemIds IDs of SecretItems that have been authenticated and are currently visible.
+ * @param transientDecryptedItems Ephemeral map storing decrypted SecretItem data locally in memory, never persisted.
+ * @param onSecretItemUnlockRequested Callback to prompt the user for credentials to unlock a specific secret item.
+ * @param columns Number of logical columns in the grid.
+ * @param rows Number of logical rows in the grid.
+ * @param isReadOnly Disables interactions and edits if true.
+ * @param showEmptyGridPlaceholder Toggles the empty "Tap to add" placeholder.
+ */
 @Composable
 fun GridCanvas(
     modifier: Modifier = Modifier,
@@ -143,7 +183,7 @@ fun GridCanvas(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             ) { onItemSelected(null) }
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.surface)
     ) {
         if (cellSize > 0f) {
             if (page.items.isEmpty() && !isReadOnly && showEmptyGridPlaceholder) {
@@ -318,15 +358,15 @@ private fun GridDraggableItem(
 
     val animPadding by animateDpAsState(
         if (isSelected) GridItemDefaults.SelectedPadding else GridItemDefaults.DefaultPadding,
-        spring(stiffness = Spring.StiffnessMediumLow)
+        animationSpec = MorgAnimation.gentle()
     )
     val animBorderWidth by animateDpAsState(
         if (isSelected) GridItemDefaults.SelectedBorderWidth else GridItemDefaults.UnselectedBorderWidth,
-        spring(stiffness = Spring.StiffnessMediumLow)
+        MorgAnimation.gentle()
     )
     val animBorderColor by animateColorAsState(
         if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-        spring(stiffness = Spring.StiffnessMediumLow)
+        MorgAnimation.gentle()
     )
 
     Box(

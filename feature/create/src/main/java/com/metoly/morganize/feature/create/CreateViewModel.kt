@@ -18,6 +18,11 @@ import android.util.Base64
 import com.metoly.morganize.core.model.security.EncryptionManager
 import com.metoly.morganize.core.model.security.KeyManager
 
+/**
+ * ViewModel managing the creation of a new Note.
+ * Utilizes a shared [NoteEditorDelegate] for handling deep grid editing logic and formatting.
+ * Owns the final save step, committing the newly constructed Note (with optional encryption) to the database.
+ */
 class CreateViewModel(
     private val noteRepository: NoteRepository,
     private val categoryRepository: CategoryRepository,
@@ -43,16 +48,23 @@ class CreateViewModel(
         observeCategories()
     }
 
+    /**
+     * Commits the current editing state as a new Note to the repository.
+     * Applies AES encryption to the note body if it was marked as a Secret Note.
+     */
     fun save() {
         val state = delegate.state.value
         if (state.title.isBlank() && state.pages.all { it.items.isEmpty() }) return
         
         viewModelScope.launch {
             try {
-                var finalPages = state.pages
+                var finalPages = delegate.getPagesForSaving()
                 var encryptedContent: String? = null
                 var saltBase64: String? = null
                 var ivBase64: String? = null
+
+                var biometricPwdCipher: String? = null
+                var biometricPwdIv: String? = null
 
                 val password = state.transientSecretNotePassword
                 if (state.isSecretNote && password != null) {
@@ -61,7 +73,14 @@ class CreateViewModel(
                     val secretKey = keyManager.deriveKeyFromPassword(password, salt)
                     val (cipherBase64, currentIvBase64, _) = encryptionManager.encryptString(pagesJson, secretKey)
                     
-                    finalPages = emptyList() // Clear pages to prevent unencrypted storage
+                    if (state.transientSecretNoteBiometric) {
+                        val biometricKey = keyManager.getOrCreateBiometricKey("secret_note_master_key")
+                        val (encPwd, encIv, _) = encryptionManager.encryptString(password, biometricKey)
+                        biometricPwdCipher = encPwd
+                        biometricPwdIv = encIv
+                    }
+                    
+                    finalPages = emptyList()
                     encryptedContent = cipherBase64
                     saltBase64 = Base64.encodeToString(salt, Base64.NO_WRAP)
                     ivBase64 = currentIvBase64
@@ -75,7 +94,10 @@ class CreateViewModel(
                     isSecret = state.isSecretNote,
                     encryptedContent = encryptedContent,
                     salt = saltBase64,
-                    iv = ivBase64
+                    iv = ivBase64,
+                    hasBiometric = state.transientSecretNoteBiometric,
+                    biometricWrappedPassword = biometricPwdCipher,
+                    biometricWrappedPasswordIv = biometricPwdIv
                 )
                 
                 noteRepository.insertNote(note)

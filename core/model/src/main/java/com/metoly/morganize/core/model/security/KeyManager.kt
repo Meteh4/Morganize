@@ -68,9 +68,8 @@ class KeyManager {
         )
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-            .setUserAuthenticationRequired(true)
-            // Invalidate key if new biometrics are enrolled, for security
-            .setInvalidatedByBiometricEnrollment(true)
+            // .setUserAuthenticationRequired(true)
+            // .setInvalidatedByBiometricEnrollment(true)
             
         keyGenerator.init(builder.build())
         return keyGenerator.generateKey()

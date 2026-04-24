@@ -29,6 +29,10 @@ import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.feature.list.R
 
+/**
+ * A wrapper over [NoteCard] that implements Material 3 swipe-to-dismiss behavior.
+ * Prompts the user with a confirmation dialog before completing the deletion.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SwipeToDismissNoteCard(

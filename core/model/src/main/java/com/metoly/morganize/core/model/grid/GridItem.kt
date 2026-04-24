@@ -73,7 +73,9 @@ sealed class GridItem {
         val iv: String,
         val biometricFailureCount: Int = 0,
         val isBiometricDisabled: Boolean = false,
-        val hasBiometric: Boolean = false
+        val hasBiometric: Boolean = false,
+        val biometricWrappedPassword: String? = null,
+        val biometricWrappedPasswordIv: String? = null
     ) : GridItem()
 }
 

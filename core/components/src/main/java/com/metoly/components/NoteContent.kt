@@ -57,6 +57,8 @@ import com.metoly.morganize.core.model.RichSpan
 import com.metoly.morganize.core.model.grid.DrawingStroke
 import com.metoly.morganize.core.model.grid.NotePage
 import com.metoly.morganize.core.model.grid.TextAlignment
+import com.metoly.morganize.core.ui.theme.MorgColors
+import com.metoly.morganize.core.ui.theme.MorgDimens
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -68,6 +70,53 @@ private val TransparentFieldColors
         unfocusedContainerColor = Color.Transparent
     )
 
+/**
+ * The main scrollable content area for a note.
+ * Renders the title, category chips, and a vertically list of grid pages.
+ * Handles scrolling, overscroll-to-add-page behaviour, and directs all grid events.
+ *
+ * @param modifier Standard Compose modifier.
+ * @param title The title of the note.
+ * @param onTitleChange Callback for title updates.
+ * @param titleHint Placeholder text for empty title.
+ * @param pages The ordered list of pages containing grid items and strokes.
+ * @param selectedItemId The ID of the currently focused grid item, if any.
+ * @param onItemSelected Callback when a grid item is focused.
+ * @param onItemMoved Callback for completing an item drag operation.
+ * @param onItemResized Callback for completing an item resize operation.
+ * @param onItemTextChanged Callback when text changes inside a typed grid item.
+ * @param onItemRichSpansChanged Callback when rich text spans are updated.
+ * @param onItemTypographyChanged Callback when item typography updates.
+ * @param onItemDeleted Callback when an item is removed.
+ * @param onEditingTextItemChanged Callback indicating which text item is actively receiving text input.
+ * @param editingTextItemId The ID of the currently active text input item.
+ * @param activeRichState The rich text formatting state of the active text input box.
+ * @param onActiveRichStateChange Sink for active rich text formatting state.
+ * @param categories List of available categories for the horizontal filter row.
+ * @param selectedCategoryId The ID of the applied category filter.
+ * @param onCategorySelected Callback when a category filter is applied or removed.
+ * @param onAddCategory Callback to invoke the add category bottom sheet.
+ * @param onAddPage Callback to append a new page to the end of the note.
+ * @param isReadOnly Prevents modifications to the content when true (e.g. List Screen).
+ * @param isDrawingMode Locks scrolling and enables canvas strokes if true.
+ * @param isEraserMode Whether strokes tapped/drawn will be removed.
+ * @param penColorArgb Color applied to new drawn strokes.
+ * @param strokeWidthFraction Canvas-relative width multiplier for new strokes.
+ * @param eraserWidthFraction Canvas-relative width multiplier for eraser interactions.
+ * @param onStrokeAdded Callback when a new stroke completes.
+ * @param onStrokesUpdated Callback when strokes are modified (e.g., partially erased).
+ * @param onChecklistTitleChanged Callback when checklist header text changes.
+ * @param onCheckboxToggled Callback when checklist entry checked state toggles.
+ * @param onCheckboxTextChanged Callback when checklist entry label text changes.
+ * @param onCheckboxAdded Callback when a new entry is appended to a checklist.
+ * @param onCheckboxDeleted Callback when an entry is removed from a checklist.
+ * @param onEmptyGridAddClicked Callback when the placeholder add button in an empty grid is tapped.
+ * @param onActivePageChanged Callback yielding the index of the page most prominent by scroll position.
+ * @param lazyListState Shared scroll state for the vertical column.
+ * @param unlockedItemIds Set of Secret Item IDs that are temporarily visible.
+ * @param transientDecryptedItems Map of unpersisted, decrypted content for Secret Items.
+ * @param onSecretItemUnlockRequested Callback to prompt the user to decrypt a locked secret item.
+ */
 @Composable
 fun NoteContent(
     modifier: Modifier = Modifier,
@@ -123,7 +172,6 @@ fun NoteContent(
     
     val firstVisibleItemIndex by remember { derivedStateOf { lazyListState.firstVisibleItemIndex } }
     val activePageIndex = maxOf(0, firstVisibleItemIndex - 1)
-    val containerColor by remember { mutableStateOf(Color(0xFFF5F5F7)) }
 
     LaunchedEffect(activePageIndex) {
         onActivePageChanged(activePageIndex)
@@ -175,7 +223,7 @@ fun NoteContent(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize().background(containerColor).nestedScroll(nestedScrollConnection)) {
+    Box(modifier = modifier.fillMaxSize().nestedScroll(nestedScrollConnection)) {
         LazyColumn(
             state = lazyListState,
             modifier = Modifier
@@ -184,7 +232,7 @@ fun NoteContent(
             contentPadding = PaddingValues(bottom = 80.dp)
         ) {
         item(key = "header") {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(MorgDimens.spacingLg))
 
             CategoryChipRow(
                 categories = categories,
@@ -193,12 +241,12 @@ fun NoteContent(
                 onAddCategory = onAddCategory
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(MorgDimens.spacingLg))
 
             OutlinedTextField(
                 value = title,
                 onValueChange = onTitleChange,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = MorgDimens.spacingSm),
                 placeholder = { Text(titleHint, style = MaterialTheme.typography.headlineSmall) },
                 textStyle = MaterialTheme.typography.headlineSmall,
                 singleLine = true,
@@ -209,7 +257,7 @@ fun NoteContent(
                 colors = TransparentFieldColors
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(MorgDimens.spacingLg))
         }
 
         itemsIndexed(pages, key = { _, page -> page.id }) { index, page ->
@@ -218,10 +266,13 @@ fun NoteContent(
                     text = "Page ${index + 1}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(
+                        horizontal = MorgDimens.screenPaddingHorizontal,
+                        vertical = MorgDimens.spacingSm
+                    )
                 )
 
-                // Overlay: GridCanvas below, DrawingCanvas on top (when drawing mode active)
+
                 Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                     GridCanvas(
                         page = page,
@@ -278,14 +329,11 @@ fun NoteContent(
             }
         }
     }
-
-    // Indicator at the bottom
     if (overscrollPx.floatValue < 0f) {
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(containerColor)
                 .height(with(density) { (-overscrollPx.floatValue).toDp() }),
             contentAlignment = Alignment.Center
         ) {

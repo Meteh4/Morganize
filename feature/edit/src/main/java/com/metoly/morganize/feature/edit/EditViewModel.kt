@@ -3,6 +3,7 @@ package com.metoly.morganize.feature.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.metoly.components.model.NoteEditorDelegate
+import com.metoly.components.model.NoteEditorEvent
 import com.metoly.components.model.NoteEditorUiEvent
 import com.metoly.morganize.core.data.CategoryRepository
 import com.metoly.morganize.core.data.NoteRepository
@@ -25,6 +26,11 @@ import com.metoly.morganize.core.model.security.EncryptionManager
 import com.metoly.morganize.core.model.security.KeyManager
 import com.metoly.morganize.core.model.grid.NotePage
 
+/**
+ * ViewModel orchestrating the modification and updating of an existing Note.
+ * Controls data re-hydration from local storage, decodes secured content via biometric prompts,
+ * manages delete requests, and persists state modifications back to the repository.
+ */
 class EditViewModel(
     private val noteId: Long,
     private val noteRepository: NoteRepository,
@@ -70,39 +76,56 @@ class EditViewModel(
         deleteNote()
     }
 
+    /**
+     * Re-encodes and updates the database with current grid edits and structural states.
+     * Retains pre-existing encryption wrappers passively if the user modifies an unlocked note
+     * without attempting to disable or alter its security layout.
+     */
     fun save() {
         val current = originalNote ?: return
         val state = delegate.state.value
         
         viewModelScope.launch {
             try {
-                var finalPages = state.pages
+                var finalPages = delegate.getPagesForSaving()
                 var encryptedContent = current.encryptedContent
                 var saltBase64 = current.salt
                 var ivBase64 = current.iv
 
+                var biometricPwdCipher = current.biometricWrappedPassword
+                var biometricPwdIv = current.biometricWrappedPasswordIv
+                var hasBiometric = current.hasBiometric
+
                 if (state.isSecretNote) {
                     val password = state.transientSecretNotePassword
                     if (password != null) {
-                        // User set a new password or unlocked it. We must re-encrypt the current pages.
                         val pagesJson = Json.encodeToString(finalPages)
                         val salt = keyManager.generateSalt()
                         val secretKey = keyManager.deriveKeyFromPassword(password, salt)
                         val (cipherBase64, currentIvBase64, _) = encryptionManager.encryptString(pagesJson, secretKey)
+                        
+                        if (state.transientSecretNoteBiometric) {
+                            val biometricKey = keyManager.getOrCreateBiometricKey("secret_note_master_key")
+                            val (encPwd, encIv, _) = encryptionManager.encryptString(password, biometricKey)
+                            biometricPwdCipher = encPwd
+                            biometricPwdIv = encIv
+                            hasBiometric = true
+                        }
                         
                         finalPages = emptyList()
                         encryptedContent = cipherBase64
                         saltBase64 = Base64.encodeToString(salt, Base64.NO_WRAP)
                         ivBase64 = currentIvBase64
                     } else if (current.isSecret && !state.isSecretNoteUnlocked) {
-                        // Note is locked and wasn't unlocked, pass the encrypted parts through without touching pages.
                         finalPages = emptyList()
                     }
                 } else {
-                    // It's not a secret note, clear encryption fields if any
                     encryptedContent = null
                     saltBase64 = null
                     ivBase64 = null
+                    biometricPwdCipher = null
+                    biometricPwdIv = null
+                    hasBiometric = false
                 }
 
                 val updatedNote = current.copy(
@@ -114,6 +137,9 @@ class EditViewModel(
                     encryptedContent = encryptedContent,
                     salt = saltBase64,
                     iv = ivBase64,
+                    hasBiometric = hasBiometric,
+                    biometricWrappedPassword = biometricPwdCipher,
+                    biometricWrappedPasswordIv = biometricPwdIv,
                     updatedAt = System.currentTimeMillis()
                 )
                 
@@ -132,6 +158,9 @@ class EditViewModel(
         }
     }
 
+    /**
+     * Attempts to unlock the Note overlay via standard text password.
+     */
     fun unlockSecretNote(password: String) {
         val current = originalNote ?: return
         val currentEncryptedContent = current.encryptedContent ?: return
@@ -154,6 +183,26 @@ class EditViewModel(
                 }
             } catch (e: Exception) {
                 delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Incorrect password"))
+            }
+        }
+    }
+
+    /**
+     * Executes the overarching secret note unlock sequence once provided with the
+     * valid OS-generated hardware backed biometric cipher object.
+     */
+    fun unlockSecretNoteWithBiometric(decryptedKey: javax.crypto.SecretKey) {
+        val current = originalNote ?: return
+        val biometricPwdCipher = current.biometricWrappedPassword ?: return
+        val biometricPwdIv = current.biometricWrappedPasswordIv ?: return
+
+        viewModelScope.launch {
+            try {
+                val password = encryptionManager.decryptString(biometricPwdCipher, biometricPwdIv, decryptedKey)
+                unlockSecretNote(password)
+            } catch (e: Exception) {
+                delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Biometric decryption failed"))
+                delegate.onEvent(NoteEditorEvent.SecretNoteBiometricFailed)
             }
         }
     }
@@ -191,9 +240,20 @@ class EditViewModel(
                                     backgroundColor = note.backgroundColor,
                                     categoryId = note.categoryId,
                                     isSecretNote = note.isSecret,
-                                    isSecretNoteUnlocked = false
+                                    isSecretNoteUnlocked = false,
+                                    transientSecretNoteBiometric = note.hasBiometric,
+                                    secretNoteBiometricIv = note.biometricWrappedPasswordIv
                                 )
                             }
+                            
+                            if (note.isSecret && note.hasBiometric && note.biometricWrappedPasswordIv != null) {
+                                delegate.sendUiEvent(NoteEditorUiEvent.ShowBiometricPrompt(
+                                    itemId = null,
+                                    keystoreAlias = "secret_note_master_key",
+                                    decryptionIv = note.biometricWrappedPasswordIv
+                                ))
+                            }
+                            
                             _editState.update { it.copy(noteState = ResponseState.Success(Unit)) }
                         } else {
                             _editState.update {

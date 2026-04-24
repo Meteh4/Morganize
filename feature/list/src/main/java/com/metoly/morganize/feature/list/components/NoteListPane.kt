@@ -27,6 +27,10 @@ import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.feature.list.R
 
+/**
+ * The primary master screen portion of the dual-pane List layout.
+ * Hosts the horizontal category filters, note creation fab, and the actual vertical list of notes.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun NoteListPane(

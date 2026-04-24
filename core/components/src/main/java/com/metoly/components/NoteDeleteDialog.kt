@@ -2,63 +2,42 @@ package com.metoly.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
+import com.metoly.components.common.MorgDestructiveButton
+import com.metoly.components.common.MorgDialog
+import com.metoly.components.common.MorgOutlinedButton
 
+/**
+ * Premium delete confirmation dialog.
+ *
+ * Uses [MorgDialog] with a destructive (error) colour scheme for the icon
+ * and confirm button, replacing the stock [AlertDialog].
+ */
 @Composable
 fun DeleteNoteDialog(
+    noteTitle: String = "",
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    noteTitle: String? = null,
+    onDismiss: () -> Unit
 ) {
-    val resolvedTitle = when {
-        noteTitle == null -> stringResource(R.string.core_components_delete_dialog_generic_message)
-        noteTitle.isBlank() -> stringResource(R.string.core_components_untitled)
-        else -> noteTitle
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error
-            )
-        },
-        title = {
-            Text(text = stringResource(R.string.core_components_delete_dialog_title))
-        },
-        text = {
-            Text(
-                text = stringResource(
-                    R.string.core_components_delete_dialog_message,
-                    resolvedTitle
-                )
-            )
-        },
+    MorgDialog(
+        icon = Icons.Default.Delete,
+        title = "Delete Note",
+        text = if (noteTitle.isNotBlank())
+            "Are you sure you want to delete \"$noteTitle\"? This action cannot be undone."
+        else
+            "Are you sure you want to delete this note? This action cannot be undone.",
         confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError
-                )
-            ) {
-                Text(stringResource(R.string.core_components_delete_dialog_confirm))
-            }
+            MorgDestructiveButton(
+                text = "Delete",
+                onClick = onConfirm
+            )
         },
         dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
-                Text(stringResource(R.string.core_components_delete_dialog_cancel))
-            }
-        }
+            MorgOutlinedButton(
+                text = "Cancel",
+                onClick = onDismiss
+            )
+        },
+        onDismiss = onDismiss
     )
 }

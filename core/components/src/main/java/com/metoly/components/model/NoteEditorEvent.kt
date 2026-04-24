@@ -71,6 +71,8 @@ sealed interface NoteEditorEvent {
     // ── Secret Note ─────────────────────────────────────────────────
     data class ToggleSecretNote(val password: String, val useBiometric: Boolean) : NoteEditorEvent
     data class SecretNoteUnlockWithPassword(val password: String) : NoteEditorEvent
+    data class SecretNoteUnlockWithBiometric(val decryptedKey: javax.crypto.SecretKey) : NoteEditorEvent
+    data object SecretNoteBiometricFailed : NoteEditorEvent
     data object SecretNoteLock : NoteEditorEvent
 }
 

@@ -5,6 +5,9 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import com.metoly.morganize.core.ui.theme.MorgAnimation
+import com.metoly.morganize.core.ui.theme.MorgDimens
+import com.metoly.morganize.core.ui.theme.MorgShapes
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -48,6 +51,23 @@ private const val FONT_SIZE_MAX = 36f
 
 private val LINE_HEIGHT_OPTIONS = listOf(1.2f, 1.4f, 1.8f)
 
+/**
+ * A toolbar providing rich text formatting capabilities.
+ * 
+ * Includes toggles for bold/italic, lists, alignment, font size, and line height.
+ * All formatting changes are emitted back via callbacks.
+ * 
+ * @param state Current formatting state of the selected text block.
+ * @param onToggleBold Callback when bold toggle is tapped.
+ * @param onToggleItalic Callback when italic toggle is tapped.
+ * @param onToggleBulletList Callback when bullet list toggle is tapped.
+ * @param onToggleNumberedList Callback when numbered list toggle is tapped.
+ * @param onFontSizeIncrease Callback when font size '+' is tapped.
+ * @param onFontSizeDecrease Callback when font size '-' is tapped.
+ * @param onTextAlignCycle Callback to cycle through text alignments.
+ * @param onLineHeightCycle Callback to cycle through line heights.
+ * @param modifier Standard Compose modifier for the toolbar surface.
+ */
 @Composable
 fun RichTextToolbar(
     state: RichTextEditorState,
@@ -74,7 +94,6 @@ fun RichTextToolbar(
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // ---- Inline formatting ----
             FormatToggleButton(
                 icon = Icons.Default.FormatBold,
                 label = "Bold",
@@ -89,8 +108,6 @@ fun RichTextToolbar(
             )
 
             ToolbarDivider()
-
-            // ---- Lists ----
             FormatToggleButton(
                 icon = Icons.AutoMirrored.Filled.FormatListBulleted,
                 label = "Bullet",
@@ -105,8 +122,6 @@ fun RichTextToolbar(
             )
 
             ToolbarDivider()
-
-            // ---- Font size ----
             ToolbarIconButton(
                 icon = Icons.Default.KeyboardArrowDown,
                 label = "Font -",
@@ -127,8 +142,6 @@ fun RichTextToolbar(
             )
 
             ToolbarDivider()
-
-            // ---- Text alignment ----
             val alignIcon = when (state.textAlign) {
                 TextAlignment.Center -> Icons.Default.FormatAlignCenter
                 TextAlignment.End -> Icons.AutoMirrored.Filled.FormatAlignRight
@@ -141,8 +154,6 @@ fun RichTextToolbar(
             )
 
             ToolbarDivider()
-
-            // ---- Line height ----
             FormatToggleButton(
                 icon = Icons.Default.FormatSize,
                 label = "Line height",
@@ -165,8 +176,8 @@ fun RichTextToolbar(
 private fun ToolbarDivider() {
     VerticalDivider(
         modifier = Modifier
-            .padding(horizontal = 4.dp)
-            .height(24.dp),
+            .padding(horizontal = MorgDimens.spacingXs)
+            .height(MorgDimens.toolbarDividerHeight),
         color = MaterialTheme.colorScheme.outlineVariant
     )
 }
@@ -183,7 +194,7 @@ private fun FormatToggleButton(
             MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
         else
             MaterialTheme.colorScheme.surface.copy(alpha = 0f),
-        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        animationSpec = MorgAnimation.standard(),
         label = "bg_$label"
     )
     val iconColor by animateColorAsState(
@@ -191,22 +202,22 @@ private fun FormatToggleButton(
             MaterialTheme.colorScheme.primary
         else
             MaterialTheme.colorScheme.onSurface,
-        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        animationSpec = MorgAnimation.standard(),
         label = "icon_$label"
     )
 
     IconButton(
         onClick = onClick,
         modifier = Modifier
-            .size(40.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .size(MorgDimens.toolbarButtonSize)
+            .clip(MorgShapes.toolbarToggle)
             .background(bgColor)
     ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
             tint = iconColor,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(MorgDimens.toolbarIconSize)
         )
     }
 }
@@ -221,7 +232,7 @@ private fun ToolbarIconButton(
     IconButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.size(40.dp)
+        modifier = Modifier.size(MorgDimens.toolbarButtonSize)
     ) {
         Icon(
             imageVector = icon,
@@ -230,12 +241,10 @@ private fun ToolbarIconButton(
                 MaterialTheme.colorScheme.onSurface
             else
                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(MorgDimens.toolbarIconSize)
         )
     }
 }
-
-// Exposed helpers used by callers to cycle values
 fun nextTextAlign(current: TextAlignment): TextAlignment = when (current) {
     TextAlignment.Start -> TextAlignment.Center
     TextAlignment.Center -> TextAlignment.End

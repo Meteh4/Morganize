@@ -8,10 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,10 +17,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import com.metoly.morganize.core.ui.theme.MorgDimens
+import com.metoly.morganize.core.ui.theme.MorgShapes
 
+/**
+ * A locked representation for a secret grid item.
+ * Obscures the content with a secure gradient overlay and lock icon.
+ *
+ * @param isBiometricDisabled Whether biometric unlocking is disabled (determines instructions text).
+ * @param modifier Compose modifier.
+ */
 @Composable
 fun SecretItemContent(
     isBiometricDisabled: Boolean,
@@ -31,26 +38,41 @@ fun SecretItemContent(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color.Black.copy(alpha = 0.8f)),
+            .clip(MorgShapes.gridItem)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF1A1A2E),
+                        Color(0xFF16213E)
+                    )
+                )
+            ),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(MorgDimens.spacingLg)
         ) {
-            Icon(
-                imageVector = if (isBiometricDisabled) Icons.Default.Lock else Icons.Default.Lock,
-                contentDescription = "Secret Item",
-                tint = Color.White,
-                modifier = Modifier.size(32.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(MorgDimens.iconContainerSize)
+                    .clip(MorgShapes.iconContainer)
+                    .background(Color.White.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = "Secret Item",
+                    tint = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier.size(MorgDimens.iconSize)
+                )
+            }
+            Spacer(modifier = Modifier.height(MorgDimens.spacingSm))
             Text(
-                text = "Secret Item",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                text = if (isBiometricDisabled) "Locked" else "Tap to Unlock",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = 0.85f)
                 )
             )
         }

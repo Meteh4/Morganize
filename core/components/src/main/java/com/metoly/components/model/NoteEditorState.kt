@@ -28,6 +28,8 @@ data class NoteEditorState(
     val isSecretNoteUnlocked: Boolean = false,
     val transientSecretNotePassword: String? = null,
     val transientSecretNoteBiometric: Boolean = false,
+    val secretNoteBiometricIv: String? = null,
+    val secretNoteBiometricFailed: Boolean = false,
 
     // ── Secret Item ─────────────────────────────────────────────────
     val unlockedItemIds: Set<String> = emptySet(),

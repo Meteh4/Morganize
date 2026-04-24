@@ -18,8 +18,20 @@ import com.metoly.components.model.NoteEditorState
 import com.metoly.morganize.core.model.SpanFormatType
 
 /**
- * Shared bottom bar composable replacing both CreateBottomBar and EditBottomBar.
- * Contains RichTextToolbar, DrawingToolbar, and NoteBottomBar.
+ * Aggregated bottom bar for the Create and Edit screens.
+ * Contains toolbars for Rich Text formatting, Drawing configuration, and the main NoteBottomBar actions.
+ * Displays the appropriate toolbar conditionally based on the active editing mode.
+ *
+ * @param state Current note editor state.
+ * @param activePageIndex The index of the currently viewed grid page.
+ * @param activeEditingTextItemId The ID of the text item currently being edited.
+ * @param activeRichState The rich text formatting state of the active text item.
+ * @param onRichStateUpdate Callback to sink rich text formatting changes.
+ * @param onEvent General NoteEditorEvent callback.
+ * @param onAddSecretItem Callback to initiate secret item creation flow.
+ * @param onSave Callback to save the note.
+ * @param saveContentDescription Accessibility description for the save button.
+ * @param imagePickerLauncher Launcher to handle visual media selection.
  */
 @Composable
 fun NoteEditorBottomBar(
@@ -29,6 +41,7 @@ fun NoteEditorBottomBar(
     activeRichState: RichTextEditorState?,
     onRichStateUpdate: (RichTextEditorState) -> Unit,
     onEvent: (NoteEditorEvent) -> Unit,
+    onAddSecretItem: () -> Unit,
     onSave: () -> Unit,
     saveContentDescription: String,
     imagePickerLauncher: ManagedActivityResultLauncher<PickVisualMediaRequest, *>
@@ -38,7 +51,6 @@ fun NoteEditorBottomBar(
             .imePadding()
             .fillMaxWidth()
     ) {
-        // ── Rich Text Toolbar ────────────────────────────────────────────
         AnimatedVisibility(
             visible = activeEditingTextItemId != null && activeRichState != null && !state.isDrawingMode,
             enter = fadeIn() + expandVertically(),
@@ -59,7 +71,6 @@ fun NoteEditorBottomBar(
             }
         }
 
-        // ── Drawing Toolbar ──────────────────────────────────────────────
         AnimatedVisibility(
             visible = state.isDrawingMode,
             enter = fadeIn() + expandVertically(),
@@ -91,7 +102,6 @@ fun NoteEditorBottomBar(
             )
         }
 
-        // ── Main Bottom Bar ──────────────────────────────────────────────
         NoteBottomBar(
             isDrawingMode = state.isDrawingMode,
             onAddText = { onEvent(NoteEditorEvent.TextGridItemAdded("", activePageIndex)) },
@@ -101,6 +111,7 @@ fun NoteEditorBottomBar(
                 )
             },
             onAddChecklist = { onEvent(NoteEditorEvent.ChecklistGridItemAdded(activePageIndex)) },
+            onAddSecretItem = onAddSecretItem,
             onStartDrawing = { onEvent(NoteEditorEvent.DrawingModeToggled) },
             onSave = onSave,
             saveContentDescription = saveContentDescription

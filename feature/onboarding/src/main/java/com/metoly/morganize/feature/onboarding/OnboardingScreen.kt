@@ -118,12 +118,10 @@ fun OnboardingScreen(onDone: () -> Unit) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Page indicators
             PagerIndicator(pagerState = pagerState, pageCount = pages.size)
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Navigation buttons
             Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,

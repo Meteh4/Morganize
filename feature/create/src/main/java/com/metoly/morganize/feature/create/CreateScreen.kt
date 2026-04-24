@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -39,6 +40,15 @@ import com.metoly.components.rememberNoteImagePicker
 import com.metoly.morganize.feature.create.components.CreateTopBar
 import kotlinx.coroutines.flow.collectLatest
 
+/**
+ * Screen for creating a new note.
+ * Initializes an empty grid canvas and handles all user interactions for drafting,
+ * styling, and optionally securing note content before persisting it to the database.
+ *
+ * @param viewModel The ViewModel overseeing note creation state.
+ * @param onBack Callback when pressing back or navigating away without saving.
+ * @param onSaved Callback indicating the note was persisted successfully.
+ */
 @Composable
 fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -89,7 +99,7 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
     val biometricHelper = remember { BiometricHelper(context) }
     val isBiometricAvailable = remember { biometricHelper.isBiometricAvailable() }
     
-    // Secret item creation flow state
+
     var showSecretItemTypePicker by remember { mutableStateOf(false) }
     var pendingSecretItemType by remember { mutableStateOf<SecretItemInnerType?>(null) }
     var showSetCredentialsForSecretItem by remember { mutableStateOf(false) }
@@ -109,39 +119,57 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
                 is NoteEditorUiEvent.ShowSnackbar -> snackbarHostState.showSnackbar(event.message)
                 is NoteEditorUiEvent.ScrollToPage -> lazyListState.animateScrollToItem(event.pageIndex + 1)
                 is NoteEditorUiEvent.ShowBiometricPrompt -> {
-                    // Biometric unlock logic for SecretItem
+
                     val keyManager = com.metoly.morganize.core.model.security.KeyManager()
                     try {
                         val secretKey = keyManager.getOrCreateBiometricKey(event.keystoreAlias)
                         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-                        cipher.init(Cipher.DECRYPT_MODE, secretKey)
+                        if (event.decryptionIv != null) {
+                            val ivBytes = android.util.Base64.decode(event.decryptionIv, android.util.Base64.NO_WRAP)
+                            val spec = javax.crypto.spec.GCMParameterSpec(128, ivBytes)
+                            cipher.init(Cipher.DECRYPT_MODE, secretKey, spec)
+                        } else {
+                            cipher.init(Cipher.DECRYPT_MODE, secretKey)
+                        }
                         biometricHelper.showBiometricPrompt(
                             activity = context as FragmentActivity,
                             cipher = cipher,
                             onSuccess = { _ ->
-                                event.itemId?.let { id ->
+                                val id = event.itemId
+                                if (id != null) {
                                     viewModel.delegate.onEvent(NoteEditorEvent.SecretItemUnlockWithBiometric(
                                        pageId = uiState.pages[activePageIndex].id,
                                        itemId = id,
                                        decryptedKey = secretKey
                                     ))
+                                } else {
+                                    viewModel.delegate.onEvent(NoteEditorEvent.SecretNoteUnlockWithBiometric(secretKey))
+
                                 }
                             },
                             onFailed = {
-                                event.itemId?.let { id ->
+                                val id = event.itemId
+                                if (id != null) {
                                     viewModel.delegate.onEvent(NoteEditorEvent.SecretItemBiometricFailed(
                                        pageId = uiState.pages[activePageIndex].id,
                                        itemId = id
                                     ))
+                                } else {
+                                    viewModel.delegate.onEvent(NoteEditorEvent.SecretNoteBiometricFailed)
                                 }
                             }
                         )
                     } catch (e: Exception) {
-                        event.itemId?.let { id ->
+                        android.util.Log.e("BIOMETRIC", "Failed to init cipher", e)
+                        snackbarHostState.showSnackbar("Biometric Error: ${e.message}")
+                        val id = event.itemId
+                        if (id != null) {
                              viewModel.delegate.onEvent(NoteEditorEvent.SecretItemBiometricFailed(
                                 pageId = uiState.pages[activePageIndex].id,
                                 itemId = id
                              ))
+                        } else {
+                             viewModel.delegate.onEvent(NoteEditorEvent.SecretNoteBiometricFailed)
                         }
                     }
                 }
@@ -151,7 +179,7 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
     }
 
     Scaffold(
-        containerColor = Color(0xFFF5F5F7),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CreateTopBar(
                 onBack = onBack,
@@ -176,6 +204,7 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
                 activeRichState = activeRichState,
                 onRichStateUpdate = updateRichState,
                 onEvent = viewModel.delegate::onEvent,
+                onAddSecretItem = { showSecretItemTypePicker = true },
                 onSave = viewModel::save,
                 saveContentDescription = stringResource(R.string.feature_create_save),
                 imagePickerLauncher = imagePickerLauncher
@@ -224,7 +253,6 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
         )
     }
 
-    // Step 1: Pick inner item type
     if (showSecretItemTypePicker) {
         SecretItemTypePickerBottomSheet(
             onTextSelected = {
@@ -247,7 +275,6 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
         )
     }
 
-    // Step 2: Set credentials for the chosen type
     if (showSetCredentialsForSecretItem && pendingSecretItemType != null) {
         SetCredentialsBottomSheet(
             isBiometricAvailable = isBiometricAvailable,

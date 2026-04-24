@@ -30,6 +30,15 @@ import com.metoly.morganize.feature.list.components.NoteListPane
 import com.metoly.morganize.feature.list.model.ListEvent
 import kotlinx.coroutines.launch
 
+/**
+ * The primary dashboard screen displaying all user notes.
+ * Implements a responsive List/Detail layout via Material 3 Adaptive Scaffold.
+ * Connects directly to the NoteViewModel to observe database flows.
+ *
+ * @param viewModel ViewModel bridging the UI to NoteRepository and CategoryRepository.
+ * @param onCreateNote Callback to navigate to the standalone Create Screen.
+ * @param onEditNote Callback to navigate to the standalone Edit Screen for a specific note ID.
+ */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ListScreen(viewModel: ListViewModel, onCreateNote: () -> Unit, onEditNote: (Long) -> Unit) {
@@ -116,8 +125,7 @@ fun ListScreen(viewModel: ListViewModel, onCreateNote: () -> Unit, onEditNote: (
             )
 
             if (notesState is ResponseState.Error) {
-                // If there's a global error fetching notes, we might want to show it.
-                // For now, it will just show an empty list, and the error can optionally be displayed in a snackbar if we handle it in ViewModel.
+
             }
         }
     }

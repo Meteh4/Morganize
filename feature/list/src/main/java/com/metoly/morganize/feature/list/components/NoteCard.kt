@@ -39,7 +39,19 @@ import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.feature.list.R
 import com.metoly.morganize.feature.list.util.DateFormatter
+import com.metoly.morganize.core.ui.theme.MorgAnimation
+import com.metoly.morganize.core.ui.theme.MorgDimens
+import com.metoly.morganize.core.ui.theme.MorgShapes
 
+/**
+ * A rich card representing a single Note in the master list pane.
+ * Renders category tags, title (or placeholder), and indicates selection state via color fills.
+ *
+ * @param note The domain entity for the note.
+ * @param category The optionally assigned category for the note.
+ * @param isSelected Whether this note is currently active in the detail pane.
+ * @param onClick Callback triggered when tapped.
+ */
 @Composable
 internal fun NoteCard(
     note: Note,
@@ -52,7 +64,7 @@ internal fun NoteCard(
 
     val fillFraction by animateFloatAsState(
         targetValue = if (isSelected && resolvedNoteColor != null) 1f else 0f,
-        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+        animationSpec = MorgAnimation.standard(),
         label = "fill"
     )
 
@@ -78,7 +90,7 @@ internal fun NoteCard(
 
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
+        shape = MorgShapes.card,
         colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Row(

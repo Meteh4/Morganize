@@ -8,6 +8,9 @@ import androidx.room.Query
 import com.metoly.morganize.core.model.Category
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Room Data Access Object for [com.metoly.morganize.core.model.Category] entities.
+ */
 @Dao
 interface CategoryDao {
 

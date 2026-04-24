@@ -9,6 +9,9 @@ import androidx.room.Update
 import com.metoly.morganize.core.model.Note
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Room Data Access Object for governing [Note] entity operations.
+ */
 @Dao
 interface NoteDao {
 

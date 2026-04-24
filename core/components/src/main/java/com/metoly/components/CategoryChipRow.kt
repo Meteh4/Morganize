@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.metoly.morganize.core.model.Category
+import com.metoly.morganize.core.ui.theme.MorgDimens
 
 /**
  * A horizontally scrollable row of [FilterChip]s for category selection/filtering.
@@ -36,10 +37,9 @@ fun CategoryChipRow(
 ) {
     LazyRow(
             modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp)
+            horizontalArrangement = Arrangement.spacedBy(MorgDimens.spacingSm),
+            contentPadding = PaddingValues(horizontal = MorgDimens.screenPaddingHorizontal)
     ) {
-        // "All" chip
         item {
             FilterChip(
                     selected = selectedCategoryId == null,
@@ -48,7 +48,6 @@ fun CategoryChipRow(
             )
         }
 
-        // Category chips
         items(categories, key = { it.id }) { category ->
             val chipColor = Color(category.colorArgb)
             FilterChip(
@@ -63,7 +62,6 @@ fun CategoryChipRow(
             )
         }
 
-        // Optional "Add category" chip
         if (onAddCategory != null) {
             item {
                 FilterChip(

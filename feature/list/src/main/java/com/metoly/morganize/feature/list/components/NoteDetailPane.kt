@@ -36,7 +36,14 @@ import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.feature.list.R
 import com.metoly.morganize.feature.list.util.DateFormatter
+import com.metoly.components.common.MorgEmptyState
+import com.metoly.components.common.MorgSectionHeader
+import com.metoly.morganize.core.ui.theme.MorgDimens
 
+/**
+ * The detail portion of the dual-pane List layout.
+ * Provides a read-only representation of the selected Note's metadata, category, and grid canvases.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun NoteDetailPane(
@@ -112,40 +119,18 @@ internal fun NoteDetailPane(
             }
 
             if (note.isSecret) {
-                Spacer(Modifier.height(48.dp))
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        text = "This note is locked",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = "Edit note to unlock",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                }
+                Spacer(Modifier.height(MorgDimens.spacingXxxl))
+                MorgEmptyState(
+                    icon = Icons.Default.Lock,
+                    title = "This note is locked",
+                    subtitle = "Edit note to unlock",
+                    modifier = Modifier.fillMaxSize()
+                )
             } else {
                 pages.forEachIndexed { index, page ->
-                    Text(
-                        text = "Page ${index + 1}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-                    )
+                    MorgSectionHeader(text = "Page ${index + 1}")
 
-                    Box(modifier = Modifier.padding(horizontal = 24.dp)) {
+                    Box(modifier = Modifier.padding(horizontal = MorgDimens.sheetPadding)) {
                         GridCanvas(
                             page = page,
                             selectedItemId = null,
@@ -165,7 +150,7 @@ internal fun NoteDetailPane(
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(MorgDimens.spacingXxl))
 
             Text(
                 text = stringResource(
@@ -173,10 +158,10 @@ internal fun NoteDetailPane(
                     DateFormatter.formatWithTime(note.updatedAt)
                 ),
                 style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(horizontal = 24.dp)
+                modifier = Modifier.padding(horizontal = MorgDimens.sheetPadding)
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(MorgDimens.spacingXxl))
         }
     }
 }

@@ -3,6 +3,7 @@ package com.metoly.components.model
 import com.metoly.morganize.core.model.grid.ChecklistActionType
 import com.metoly.morganize.core.model.grid.GridItem
 import com.metoly.morganize.core.model.grid.GridItemFactory
+import com.metoly.morganize.core.model.grid.NotePage
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -105,7 +106,9 @@ class NoteEditorDelegate(
 
             is NoteEditorEvent.ToggleSecretNote,
             is NoteEditorEvent.SecretNoteUnlockWithPassword,
-            is NoteEditorEvent.SecretNoteLock -> handleSecretNote(event)
+            is NoteEditorEvent.SecretNoteUnlockWithBiometric,
+            NoteEditorEvent.SecretNoteBiometricFailed,
+            NoteEditorEvent.SecretNoteLock -> handleSecretNote(event)
         }
     }
 
@@ -490,14 +493,28 @@ class NoteEditorDelegate(
                         val secretKey = keyManager.deriveKeyFromPassword(event.password, salt)
                         val (ciphertextParams, ivParams, _) = encryptionManager.encryptString(innerJson, secretKey)
                         
+                        val id = java.util.UUID.randomUUID().toString()
+                        var biometricPwdCipher: String? = null
+                        var biometricPwdIv: String? = null
+                        
+                        if (event.useBiometric) {
+                            val biometricKey = keyManager.getOrCreateBiometricKey("secret_item_$id")
+                            val (encPwd, encIv, _) = encryptionManager.encryptString(event.password, biometricKey)
+                            biometricPwdCipher = encPwd
+                            biometricPwdIv = encIv
+                        }
+                        
                         val (newPages, addedIndex) = state.value.pages.addItemToPage(
                             event.targetPageIndex,
                             GridItemFactory.createSecretItem(
+                                id = id,
                                 width = event.width, height = event.height,
                                 encryptedPayload = ciphertextParams,
                                 salt = android.util.Base64.encodeToString(salt, android.util.Base64.NO_WRAP),
                                 iv = ivParams,
-                                hasBiometric = event.useBiometric
+                                hasBiometric = event.useBiometric,
+                                biometricWrappedPassword = biometricPwdCipher,
+                                biometricWrappedPasswordIv = biometricPwdIv
                             )
                         )
                         _state.update { it.copy(pages = newPages) }
@@ -509,9 +526,13 @@ class NoteEditorDelegate(
             }
             is NoteEditorEvent.SecretItemUnlockRequested -> {
                 val item = findGridItem(event.pageId, event.itemId) as? GridItem.SecretItem ?: return
-                if (item.hasBiometric && !item.isBiometricDisabled) {
+                if (item.hasBiometric && !item.isBiometricDisabled && item.biometricWrappedPasswordIv != null) {
                     val alias = "secret_item_${item.id}"
-                    sendUiEvent(NoteEditorUiEvent.ShowBiometricPrompt(itemId = item.id, keystoreAlias = alias))
+                    sendUiEvent(NoteEditorUiEvent.ShowBiometricPrompt(
+                        itemId = item.id, 
+                        keystoreAlias = alias,
+                        decryptionIv = item.biometricWrappedPasswordIv
+                    ))
                 } else {
                     _state.update { it.copy(showUnlockDialog = true, unlockTargetItemId = item.id) }
                 }
@@ -539,17 +560,28 @@ class NoteEditorDelegate(
                 }
             }
             is NoteEditorEvent.SecretItemUnlockWithBiometric -> {
-                if (encryptionManager == null) return
+                if (encryptionManager == null || keyManager == null) return
                 val item = findGridItem(event.pageId, event.itemId) as? GridItem.SecretItem ?: return
                 coroutineScope.launch {
                     try {
-                        val decryptedJson = encryptionManager.decryptString(item.encryptedPayload, item.iv, event.decryptedKey)
+                        // 1. Decrypt the wrapped password using the Biometric Keystore key
+                        val password = encryptionManager.decryptString(
+                            item.biometricWrappedPassword!!, 
+                            item.biometricWrappedPasswordIv!!, 
+                            event.decryptedKey
+                        )
+                        // 2. Derive the master secret key from the password + salt
+                        val saltBytes = android.util.Base64.decode(item.salt, android.util.Base64.NO_WRAP)
+                        val secretKey = keyManager.deriveKeyFromPassword(password, saltBytes)
+                        
+                        // 3. Decrypt the payload
+                        val decryptedJson = encryptionManager.decryptString(item.encryptedPayload, item.iv, secretKey)
                         val decryptedItem = Json.decodeFromString(GridItem.serializer(), decryptedJson)
                         
                         _state.update { it.copy(
                             unlockedItemIds = it.unlockedItemIds + item.id,
                             transientDecryptedItems = it.transientDecryptedItems + (item.id to decryptedItem),
-                            transientSecretItemKeys = it.transientSecretItemKeys + (item.id to event.decryptedKey)
+                            transientSecretItemKeys = it.transientSecretItemKeys + (item.id to secretKey)
                         ) }
                     } catch (e: Exception) {
                         sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Biometric decryption failed"))
@@ -634,9 +666,17 @@ class NoteEditorDelegate(
                 // The ViewModel handles the actual decryption and populates state.pages because
                 // encrypted content exists on the Note entity, not in NoteEditorState.
             }
+            is NoteEditorEvent.SecretNoteUnlockWithBiometric -> {
+                _state.update { it.copy(secretNoteBiometricFailed = false) }
+            }
+            is NoteEditorEvent.SecretNoteBiometricFailed -> {
+                _state.update { it.copy(secretNoteBiometricFailed = true) }
+            }
             is NoteEditorEvent.SecretNoteLock -> {
                 _state.update { it.copy(
                     isSecretNoteUnlocked = false,
+                    transientSecretNotePassword = null,
+                    secretNoteBiometricFailed = false,
                     pages = emptyList(),
                     title = ""
                 ) }
@@ -648,5 +688,37 @@ class NoteEditorDelegate(
     private fun findGridItem(pageId: String, itemId: String): GridItem? {
         val page = state.value.pages.find { it.id == pageId } ?: return null
         return page.items.find { it.id == itemId }
+    }
+
+    /** 
+     * Returns a safely synchronized list of pages ensuring all unlocked transient
+     * SecretItems are securely encrypted into their payloads before saving.
+     */
+    suspend fun getPagesForSaving(): List<NotePage> {
+        if (encryptionManager == null) return state.value.pages
+        var currentPages = state.value.pages
+        val transientItems = state.value.transientDecryptedItems
+        val transientKeys = state.value.transientSecretItemKeys
+        
+        for ((itemId, modifiedInner) in transientItems) {
+            val secretKey = transientKeys[itemId] ?: continue
+            try {
+                val innerJson = Json.encodeToString(GridItem.serializer(), modifiedInner)
+                val (cipherBase64, ivBase64, _) = encryptionManager.encryptString(innerJson, secretKey)
+                
+                currentPages = currentPages.map { page ->
+                    page.copy(
+                        items = page.items.map { item ->
+                            if (item is GridItem.SecretItem && item.id == itemId) {
+                                item.copy(encryptedPayload = cipherBase64, iv = ivBase64)
+                            } else item
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                // Ignore transient failures during bulk save evaluation
+            }
+        }
+        return currentPages
     }
 }

@@ -6,6 +6,10 @@ sealed interface NoteEditorUiEvent {
     data class ScrollToPage(val pageIndex: Int) : NoteEditorUiEvent
     
     // Security UI events
-    data class ShowBiometricPrompt(val itemId: String?, val keystoreAlias: String) : NoteEditorUiEvent
+    data class ShowBiometricPrompt(
+        val itemId: String?, 
+        val keystoreAlias: String,
+        val decryptionIv: String? = null
+    ) : NoteEditorUiEvent
     data class UnlockFailed(val message: String, val attemptsUsed: Int, val maxAttempts: Int = 5) : NoteEditorUiEvent
 }
