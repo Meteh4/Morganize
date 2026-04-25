@@ -1,11 +1,12 @@
 package com.metoly.components.common
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+
+import androidx.compose.ui.res.painterResource
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -13,10 +14,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -100,8 +99,8 @@ fun MorgPasswordField(
         trailingIcon = {
             IconButton(onClick = { showPassword = !showPassword }) {
                 Icon(
-                    imageVector = if (showPassword) Icons.Default.VisibilityOff
-                        else Icons.Default.Visibility,
+                    painter = if (showPassword) painterResource(id = com.metoly.morganize.core.ui.R.drawable.lock_unlocked)
+                        else painterResource(id = com.metoly.morganize.core.ui.R.drawable.lock_locked),
                     contentDescription = "Toggle password visibility"
                 )
             }

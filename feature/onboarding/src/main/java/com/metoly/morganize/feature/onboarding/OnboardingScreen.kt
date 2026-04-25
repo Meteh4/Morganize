@@ -23,10 +23,6 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CreateNewFolder
-import androidx.compose.material.icons.filled.EditNote
-import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -42,36 +38,35 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
 private data class OnboardingPage(
-        val icon: ImageVector,
-        val title: String,
-        val description: String
+    val iconRes: Int,
+    val title: String,
+    val description: String
 )
 
 private val pages =
         listOf(
                 OnboardingPage(
-                        icon = Icons.Default.CreateNewFolder,
+                        iconRes = com.metoly.morganize.core.ui.R.drawable.add_item,
                         title = "Organize Your Thoughts",
                         description =
                                 "Capture ideas the moment they strike. Morganize keeps everything in one beautiful, searchable place."
                 ),
                 OnboardingPage(
-                        icon = Icons.Default.EditNote,
+                        iconRes = com.metoly.morganize.core.ui.R.drawable.edit_note,
                         title = "Create & Edit With Ease",
                         description =
                                 "Rich text editing that's fast and intuitive. Create notes in seconds and refine them whenever you like."
                 ),
                 OnboardingPage(
-                        icon = Icons.Default.PhoneAndroid,
+                        iconRes = com.metoly.morganize.core.ui.R.drawable.phone,
                         title = "Works on Any Screen",
                         description =
                                 "Designed for phones, tablets, and foldables. Your workspace adapts to your device automatically."
@@ -191,7 +186,7 @@ private fun OnboardingPageContent(page: OnboardingPage) {
                     contentAlignment = Alignment.Center
             ) {
                 Icon(
-                        imageVector = page.icon,
+                        painter = painterResource(id = page.iconRes),
                         contentDescription = null,
                         modifier = Modifier.size(56.dp),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer

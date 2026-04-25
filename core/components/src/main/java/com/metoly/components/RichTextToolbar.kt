@@ -1,9 +1,12 @@
 // RichTextToolbar.kt
 package com.metoly.components
+import androidx.compose.runtime.getValue
+
+import androidx.compose.ui.graphics.painter.Painter
+
+import androidx.compose.ui.res.painterResource
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import com.metoly.morganize.core.ui.theme.MorgAnimation
 import com.metoly.morganize.core.ui.theme.MorgDimens
@@ -17,18 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.FormatAlignLeft
-import androidx.compose.material.icons.automirrored.filled.FormatAlignRight
-import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
-import androidx.compose.material.icons.filled.FormatAlignCenter
-import androidx.compose.material.icons.filled.FormatBold
-import androidx.compose.material.icons.filled.FormatItalic
-import androidx.compose.material.icons.filled.FormatListNumbered
-import androidx.compose.material.icons.filled.FormatSize
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,11 +27,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metoly.morganize.core.model.SpanFormatType
@@ -95,13 +84,13 @@ fun RichTextToolbar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             FormatToggleButton(
-                icon = Icons.Default.FormatBold,
+                icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.text_bold),
                 label = "Bold",
                 isActive = state.isFormatActive(SpanFormatType.BOLD),
                 onClick = onToggleBold
             )
             FormatToggleButton(
-                icon = Icons.Default.FormatItalic,
+                icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.text_italic),
                 label = "Italic",
                 isActive = state.isFormatActive(SpanFormatType.ITALIC),
                 onClick = onToggleItalic
@@ -109,13 +98,13 @@ fun RichTextToolbar(
 
             ToolbarDivider()
             FormatToggleButton(
-                icon = Icons.AutoMirrored.Filled.FormatListBulleted,
+                icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.bullet_list),
                 label = "Bullet",
                 isActive = state.isBulletListActive,
                 onClick = onToggleBulletList
             )
             FormatToggleButton(
-                icon = Icons.Default.FormatListNumbered,
+                icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.number_list),
                 label = "Numbered",
                 isActive = state.isNumberedListActive,
                 onClick = onToggleNumberedList
@@ -123,7 +112,7 @@ fun RichTextToolbar(
 
             ToolbarDivider()
             ToolbarIconButton(
-                icon = Icons.Default.KeyboardArrowDown,
+                icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.chevron_down),
                 label = "Font -",
                 enabled = state.fontSize > FONT_SIZE_MIN,
                 onClick = onFontSizeDecrease
@@ -135,7 +124,7 @@ fun RichTextToolbar(
                 modifier = Modifier.padding(horizontal = 2.dp)
             )
             ToolbarIconButton(
-                icon = Icons.Default.KeyboardArrowUp,
+                icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.chevron_up),
                 label = "Font +",
                 enabled = state.fontSize < FONT_SIZE_MAX,
                 onClick = onFontSizeIncrease
@@ -143,9 +132,9 @@ fun RichTextToolbar(
 
             ToolbarDivider()
             val alignIcon = when (state.textAlign) {
-                TextAlignment.Center -> Icons.Default.FormatAlignCenter
-                TextAlignment.End -> Icons.AutoMirrored.Filled.FormatAlignRight
-                TextAlignment.Start -> Icons.AutoMirrored.Filled.FormatAlignLeft
+                TextAlignment.Center -> painterResource(id = com.metoly.morganize.core.ui.R.drawable.text_align_center)
+                TextAlignment.End -> painterResource(id = com.metoly.morganize.core.ui.R.drawable.text_align_right)
+                TextAlignment.Start -> painterResource(id = com.metoly.morganize.core.ui.R.drawable.text_align_left)
             }
             ToolbarIconButton(
                 icon = alignIcon,
@@ -155,7 +144,7 @@ fun RichTextToolbar(
 
             ToolbarDivider()
             FormatToggleButton(
-                icon = Icons.Default.FormatSize,
+                icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.line_height),
                 label = "Line height",
                 isActive = state.lineHeight != 1.4f,
                 onClick = onLineHeightCycle
@@ -184,7 +173,7 @@ private fun ToolbarDivider() {
 
 @Composable
 private fun FormatToggleButton(
-    icon: ImageVector,
+    icon: Painter,
     label: String,
     isActive: Boolean,
     onClick: () -> Unit
@@ -214,7 +203,7 @@ private fun FormatToggleButton(
             .background(bgColor)
     ) {
         Icon(
-            imageVector = icon,
+            painter = icon,
             contentDescription = label,
             tint = iconColor,
             modifier = Modifier.size(MorgDimens.toolbarIconSize)
@@ -224,7 +213,7 @@ private fun FormatToggleButton(
 
 @Composable
 private fun ToolbarIconButton(
-    icon: ImageVector,
+    icon: Painter,
     label: String,
     enabled: Boolean = true,
     onClick: () -> Unit
@@ -235,7 +224,7 @@ private fun ToolbarIconButton(
         modifier = Modifier.size(MorgDimens.toolbarButtonSize)
     ) {
         Icon(
-            imageVector = icon,
+            painter = icon,
             contentDescription = label,
             tint = if (enabled)
                 MaterialTheme.colorScheme.onSurface

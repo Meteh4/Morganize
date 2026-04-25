@@ -1,7 +1,6 @@
 package com.metoly.components.security
 
 import android.content.Context
-import androidx.fragment.app.FragmentActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -10,6 +9,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.crypto.Cipher

@@ -1,14 +1,16 @@
 // DrawingToolbar.kt
 package com.metoly.components
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+
+import androidx.compose.ui.res.painterResource
 
 import com.metoly.morganize.core.ui.theme.MorgAnimation
 import com.metoly.morganize.core.ui.theme.MorgDimens
 import com.metoly.morganize.core.ui.theme.MorgShapes
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,11 +27,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Undo
-import androidx.compose.material.icons.filled.AutoFixNormal
-import androidx.compose.material.icons.filled.AutoFixOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,10 +36,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -141,7 +136,7 @@ fun DrawingToolbar(
 
                 DrawingToolbarDivider()
                 DrawingToggleButton(
-                    icon = if (isEraserMode) Icons.Default.AutoFixOff else Icons.Default.AutoFixNormal,
+                    icon = if (isEraserMode) painterResource(id = com.metoly.morganize.core.ui.R.drawable.eraser_cancelled) else painterResource(id = com.metoly.morganize.core.ui.R.drawable.eraser),
                     label = if (isEraserMode) "Switch to Pen" else "Eraser",
                     isActive = isEraserMode,
                     onClick = {
@@ -152,7 +147,7 @@ fun DrawingToolbar(
 
                 DrawingToolbarDivider()
                 DrawingIconButton(
-                    icon = Icons.AutoMirrored.Filled.Undo,
+                    icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.undo),
                     label = "Undo",
                     enabled = canUndo,
                     onClick = onUndo
@@ -216,7 +211,7 @@ private fun ColorSwatch(
 
 @Composable
 private fun DrawingToggleButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: androidx.compose.ui.graphics.painter.Painter,
     label: String,
     isActive: Boolean,
     onClick: () -> Unit
@@ -246,7 +241,7 @@ private fun DrawingToggleButton(
             .background(bgColor)
     ) {
         Icon(
-            imageVector = icon,
+            painter = icon,
             contentDescription = label,
             tint = iconColor,
             modifier = Modifier.size(MorgDimens.toolbarIconSize)
@@ -256,7 +251,7 @@ private fun DrawingToggleButton(
 
 @Composable
 private fun DrawingIconButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: androidx.compose.ui.graphics.painter.Painter,
     label: String,
     enabled: Boolean,
     onClick: () -> Unit
@@ -267,7 +262,7 @@ private fun DrawingIconButton(
         modifier = Modifier.size(MorgDimens.toolbarButtonSize)
     ) {
         Icon(
-            imageVector = icon,
+            painter = icon,
             contentDescription = label,
             tint = if (enabled)
                 MaterialTheme.colorScheme.onSurface

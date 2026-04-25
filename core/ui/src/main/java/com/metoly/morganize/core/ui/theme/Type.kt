@@ -9,20 +9,20 @@ import androidx.compose.ui.unit.sp
 import com.metoly.morganize.core.ui.R
 
 /**
- * Inter — a modern, neutral typeface optimised for screen readability.
+ * Manrope — a modern, geometric sans-serif font.
  *
  * Font files live in res/font/ and are loaded as static resource fonts.
  * If you prefer downloadable fonts instead, swap [Font(resId)] with the
  * Compose `GoogleFont` provider — the Typography below stays the same.
  */
-val InterFontFamily = FontFamily(
-    Font(R.font.inter_regular, FontWeight.W400),
-    Font(R.font.inter_medium, FontWeight.W500),
-    Font(R.font.inter_semibold, FontWeight.W600),
-    Font(R.font.inter_bold, FontWeight.W700),
+val ManropeFontFamily = FontFamily(
+    Font(R.font.manrope_regular, FontWeight.W400),
+    Font(R.font.manrope_medium, FontWeight.W500),
+    Font(R.font.manrope_semibold, FontWeight.W600),
+    Font(R.font.manrope_bold, FontWeight.W700),
 )
 
-val AppFontFamily = InterFontFamily
+val AppFontFamily = ManropeFontFamily
 
 val AppTypography =
     Typography(

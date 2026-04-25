@@ -1,5 +1,8 @@
 package com.metoly.components.common
 
+import androidx.compose.ui.graphics.painter.Painter
+
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import com.metoly.morganize.core.ui.theme.MorgDimens
 import com.metoly.morganize.core.ui.theme.MorgShapes
@@ -36,7 +38,7 @@ import com.metoly.morganize.core.ui.theme.MorgShapes
  */
 @Composable
 fun MorgSheetHeader(
-    icon: ImageVector,
+    icon: Painter,
     title: String,
     subtitle: String,
     modifier: Modifier = Modifier,
@@ -55,7 +57,7 @@ fun MorgSheetHeader(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = icon,
+                painter = icon,
                 contentDescription = null,
                 tint = iconTint,
                 modifier = Modifier.size(MorgDimens.iconSize)

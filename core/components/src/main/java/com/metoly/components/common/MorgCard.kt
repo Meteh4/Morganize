@@ -1,4 +1,5 @@
 package com.metoly.components.common
+import androidx.compose.runtime.getValue
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.clickable
@@ -7,7 +8,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.metoly.morganize.core.ui.theme.MorgAnimation
 import com.metoly.morganize.core.ui.theme.MorgDimens

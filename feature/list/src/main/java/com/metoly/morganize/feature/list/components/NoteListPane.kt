@@ -1,5 +1,7 @@
 package com.metoly.morganize.feature.list.components
 
+import androidx.compose.ui.res.painterResource
+
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
@@ -9,8 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -34,6 +34,7 @@ import com.metoly.morganize.feature.list.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun NoteListPane(
+    modifier: Modifier = Modifier,
     notes: List<Note>,
     categories: List<Category>,
     selectedCategoryId: Long?,
@@ -43,8 +44,7 @@ internal fun NoteListPane(
     onDeleteNote: (Note) -> Unit,
     onCreateNote: () -> Unit,
     onAddCategory: (() -> Unit)? = null,
-    isLoading: Boolean = false,
-    modifier: Modifier = Modifier
+    isLoading: Boolean = false
 ) {
     Scaffold(
         modifier = modifier,
@@ -61,7 +61,7 @@ internal fun NoteListPane(
         floatingActionButton = {
             FloatingActionButton(onClick = onCreateNote) {
                 Icon(
-                    Icons.Default.Add,
+                    painterResource(id = com.metoly.morganize.core.ui.R.drawable.add),
                     contentDescription = stringResource(
                         R.string.feature_list_create_note
                     )

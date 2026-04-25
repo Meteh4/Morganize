@@ -1,4 +1,8 @@
 package com.metoly.components.security
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+
+import androidx.compose.ui.res.painterResource
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.layout.Spacer
@@ -7,19 +11,14 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.input.ImeAction
@@ -85,7 +84,7 @@ fun UnlockBottomSheet(
 
     MorgBottomSheet(onDismiss = onDismiss) {
         MorgSheetHeader(
-            icon = Icons.Default.Lock,
+            icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.lock_locked),
             title = title,
             subtitle = "Enter password to access this item",
             iconContainerColor = androidx.compose.material3.MaterialTheme.colorScheme.secondaryContainer,
@@ -135,7 +134,7 @@ fun UnlockBottomSheet(
                 modifier = Modifier
             ) {
                 Icon(
-                    imageVector = Icons.Default.Fingerprint,
+                    painter = painterResource(id = com.metoly.morganize.core.ui.R.drawable.fingerprint),
                     contentDescription = null,
                     modifier = Modifier.size(20.dp)
                 )

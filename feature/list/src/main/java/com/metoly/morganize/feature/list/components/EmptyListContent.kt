@@ -1,7 +1,6 @@
 package com.metoly.morganize.feature.list.components
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.NoteAlt
+import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -14,7 +13,7 @@ import com.metoly.morganize.feature.list.R
 @Composable
 internal fun EmptyListContent(modifier: Modifier = Modifier) {
     MorgEmptyState(
-        icon = Icons.Outlined.NoteAlt,
+        icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.edit_note),
         title = stringResource(R.string.feature_list_no_notes_yet),
         subtitle = stringResource(R.string.feature_list_tap_to_create_first_note),
         modifier = modifier

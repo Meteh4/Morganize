@@ -3,8 +3,8 @@ package com.metoly.morganize.feature.create
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -14,9 +14,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -27,18 +28,15 @@ import com.metoly.components.NoteEditorContent
 import com.metoly.components.RichTextEditorState
 import com.metoly.components.model.NoteEditorEvent
 import com.metoly.components.model.NoteEditorUiEvent
+import com.metoly.components.model.SecretItemInnerType
 import com.metoly.components.rememberNoteImagePicker
 import com.metoly.components.security.BiometricHelper
+import com.metoly.components.security.SecretItemTypePickerBottomSheet
 import com.metoly.components.security.SetCredentialsBottomSheet
 import com.metoly.components.security.UnlockBottomSheet
-import com.metoly.components.security.SecretItemTypePickerBottomSheet
-import com.metoly.components.model.SecretItemInnerType
-import androidx.compose.ui.platform.LocalContext
-import androidx.fragment.app.FragmentActivity
-import javax.crypto.Cipher
-import com.metoly.components.rememberNoteImagePicker
 import com.metoly.morganize.feature.create.components.CreateTopBar
 import kotlinx.coroutines.flow.collectLatest
+import javax.crypto.Cipher
 
 /**
  * Screen for creating a new note.

@@ -1,5 +1,7 @@
 package com.metoly.morganize.feature.list.components
 
+import androidx.compose.ui.res.painterResource
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,11 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Label
-import androidx.compose.material.icons.filled.EditNote
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -71,7 +68,7 @@ internal fun NoteDetailPane(
                     if (showBackButton) {
                         IconButton(onClick = onBack) {
                             Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
+                                painterResource(id = com.metoly.morganize.core.ui.R.drawable.arrow_back),
                                 contentDescription = stringResource(R.string.feature_list_back)
                             )
                         }
@@ -80,7 +77,7 @@ internal fun NoteDetailPane(
                 actions = {
                     IconButton(onClick = onEditClick) {
                         Icon(
-                            Icons.Default.EditNote,
+                            painterResource(id = com.metoly.morganize.core.ui.R.drawable.edit_note),
                             contentDescription = stringResource(R.string.feature_list_edit_note)
                         )
                     }
@@ -100,7 +97,7 @@ internal fun NoteDetailPane(
                 Column(modifier = Modifier.padding(24.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Label,
+                            painter = painterResource(id = com.metoly.morganize.core.ui.R.drawable.category),
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = Color(category.colorArgb)
@@ -121,7 +118,7 @@ internal fun NoteDetailPane(
             if (note.isSecret) {
                 Spacer(Modifier.height(MorgDimens.spacingXxxl))
                 MorgEmptyState(
-                    icon = Icons.Default.Lock,
+                    icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.lock_locked),
                     title = "This note is locked",
                     subtitle = "Edit note to unlock",
                     modifier = Modifier.fillMaxSize()

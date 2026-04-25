@@ -1,5 +1,8 @@
 package com.metoly.components.common
 
+import androidx.compose.ui.graphics.painter.Painter
+
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -18,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import com.metoly.morganize.core.ui.theme.MorgColors
 import com.metoly.morganize.core.ui.theme.MorgDimens
@@ -42,7 +44,7 @@ import com.metoly.morganize.core.ui.theme.MorgShapes
  */
 @Composable
 fun MorgOptionRow(
-    icon: ImageVector,
+    icon: Painter,
     title: String,
     description: String,
     iconTint: Color,
@@ -69,7 +71,7 @@ fun MorgOptionRow(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = icon,
+                painter = icon,
                 contentDescription = null,
                 tint = iconTint,
                 modifier = Modifier.size(MorgDimens.iconSize)

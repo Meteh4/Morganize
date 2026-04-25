@@ -1,7 +1,7 @@
 package com.metoly.components
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.res.painterResource
+
 import androidx.compose.runtime.Composable
 import com.metoly.components.common.MorgDestructiveButton
 import com.metoly.components.common.MorgDialog
@@ -20,7 +20,7 @@ fun DeleteNoteDialog(
     onDismiss: () -> Unit
 ) {
     MorgDialog(
-        icon = Icons.Default.Delete,
+        icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.delete),
         title = "Delete Note",
         text = if (noteTitle.isNotBlank())
             "Are you sure you want to delete \"$noteTitle\"? This action cannot be undone."

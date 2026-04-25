@@ -1,4 +1,8 @@
 package com.metoly.components
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+
+import androidx.compose.ui.res.painterResource
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,17 +16,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Label
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,7 +70,7 @@ fun AddCategoryBottomSheet(
 
     MorgBottomSheet(onDismiss = onDismiss) {
         MorgSheetHeader(
-            icon = Icons.AutoMirrored.Filled.Label,
+            icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.category),
             title = "New Category",
             subtitle = "Create a label to organise notes"
         )
@@ -117,7 +116,7 @@ fun AddCategoryBottomSheet(
                 ) {
                     if (isSelected) {
                         Icon(
-                            imageVector = Icons.Default.Check,
+                            painter = painterResource(id = com.metoly.morganize.core.ui.R.drawable.tick),
                             contentDescription = null,
                             tint = if (displayColor.luminance() > 0.5f)
                                 Color.Black.copy(alpha = 0.6f)

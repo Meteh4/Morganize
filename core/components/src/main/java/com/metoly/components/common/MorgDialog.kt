@@ -1,5 +1,8 @@
 package com.metoly.components.common
 
+import androidx.compose.ui.graphics.painter.Painter
+
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.metoly.morganize.core.ui.theme.MorgDimens
 import com.metoly.morganize.core.ui.theme.MorgShapes
 
@@ -41,7 +43,7 @@ import com.metoly.morganize.core.ui.theme.MorgShapes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MorgDialog(
-    icon: ImageVector,
+    icon: Painter,
     title: String,
     text: String,
     confirmButton: @Composable () -> Unit,
@@ -71,7 +73,7 @@ fun MorgDialog(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = icon,
+                    painter = icon,
                     contentDescription = null,
                     tint = iconTint,
                     modifier = Modifier.size(MorgDimens.iconSize)

@@ -1,12 +1,9 @@
 package com.metoly.components.security
 
+import androidx.compose.ui.res.painterResource
+
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.metoly.components.common.MorgBottomSheet
@@ -32,7 +29,7 @@ fun SecretItemTypePickerBottomSheet(
 ) {
     MorgBottomSheet(onDismiss = onDismiss) {
         MorgSheetHeader(
-            icon = Icons.Default.Lock,
+            icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.lock_locked),
             title = "Secret Item",
             subtitle = "Choose what to protect"
         )
@@ -40,7 +37,7 @@ fun SecretItemTypePickerBottomSheet(
         Spacer(Modifier.height(MorgDimens.spacingLg))
 
         MorgOptionRow(
-            icon = Icons.Default.TextFields,
+            icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.text_item),
             title = "Text",
             description = "Protected text content",
             iconTint = MorgColors.Blue,
@@ -53,7 +50,7 @@ fun SecretItemTypePickerBottomSheet(
         Spacer(Modifier.height(MorgDimens.spacingSm))
 
         MorgOptionRow(
-            icon = Icons.Default.Checklist,
+            icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.checklist),
             title = "Checklist",
             description = "Protected checklist with tasks",
             iconTint = MorgColors.Green,
@@ -66,7 +63,7 @@ fun SecretItemTypePickerBottomSheet(
         Spacer(Modifier.height(MorgDimens.spacingSm))
 
         MorgOptionRow(
-            icon = Icons.Default.Image,
+            icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.image_item),
             title = "Image",
             description = "Protected image content",
             iconTint = MorgColors.Orange,

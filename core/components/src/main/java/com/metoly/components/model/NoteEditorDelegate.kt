@@ -4,20 +4,18 @@ import com.metoly.morganize.core.model.grid.ChecklistActionType
 import com.metoly.morganize.core.model.grid.GridItem
 import com.metoly.morganize.core.model.grid.GridItemFactory
 import com.metoly.morganize.core.model.grid.NotePage
+import com.metoly.morganize.core.model.security.EncryptionManager
+import com.metoly.morganize.core.model.security.KeyManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
-
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import com.metoly.morganize.core.model.security.EncryptionManager
-import com.metoly.morganize.core.model.security.KeyManager
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 /**
@@ -554,7 +552,7 @@ class NoteEditorDelegate(
                             showUnlockDialog = false,
                             unlockTargetItemId = null
                         ) }
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         sendUiEvent(NoteEditorUiEvent.UnlockFailed("Incorrect password", 0, 0))
                     }
                 }
@@ -583,7 +581,7 @@ class NoteEditorDelegate(
                             transientDecryptedItems = it.transientDecryptedItems + (item.id to decryptedItem),
                             transientSecretItemKeys = it.transientSecretItemKeys + (item.id to secretKey)
                         ) }
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Biometric decryption failed"))
                     }
                 }
@@ -715,7 +713,7 @@ class NoteEditorDelegate(
                         }
                     )
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Ignore transient failures during bulk save evaluation
             }
         }

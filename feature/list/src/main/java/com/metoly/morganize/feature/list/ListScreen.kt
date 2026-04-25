@@ -1,4 +1,6 @@
 package com.metoly.morganize.feature.list
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
@@ -15,11 +17,9 @@ import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.metoly.components.AddCategoryBottomSheet

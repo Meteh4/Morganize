@@ -1,17 +1,13 @@
 package com.metoly.components
 
+import androidx.compose.ui.res.painterResource
+
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.ui.Modifier
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.runtime.Composable
 import com.metoly.components.common.MorgBottomSheet
 import com.metoly.components.common.MorgOptionRow
@@ -41,13 +37,13 @@ fun AddItemBottomSheet(
 ) {
     MorgBottomSheet(onDismiss = onDismiss) {
         MorgSheetHeader(
-            icon = Icons.Default.Add,
+            icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.add),
             title = "Add Item",
             subtitle = "Choose content type to add"
         )
 
         MorgOptionRow(
-            icon = Icons.Default.TextFields,
+            icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.text_item),
             title = "Text",
             description = "Rich text with formatting",
             iconTint = MorgColors.Blue,
@@ -60,7 +56,7 @@ fun AddItemBottomSheet(
         Spacer(Modifier.height(MorgDimens.spacingSm))
 
         MorgOptionRow(
-            icon = Icons.Default.Image,
+            icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.image_item),
             title = "Image",
             description = "Photo or picture from gallery",
             iconTint = MorgColors.Orange,
@@ -76,7 +72,7 @@ fun AddItemBottomSheet(
         Spacer(Modifier.height(MorgDimens.spacingSm))
 
         MorgOptionRow(
-            icon = Icons.Default.Checklist,
+            icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.checklist),
             title = "Checklist",
             description = "Checkboxes with tasks",
             iconTint = MorgColors.Green,
@@ -89,7 +85,7 @@ fun AddItemBottomSheet(
         Spacer(Modifier.height(MorgDimens.spacingSm))
 
         MorgOptionRow(
-            icon = Icons.Default.Lock,
+            icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.lock_locked),
             title = "Secret Item",
             description = "Password-protected content",
             iconTint = MorgColors.Purple,

@@ -1,13 +1,9 @@
 package com.metoly.components
+import androidx.compose.runtime.getValue
+
+import androidx.compose.ui.res.painterResource
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -15,7 +11,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import com.metoly.morganize.core.ui.theme.MorgAnimation
 import com.metoly.morganize.core.ui.theme.MorgDimens
 
@@ -67,28 +62,28 @@ fun NoteBottomBar(
         actions = {
             IconButton(onClick = onAddText) {
                 Icon(
-                    Icons.Default.TextFields,
+                    painterResource(id = com.metoly.morganize.core.ui.R.drawable.text_item),
                     contentDescription = "Add Text",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             IconButton(onClick = onAddImage) {
                 Icon(
-                    Icons.Default.Image,
+                    painterResource(id = com.metoly.morganize.core.ui.R.drawable.image_item),
                     contentDescription = "Add Image",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             IconButton(onClick = onAddChecklist) {
                 Icon(
-                    Icons.Default.Checklist,
+                    painterResource(id = com.metoly.morganize.core.ui.R.drawable.checklist),
                     contentDescription = "Add Checklist",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             IconButton(onClick = onAddSecretItem) {
                 Icon(
-                    androidx.compose.material.icons.Icons.Default.Lock,
+                    painterResource(id = com.metoly.morganize.core.ui.R.drawable.lock_locked),
                     contentDescription = "Add Secret Item",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -100,7 +95,7 @@ fun NoteBottomBar(
                     contentColor = drawingContentColor
                 )
             ) {
-                Icon(Icons.Default.Create, contentDescription = "Draw")
+                Icon(painterResource(id = com.metoly.morganize.core.ui.R.drawable.pencil), contentDescription = "Draw")
             }
         },
         floatingActionButton = {
@@ -110,7 +105,7 @@ fun NoteBottomBar(
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(
-                    imageVector = Icons.Default.Check,
+                    painter = painterResource(id = com.metoly.morganize.core.ui.R.drawable.tick),
                     contentDescription = saveContentDescription
                 )
             }
