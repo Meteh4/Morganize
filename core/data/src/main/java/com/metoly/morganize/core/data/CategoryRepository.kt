@@ -4,6 +4,9 @@ import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.ResponseState
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Repository interface for managing [Category] data operations.
+ */
 interface CategoryRepository {
 
     /** Emit all categories ordered by name, reactively. */

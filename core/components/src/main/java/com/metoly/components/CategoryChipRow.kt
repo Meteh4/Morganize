@@ -1,12 +1,12 @@
 package com.metoly.components
 
+import androidx.compose.ui.res.painterResource
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -15,8 +15,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import com.metoly.morganize.core.model.Category
+import com.metoly.morganize.core.ui.theme.MorgDimens
 
 /**
  * A horizontally scrollable row of [FilterChip]s for category selection/filtering.
@@ -28,54 +28,51 @@ import com.metoly.morganize.core.model.Category
  */
 @Composable
 fun CategoryChipRow(
-        categories: List<Category>,
-        selectedCategoryId: Long?,
-        onCategorySelected: (Long?) -> Unit,
-        onAddCategory: (() -> Unit)? = null,
-        modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    categories: List<Category>,
+    selectedCategoryId: Long?,
+    onCategorySelected: (Long?) -> Unit,
+    onAddCategory: (() -> Unit)? = null
 ) {
     LazyRow(
-            modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp)
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(MorgDimens.spacingSm),
+        contentPadding = PaddingValues(horizontal = MorgDimens.screenPaddingHorizontal)
     ) {
-        // "All" chip
         item {
             FilterChip(
-                    selected = selectedCategoryId == null,
-                    onClick = { onCategorySelected(null) },
-                    label = { Text("All") }
+                selected = selectedCategoryId == null,
+                onClick = { onCategorySelected(null) },
+                label = { Text("All") }
             )
         }
 
-        // Category chips
         items(categories, key = { it.id }) { category ->
             val chipColor = Color(category.colorArgb)
             FilterChip(
-                    selected = selectedCategoryId == category.id,
-                    onClick = { onCategorySelected(category.id) },
-                    label = { Text(category.name) },
-                    colors =
-                            FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = chipColor.copy(alpha = 0.3f),
-                                    selectedLabelColor = MaterialTheme.colorScheme.onSurface
-                            )
+                selected = selectedCategoryId == category.id,
+                onClick = { onCategorySelected(category.id) },
+                label = { Text(category.name) },
+                colors =
+                    FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = chipColor.copy(alpha = 0.3f),
+                        selectedLabelColor = MaterialTheme.colorScheme.onSurface
+                    )
             )
         }
 
-        // Optional "Add category" chip
         if (onAddCategory != null) {
             item {
                 FilterChip(
-                        selected = false,
-                        onClick = onAddCategory,
-                        label = { Text("New") },
-                        leadingIcon = {
-                            Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = "Add category"
-                            )
-                        }
+                    selected = false,
+                    onClick = onAddCategory,
+                    label = { Text("New") },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(id = com.metoly.morganize.core.ui.R.drawable.add),
+                            contentDescription = "Add category"
+                        )
+                    }
                 )
             }
         }

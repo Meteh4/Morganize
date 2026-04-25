@@ -1,12 +1,14 @@
 package com.metoly.morganize.feature.list.components
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+
+import androidx.compose.ui.res.painterResource
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -15,10 +17,8 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +29,10 @@ import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.feature.list.R
 
+/**
+ * A wrapper over [NoteCard] that implements Material 3 swipe-to-dismiss behavior.
+ * Prompts the user with a confirmation dialog before completing the deletion.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SwipeToDismissNoteCard(
@@ -71,7 +75,7 @@ internal fun SwipeToDismissNoteCard(
                 contentAlignment = Alignment.CenterEnd
             ) {
                 Icon(
-                    Icons.Default.Delete,
+                    painterResource(id = com.metoly.morganize.core.ui.R.drawable.delete),
                     contentDescription = stringResource(R.string.feature_list_delete_note),
                     modifier = Modifier.padding(end = 20.dp)
                 )

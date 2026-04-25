@@ -51,5 +51,28 @@ object GridItemFactory {
     fun createCheckboxEntry(text: String = "", isChecked: Boolean = false): CheckboxEntry =
         CheckboxEntry(id = generateId(), text = text, isChecked = isChecked)
 
+    fun createSecretItem(
+        id: String = generateId(),
+        x: Int = 0, y: Int = 0,
+        width: Int, height: Int,
+        encryptedPayload: String,
+        salt: String,
+        iv: String,
+        hasBiometric: Boolean = false,
+        biometricWrappedPassword: String? = null,
+        biometricWrappedPasswordIv: String? = null
+    ): GridItem.SecretItem =
+        GridItem.SecretItem(
+            id = id,
+            x = x, y = y,
+            width = width, height = height,
+            encryptedPayload = encryptedPayload,
+            salt = salt,
+            iv = iv,
+            hasBiometric = hasBiometric,
+            biometricWrappedPassword = biometricWrappedPassword,
+            biometricWrappedPasswordIv = biometricWrappedPasswordIv
+        )
+
     private fun generateId(): String = UUID.randomUUID().toString()
 }

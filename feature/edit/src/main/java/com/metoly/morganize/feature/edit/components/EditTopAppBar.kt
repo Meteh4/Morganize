@@ -1,13 +1,13 @@
 package com.metoly.morganize.feature.edit.components
+import androidx.compose.runtime.getValue
+
+import androidx.compose.ui.res.painterResource
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.stringResource
@@ -19,7 +19,9 @@ internal fun EditTopBar(
     onBack: () -> Unit,
     onDeleteClick: () -> Unit,
     selectedColor: Int?,
-    onColorSelected: (Int?) -> Unit
+    onColorSelected: (Int?) -> Unit,
+    isSecretNote: Boolean,
+    onToggleSecretNote: () -> Unit
 ) {
     NoteTopBar(
         title = stringResource(R.string.feature_edit_screen_title),
@@ -27,6 +29,8 @@ internal fun EditTopBar(
         backContentDescription = stringResource(R.string.feature_edit_back),
         selectedColor = selectedColor,
         onColorSelected = onColorSelected,
+        isSecretNote = isSecretNote,
+        onToggleSecretNote = onToggleSecretNote,
         extraActions = { resolvedColor ->
             val deleteIconColor by animateColorAsState(
                 targetValue = if (resolvedColor != null) {
@@ -39,7 +43,7 @@ internal fun EditTopBar(
             )
             IconButton(onClick = onDeleteClick) {
                 Icon(
-                    imageVector = Icons.Default.Delete,
+                    painter = painterResource(id = com.metoly.morganize.core.ui.R.drawable.delete),
                     contentDescription = stringResource(R.string.feature_edit_delete_note),
                     tint = deleteIconColor
                 )

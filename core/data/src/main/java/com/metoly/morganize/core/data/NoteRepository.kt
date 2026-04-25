@@ -4,6 +4,9 @@ import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.core.model.ResponseState
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Repository interface for abstracting [Note] persistent storage layer.
+ */
 interface NoteRepository {
 
     /** Emit the full list of notes ordered by last updated, reactively. */

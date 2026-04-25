@@ -7,6 +7,9 @@ import com.metoly.morganize.core.model.asResponseState
 import com.metoly.morganize.core.model.suspendAsResponseStateFlow
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Concrete implementation of [NoteRepository] leveraging the Room [NoteDao].
+ */
 class NoteRepositoryImpl(private val noteDao: NoteDao) : NoteRepository {
 
     override fun getAllNotes(): Flow<ResponseState<List<Note>>> =

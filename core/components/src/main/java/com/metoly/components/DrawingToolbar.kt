@@ -1,10 +1,16 @@
 // DrawingToolbar.kt
 package com.metoly.components
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+
+import androidx.compose.ui.res.painterResource
+
+import com.metoly.morganize.core.ui.theme.MorgAnimation
+import com.metoly.morganize.core.ui.theme.MorgDimens
+import com.metoly.morganize.core.ui.theme.MorgShapes
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,11 +27,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Undo
-import androidx.compose.material.icons.filled.AutoFixNormal
-import androidx.compose.material.icons.filled.AutoFixOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,10 +36,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,9 +47,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// ────────────────────────────────────────────────────────────────────────────
-// Pen color palette
-// ────────────────────────────────────────────────────────────────────────────
+
 
 private val PEN_COLORS: List<Long> = listOf(
     0xFF000000L, // Black
@@ -65,9 +62,7 @@ private val PEN_COLORS: List<Long> = listOf(
     0xFFEC407AL, // Pink
 )
 
-// ────────────────────────────────────────────────────────────────────────────
-// Slider ranges
-// ────────────────────────────────────────────────────────────────────────────
+
 
 private val STROKE_WIDTH_RANGE = 0.002f..0.04f   // canvas-fraction
 private val ERASER_WIDTH_RANGE = 0.01f..0.12f    // canvas-fraction
@@ -78,7 +73,6 @@ private val ERASER_WIDTH_RANGE = 0.01f..0.12f    // canvas-fraction
  *  - Stroke width slider
  *  - Eraser toggle + eraser size slider (shown only in eraser mode)
  *  - Undo (revert last stroke) button
- *  - Close / done button
  *
  * Single Responsibility: This composable owns only the *display* of drawing
  * controls and calls back to the parent for every state mutation.
@@ -122,7 +116,6 @@ fun DrawingToolbar(
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
-            // ── Row 1: color palette + tool actions ──────────────────────
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -130,23 +123,20 @@ fun DrawingToolbar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                // Color swatches
                 PEN_COLORS.forEach { colorArgb ->
                     ColorSwatch(
                         colorArgb = colorArgb,
                         isSelected = !isEraserMode && colorArgb == penColorArgb,
                         onClick = {
                             onColorSelected(colorArgb)
-                            if (isEraserMode) onToggleEraser() // switch back to pen
+                            if (isEraserMode) onToggleEraser()
                         }
                     )
                 }
 
                 DrawingToolbarDivider()
-
-                // Eraser toggle
                 DrawingToggleButton(
-                    icon = if (isEraserMode) Icons.Default.AutoFixOff else Icons.Default.AutoFixNormal,
+                    icon = if (isEraserMode) painterResource(id = com.metoly.morganize.core.ui.R.drawable.eraser_cancelled) else painterResource(id = com.metoly.morganize.core.ui.R.drawable.eraser),
                     label = if (isEraserMode) "Switch to Pen" else "Eraser",
                     isActive = isEraserMode,
                     onClick = {
@@ -156,17 +146,13 @@ fun DrawingToolbar(
                 )
 
                 DrawingToolbarDivider()
-
-                // Undo / revert last stroke
                 DrawingIconButton(
-                    icon = Icons.AutoMirrored.Filled.Undo,
+                    icon = painterResource(id = com.metoly.morganize.core.ui.R.drawable.undo),
                     label = "Undo",
                     enabled = canUndo,
                     onClick = onUndo
                 )
             }
-
-            // ── Row 2: stroke / eraser slider ────────────────────────────
             Spacer(Modifier.height(6.dp))
 
             if (isEraserMode) {
@@ -190,9 +176,7 @@ fun DrawingToolbar(
     }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Private sub-components
-// ────────────────────────────────────────────────────────────────────────────
+
 
 @Composable
 private fun ColorSwatch(
@@ -202,7 +186,7 @@ private fun ColorSwatch(
 ) {
     val borderWidth: Dp by animateDpAsState(
         targetValue = if (isSelected) 3.dp else 1.dp,
-        animationSpec = spring(stiffness = Spring.StiffnessHigh),
+        animationSpec = MorgAnimation.snappy(),
         label = "swatch_border"
     )
     val borderColor by animateColorAsState(
@@ -210,7 +194,7 @@ private fun ColorSwatch(
             MaterialTheme.colorScheme.primary
         else
             MaterialTheme.colorScheme.outlineVariant,
-        animationSpec = spring(stiffness = Spring.StiffnessHigh),
+        animationSpec = MorgAnimation.snappy(),
         label = "swatch_border_color"
     )
 
@@ -227,7 +211,7 @@ private fun ColorSwatch(
 
 @Composable
 private fun DrawingToggleButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: androidx.compose.ui.graphics.painter.Painter,
     label: String,
     isActive: Boolean,
     onClick: () -> Unit
@@ -237,7 +221,7 @@ private fun DrawingToggleButton(
             MaterialTheme.colorScheme.secondary.copy(alpha = 0.20f)
         else
             Color.Transparent,
-        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        animationSpec = MorgAnimation.standard(),
         label = "toggle_bg_$label"
     )
     val iconColor by animateColorAsState(
@@ -245,29 +229,29 @@ private fun DrawingToggleButton(
             MaterialTheme.colorScheme.secondary
         else
             MaterialTheme.colorScheme.onSurface,
-        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        animationSpec = MorgAnimation.standard(),
         label = "toggle_icon_$label"
     )
 
     IconButton(
         onClick = onClick,
         modifier = Modifier
-            .size(40.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .size(MorgDimens.toolbarButtonSize)
+            .clip(MorgShapes.toolbarToggle)
             .background(bgColor)
     ) {
         Icon(
-            imageVector = icon,
+            painter = icon,
             contentDescription = label,
             tint = iconColor,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(MorgDimens.toolbarIconSize)
         )
     }
 }
 
 @Composable
 private fun DrawingIconButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: androidx.compose.ui.graphics.painter.Painter,
     label: String,
     enabled: Boolean,
     onClick: () -> Unit
@@ -275,16 +259,16 @@ private fun DrawingIconButton(
     IconButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.size(40.dp)
+        modifier = Modifier.size(MorgDimens.toolbarButtonSize)
     ) {
         Icon(
-            imageVector = icon,
+            painter = icon,
             contentDescription = label,
             tint = if (enabled)
                 MaterialTheme.colorScheme.onSurface
             else
                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(MorgDimens.toolbarIconSize)
         )
     }
 }
@@ -293,8 +277,8 @@ private fun DrawingIconButton(
 private fun DrawingToolbarDivider() {
     VerticalDivider(
         modifier = Modifier
-            .padding(horizontal = 4.dp)
-            .height(24.dp),
+            .padding(horizontal = MorgDimens.spacingXs)
+            .height(MorgDimens.toolbarDividerHeight),
         color = MaterialTheme.colorScheme.outlineVariant
     )
 }

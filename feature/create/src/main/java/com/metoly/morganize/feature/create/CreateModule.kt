@@ -4,5 +4,10 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val createModule = module {
-    viewModel { CreateViewModel(noteRepository = get(), categoryRepository = get()) }
+    viewModel { CreateViewModel(
+        noteRepository = get(),
+        categoryRepository = get(),
+        encryptionManager = get(),
+        keyManager = get()
+    ) }
 }

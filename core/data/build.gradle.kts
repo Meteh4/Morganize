@@ -24,4 +24,5 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.koin.android)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.kotlinx.serialization.json)
 }

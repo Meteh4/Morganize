@@ -1,5 +1,7 @@
 package com.metoly.components
 
+import androidx.compose.ui.res.painterResource
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -10,10 +12,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,6 +35,8 @@ fun NoteTopBar(
     backContentDescription: String,
     selectedColor: Int?,
     onColorSelected: (Int?) -> Unit,
+    isSecretNote: Boolean? = null,
+    onToggleSecretNote: (() -> Unit)? = null,
     extraActions: @Composable RowScope.(resolvedColor: Color?) -> Unit = {}
 ) {
     var showColorPicker by remember { mutableStateOf(false) }
@@ -60,7 +60,7 @@ fun NoteTopBar(
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    painter = painterResource(id = com.metoly.morganize.core.ui.R.drawable.arrow_back),
                     contentDescription = backContentDescription
                 )
             }
@@ -68,7 +68,7 @@ fun NoteTopBar(
         actions = {
             Box {
                 IconButton(onClick = { showColorPicker = !showColorPicker }) {
-                    Icon(Icons.Default.Palette, contentDescription = "Pick Color")
+                    Icon(painterResource(id = com.metoly.morganize.core.ui.R.drawable.palette), contentDescription = "Pick Color")
                 }
                 DropdownMenu(
                     expanded = showColorPicker,
@@ -80,6 +80,14 @@ fun NoteTopBar(
                             onColorSelected(color)
                             showColorPicker = false
                         }
+                    )
+                }
+            }
+            if (isSecretNote != null && onToggleSecretNote != null) {
+                IconButton(onClick = onToggleSecretNote) {
+                    Icon(
+                        painter = if (isSecretNote) painterResource(id = com.metoly.morganize.core.ui.R.drawable.lock_locked) else painterResource(id = com.metoly.morganize.core.ui.R.drawable.lock_unlocked),
+                        contentDescription = "Toggle Secret Note"
                     )
                 }
             }
@@ -157,7 +165,7 @@ internal fun ColorSwatch(
     ) {
         if (isSelected) {
             Icon(
-                imageVector = Icons.Default.Check,
+                painter = painterResource(id = com.metoly.morganize.core.ui.R.drawable.tick),
                 contentDescription = null,
                 tint = if (displayColor.luminance() > 0.5f)
                     Color.Black.copy(alpha = 0.6f)

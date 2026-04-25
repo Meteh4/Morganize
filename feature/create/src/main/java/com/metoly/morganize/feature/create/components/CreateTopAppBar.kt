@@ -9,13 +9,17 @@ import com.metoly.morganize.feature.create.R
 internal fun CreateTopBar(
     onBack: () -> Unit,
     selectedColor: Int?,
-    onColorSelected: (Int?) -> Unit
+    onColorSelected: (Int?) -> Unit,
+    isSecretNote: Boolean,
+    onToggleSecretNote: () -> Unit
 ) {
     NoteTopBar(
         title = stringResource(R.string.feature_create_screen_title),
         onBack = onBack,
         backContentDescription = stringResource(R.string.feature_create_back),
         selectedColor = selectedColor,
-        onColorSelected = onColorSelected
+        onColorSelected = onColorSelected,
+        isSecretNote = isSecretNote,
+        onToggleSecretNote = onToggleSecretNote
     )
 }

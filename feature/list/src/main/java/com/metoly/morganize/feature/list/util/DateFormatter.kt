@@ -12,7 +12,5 @@ object DateFormatter {
         SimpleDateFormat("d MMM yyyy, HH:mm", Locale.getDefault())
     }
 
-    fun format(millis: Long): String = dateFormat.format(Date(millis))
-
     fun formatWithTime(millis: Long): String = dateTimeFormat.format(Date(millis))
 }

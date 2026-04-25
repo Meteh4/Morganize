@@ -25,7 +25,7 @@ sealed interface ResponseState<out T> {
     /** Represents a failed operation with an error [message]. */
     data class Error(val message: String) : ResponseState<Nothing>
 
-    // region — State flags
+
 
     val isIdle: Boolean get() = this is Idle
 
@@ -35,9 +35,9 @@ sealed interface ResponseState<out T> {
 
     val isError: Boolean get() = this is Error
 
-    // endregion
 
-    // region — Data accessors
+
+
 
     /**
      * Returns the encapsulated data if this is [Success], null otherwise.
@@ -49,10 +49,10 @@ sealed interface ResponseState<out T> {
      */
     val error: String? get() = (this as? Error)?.message
 
-    // endregion
+
 }
 
-// region — Flow extensions
+
 
 fun <T> Flow<T>.asResponseState(): Flow<ResponseState<T>> =
     this
@@ -68,5 +68,3 @@ fun <T> suspendAsResponseStateFlow(block: suspend () -> T): Flow<ResponseState<T
         emit(ResponseState.Error(e.message ?: "Bilinmeyen hata"))
     }
 }
-
-// endregion

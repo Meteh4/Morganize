@@ -7,6 +7,9 @@ import com.metoly.morganize.core.model.asResponseState
 import com.metoly.morganize.core.model.suspendAsResponseStateFlow
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Concrete implementation of [CategoryRepository] backed by a Room [CategoryDao].
+ */
 class CategoryRepositoryImpl(private val categoryDao: CategoryDao) : CategoryRepository {
 
     override fun getAllCategories(): Flow<ResponseState<List<Category>>> =

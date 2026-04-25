@@ -1,5 +1,9 @@
 // GridCanvas.kt
 package com.metoly.components.grid
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+
+import androidx.compose.ui.res.painterResource
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -37,9 +41,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.zIndex
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,12 +49,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -76,26 +75,66 @@ import com.metoly.morganize.core.model.RichSpan
 import com.metoly.morganize.core.model.grid.GridItem
 import com.metoly.morganize.core.model.grid.NotePage
 import com.metoly.morganize.core.model.grid.TextAlignment
+import com.metoly.morganize.core.ui.theme.MorgAnimation
+import com.metoly.morganize.core.ui.theme.MorgColors
+import com.metoly.morganize.core.ui.theme.MorgDimens
+import com.metoly.morganize.core.ui.theme.MorgShapes
 import kotlin.math.roundToInt
 
 
-
+/**
+ * Standard visual properties for rendering any grid item on the canvas.
+ * Consolidates paddings, borders, shapes, and semi-transparent backgrounds.
+ */
 object GridItemDefaults {
-    val DefaultPadding = 8.dp
-    val SelectedPadding = 8.dp
-    val CornerRadius = 12.dp
-    val SelectedBorderWidth = 2.dp
+    val DefaultPadding = MorgDimens.gridItemPadding
+    val SelectedPadding = MorgDimens.gridItemPadding
+    val CornerRadius = MorgDimens.gridItemCorner
+    val SelectedBorderWidth = MorgDimens.gridItemSelectedBorder
     val UnselectedBorderWidth = 0.dp
-    val BackgroundAlpha = 0.6f
-    val InnerPadding = 8.dp
+    val BackgroundAlpha = MorgColors.GridItemBackgroundAlpha
+    val InnerPadding = MorgDimens.gridItemInnerPadding
 
     val Shape: RoundedCornerShape
-        get() = RoundedCornerShape(CornerRadius)
+        get() = MorgShapes.gridItem
 
     @Composable
     fun backgroundColor(): Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = BackgroundAlpha)
 }
 
+/**
+ * An interactive 2D grid responsible for rendering and positioning Note items.
+ * Allows items (Text, Checklists, Images, SecretItems) to be dragged, resized, and modified.
+ * Also handles coordinating between locked/unlocked states for Secret Items via the [transientDecryptedItems].
+ *
+ * @param modifier Compose modifier.
+ * @param page The specific note page data model this canvas renders.
+ * @param selectedItemId The ID of the currently focused grid item.
+ * @param onItemSelected Callback when an item is tapped.
+ * @param onItemMoved Callback when an item's position changes via drag.
+ * @param onItemResized Callback when an item's dimension changes via drag handle.
+ * @param onItemTextChanged Callback for text mutations inside an item.
+ * @param onItemRichSpansChanged Callback for formatted range updates.
+ * @param onItemTypographyChanged Callback for structural typography changes.
+ * @param onItemDeleted Callback to remove an item.
+ * @param onEditingTextItemChanged Callback indicating which text field is focused.
+ * @param editingTextItemId The ID of the currently focused text field.
+ * @param activeRichState The underlying formatting state of the active text field.
+ * @param onActiveRichStateChange Sink for formatting state.
+ * @param onChecklistTitleChanged Callback for checklist header changes.
+ * @param onCheckboxToggled Callback to toggle a checklist entry.
+ * @param onCheckboxTextChanged Callback for editing a checklist entry label.
+ * @param onCheckboxAdded Callback to append a new entry to a checklist.
+ * @param onCheckboxDeleted Callback to remove an entry from a checklist.
+ * @param onEmptyGridAddClicked Callback triggered when tapping the center of an empty grid.
+ * @param unlockedItemIds IDs of SecretItems that have been authenticated and are currently visible.
+ * @param transientDecryptedItems Ephemeral map storing decrypted SecretItem data locally in memory, never persisted.
+ * @param onSecretItemUnlockRequested Callback to prompt the user for credentials to unlock a specific secret item.
+ * @param columns Number of logical columns in the grid.
+ * @param rows Number of logical rows in the grid.
+ * @param isReadOnly Disables interactions and edits if true.
+ * @param showEmptyGridPlaceholder Toggles the empty "Tap to add" placeholder.
+ */
 @Composable
 fun GridCanvas(
     modifier: Modifier = Modifier,
@@ -118,6 +157,9 @@ fun GridCanvas(
     onCheckboxAdded: (itemId: String) -> Unit = {},
     onCheckboxDeleted: (itemId: String, entryId: String) -> Unit = { _, _ -> },
     onEmptyGridAddClicked: () -> Unit = {},
+    unlockedItemIds: Set<String> = emptySet(),
+    transientDecryptedItems: Map<String, GridItem> = emptyMap(),
+    onSecretItemUnlockRequested: (itemId: String) -> Unit = {},
     columns: Int = 10,
     rows: Int = 20,
     isReadOnly: Boolean = false,
@@ -140,7 +182,7 @@ fun GridCanvas(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             ) { onItemSelected(null) }
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.surface)
     ) {
         if (cellSize > 0f) {
             if (page.items.isEmpty() && !isReadOnly && showEmptyGridPlaceholder) {
@@ -156,7 +198,7 @@ fun GridCanvas(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Add,
+                        painter = painterResource(id = com.metoly.morganize.core.ui.R.drawable.add),
                         contentDescription = "Add item",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(32.dp)
@@ -194,7 +236,10 @@ fun GridCanvas(
                     onCheckboxToggled = { entryId -> onCheckboxToggled(item.id, entryId) },
                     onCheckboxTextChanged = { entryId, text -> onCheckboxTextChanged(item.id, entryId, text) },
                     onCheckboxAdded = { onCheckboxAdded(item.id) },
-                    onCheckboxDeleted = { entryId -> onCheckboxDeleted(item.id, entryId) }
+                    onCheckboxDeleted = { entryId -> onCheckboxDeleted(item.id, entryId) },
+                    isUnlocked = unlockedItemIds.contains(item.id),
+                    decryptedItem = transientDecryptedItems[item.id],
+                    onSecretItemUnlockRequested = { onSecretItemUnlockRequested(item.id) }
                 )
             }
         }
@@ -226,6 +271,9 @@ private fun GridDraggableItem(
     onCheckboxTextChanged: (String, String) -> Unit = { _, _ -> },
     onCheckboxAdded: () -> Unit = {},
     onCheckboxDeleted: (String) -> Unit = {},
+    isUnlocked: Boolean = false,
+    decryptedItem: GridItem? = null,
+    onSecretItemUnlockRequested: (String) -> Unit = {}
 ) {
     val density = LocalDensity.current
 
@@ -257,23 +305,24 @@ private fun GridDraggableItem(
     }
 
     val isEditorActive = (editingTextItemId == item.id)
+    val effectiveItem = decryptedItem ?: item
     val currentRichState = if (isEditorActive && activeRichState != null) {
         activeRichState
     } else {
         remember(
-            if (item is GridItem.Text) item.textContent else "",
-            if (item is GridItem.Text) item.richSpans else emptyList(),
-            if (item is GridItem.Text) item.fontSize else 16f,
-            if (item is GridItem.Text) item.textAlign else TextAlignment.Start,
-            if (item is GridItem.Text) item.lineHeight else 1.5f
+            if (effectiveItem is GridItem.Text) effectiveItem.textContent else "",
+            if (effectiveItem is GridItem.Text) effectiveItem.richSpans else emptyList(),
+            if (effectiveItem is GridItem.Text) effectiveItem.fontSize else 16f,
+            if (effectiveItem is GridItem.Text) effectiveItem.textAlign else TextAlignment.Start,
+            if (effectiveItem is GridItem.Text) effectiveItem.lineHeight else 1.5f
         ) {
-            if (item is GridItem.Text) {
+            if (effectiveItem is GridItem.Text) {
                 richTextStateFromPersisted(
-                    text = item.textContent,
-                    spans = item.richSpans,
-                    fontSize = item.fontSize,
-                    textAlign = item.textAlign,
-                    lineHeight = item.lineHeight
+                    text = effectiveItem.textContent,
+                    spans = effectiveItem.richSpans,
+                    fontSize = effectiveItem.fontSize,
+                    textAlign = effectiveItem.textAlign,
+                    lineHeight = effectiveItem.lineHeight
                 )
             } else {
                 RichTextEditorState()
@@ -283,7 +332,7 @@ private fun GridDraggableItem(
 
     // Report editing state to parent whenever it changes
     LaunchedEffect(isEditingText) {
-        if (item is GridItem.Text) {
+        if (effectiveItem is GridItem.Text || effectiveItem is GridItem.Checklist) {
             onEditingChanged(isEditingText && !isReadOnly, currentRichState)
         }
     }
@@ -308,15 +357,15 @@ private fun GridDraggableItem(
 
     val animPadding by animateDpAsState(
         if (isSelected) GridItemDefaults.SelectedPadding else GridItemDefaults.DefaultPadding,
-        spring(stiffness = Spring.StiffnessMediumLow)
+        animationSpec = MorgAnimation.gentle()
     )
     val animBorderWidth by animateDpAsState(
         if (isSelected) GridItemDefaults.SelectedBorderWidth else GridItemDefaults.UnselectedBorderWidth,
-        spring(stiffness = Spring.StiffnessMediumLow)
+        MorgAnimation.gentle()
     )
     val animBorderColor by animateColorAsState(
         if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-        spring(stiffness = Spring.StiffnessMediumLow)
+        MorgAnimation.gentle()
     )
 
     Box(
@@ -352,7 +401,8 @@ private fun GridDraggableItem(
                         Modifier.combinedClickable(
                             onClick = { 
                                 onClick()
-                                if (item is GridItem.Text || item is GridItem.Checklist) {
+                                val effectiveItem = decryptedItem ?: item
+                                if (effectiveItem is GridItem.Text || effectiveItem is GridItem.Checklist) {
                                     isEditingText = true
                                 }
                             },
@@ -381,7 +431,10 @@ private fun GridDraggableItem(
                     }
                 }
         ) {
-            when (item) {
+            val renderItem = decryptedItem ?: item
+            val effectiveReadOnly = isReadOnly
+
+            when (renderItem) {
                 is GridItem.Text -> {
                     RichTextEditor(
                         state = currentRichState,
@@ -401,13 +454,13 @@ private fun GridDraggableItem(
                             onTextChanged(next.text)
                             onRichSpansChanged(next.spans)
                         },
-                        enabled = isEditingText && !isReadOnly,
+                        enabled = isEditingText && !effectiveReadOnly,
                         modifier = Modifier.fillMaxSize().padding(GridItemDefaults.InnerPadding)
                     )
                 }
                 is GridItem.Image -> {
                     AsyncImage(
-                        model = item.imageUri,
+                        model = renderItem.imageUri,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
@@ -415,15 +468,23 @@ private fun GridDraggableItem(
                 }
                 is GridItem.Checklist -> {
                     ChecklistContent(
-                        item = item,
+                        item = renderItem,
                         isSelected = isSelected,
-                        isReadOnly = isReadOnly,
+                        isReadOnly = effectiveReadOnly,
                         onTitleChanged = onChecklistTitleChanged,
                         onCheckboxToggled = onCheckboxToggled,
                         onCheckboxTextChanged = onCheckboxTextChanged,
                         onCheckboxAdded = onCheckboxAdded,
                         onCheckboxDeleted = onCheckboxDeleted,
                         modifier = Modifier.fillMaxSize().padding(GridItemDefaults.InnerPadding)
+                    )
+                }
+                is GridItem.SecretItem -> {
+                    SecretItemContent(
+                        isBiometricDisabled = renderItem.isBiometricDisabled,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable { onSecretItemUnlockRequested(item.id) }
                     )
                 }
             }
@@ -485,7 +546,7 @@ private fun GridDraggableItem(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Close,
+                            painter = painterResource(id = com.metoly.morganize.core.ui.R.drawable.remove),
                             contentDescription = "Delete item",
                             tint = MaterialTheme.colorScheme.onError,
                             modifier = Modifier.size(16.dp)
@@ -709,7 +770,7 @@ private fun ChecklistContent(
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
-                                Icons.Default.Close,
+                                painterResource(id = com.metoly.morganize.core.ui.R.drawable.remove),
                                 contentDescription = "Delete checkbox",
                                 modifier = Modifier.size(14.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
@@ -726,7 +787,7 @@ private fun ChecklistContent(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(
-                            Icons.Default.Add,
+                            painterResource(id = com.metoly.morganize.core.ui.R.drawable.add),
                             contentDescription = null,
                             modifier = Modifier.size(16.dp)
                         )

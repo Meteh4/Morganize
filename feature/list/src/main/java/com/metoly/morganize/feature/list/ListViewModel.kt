@@ -16,6 +16,11 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 
+/**
+ * ViewModel responsible for feeding data to the main ListScreen.
+ * Observes the SQLite database for real-time Note and Category updates,
+ * handles filtering by category, and executes basic CRUD operations unassociated with deep editing.
+ */
 class ListViewModel(
     private val noteRepository: NoteRepository,
     private val categoryRepository: CategoryRepository
