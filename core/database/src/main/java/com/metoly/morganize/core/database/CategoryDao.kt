@@ -5,22 +5,25 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.metoly.morganize.core.model.Category
+import com.metoly.morganize.core.database.entity.CategoryEntity
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Room Data Access Object for [com.metoly.morganize.core.model.Category] entities.
+ * Room Data Access Object for [CategoryEntity] operations.
+ * Returns raw entities — mapping to domain models is done in the repository layer.
  */
 @Dao
 interface CategoryDao {
 
     @Query("SELECT * FROM categories ORDER BY name ASC")
-    fun getAllCategories(): Flow<List<Category>>
+    fun getAllCategories(): Flow<List<CategoryEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCategory(category: Category): Long
+    suspend fun insertCategory(category: CategoryEntity): Long
 
-    @Delete suspend fun deleteCategory(category: Category)
+    @Delete
+    suspend fun deleteCategory(category: CategoryEntity)
 
-    @Query("DELETE FROM categories WHERE id = :id") suspend fun deleteCategoryById(id: Long)
+    @Query("DELETE FROM categories WHERE id = :id")
+    suspend fun deleteCategoryById(id: Long)
 }

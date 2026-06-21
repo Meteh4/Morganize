@@ -2,6 +2,7 @@ package com.metoly.components.model
 
 import com.metoly.components.RichTextEditorState
 import com.metoly.morganize.core.model.Category
+import com.metoly.morganize.core.model.Tag
 import com.metoly.morganize.core.model.grid.DrawingStroke
 import com.metoly.morganize.core.model.grid.GridItem
 import com.metoly.morganize.core.model.grid.GridItemFactory
@@ -11,6 +12,9 @@ data class NoteEditorState(
     val backgroundColor: Int? = null,
     val categories: List<Category> = emptyList(),
     val categoryId: Long? = null,
+    val tags: List<Tag> = emptyList(),
+    val selectedTagIds: Set<Long> = emptySet(),
+    val reminderAt: Long? = null,
     val drawingEraserWidthFraction: Float = 0.04f,
     val drawingPenColorArgb: Long = 0xFF000000L,
     val drawingStrokeWidthFraction: Float = 0.008f,

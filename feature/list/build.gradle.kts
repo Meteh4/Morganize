@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.metoly.morganize.feature.list"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -50,4 +50,12 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+dependencies {
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.mockk)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 }

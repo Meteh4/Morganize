@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.metoly.components"
-    compileSdk { version = release(36) }
+    compileSdk { version = release(37) }
 
     defaultConfig {
         minSdk = 24

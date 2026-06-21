@@ -2,11 +2,12 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
     namespace = "com.metoly.morganize.core.database"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -31,4 +32,8 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.koin.android)
+    implementation(libs.kotlinx.serialization.json)
+}
+dependencies {
+    androidTestImplementation(libs.androidx.room.testing)
 }

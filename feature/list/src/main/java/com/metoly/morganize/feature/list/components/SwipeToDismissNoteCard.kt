@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -24,14 +26,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.metoly.components.DeleteNoteDialog
 import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.model.Note
 import com.metoly.morganize.feature.list.R
 
 /**
  * A wrapper over [NoteCard] that implements Material 3 swipe-to-dismiss behavior.
- * Prompts the user with a confirmation dialog before completing the deletion.
+ * - Swipe end-to-start → soft delete (with confirmation dialog)
+ * - Swipe start-to-end → toggle pin
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,20 +43,28 @@ internal fun SwipeToDismissNoteCard(
     isSelected: Boolean,
     onClick: () -> Unit,
     onDeleteConfirmed: () -> Unit,
+    onPinToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     val dismissState = rememberSwipeToDismissBoxState()
 
     LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
-            showDeleteDialog = true
-            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+        when (dismissState.currentValue) {
+            SwipeToDismissBoxValue.EndToStart -> {
+                showDeleteDialog = true
+                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+            }
+            SwipeToDismissBoxValue.StartToEnd -> {
+                onPinToggle()
+                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+            }
+            else -> {}
         }
     }
 
     if (showDeleteDialog) {
-        DeleteNoteDialog(
+        com.metoly.components.DeleteNoteDialog(
             noteTitle = note.title,
             onConfirm = {
                 showDeleteDialog = false
@@ -67,18 +77,40 @@ internal fun SwipeToDismissNoteCard(
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
+            val direction = dismissState.dismissDirection
+            val bgColor = when (direction) {
+                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
+                else -> MaterialTheme.colorScheme.surface
+            }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.errorContainer),
-                contentAlignment = Alignment.CenterEnd
+                    .background(bgColor),
+                contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd)
+                    Alignment.CenterStart
+                else
+                    Alignment.CenterEnd
             ) {
-                Icon(
-                    painterResource(id = com.metoly.morganize.core.ui.R.drawable.delete),
-                    contentDescription = stringResource(R.string.feature_list_delete_note),
-                    modifier = Modifier.padding(end = 20.dp)
-                )
+                when (direction) {
+                    SwipeToDismissBoxValue.EndToStart -> {
+                        Icon(
+                            painterResource(id = com.metoly.morganize.core.ui.R.drawable.delete),
+                            contentDescription = stringResource(R.string.feature_list_delete_note),
+                            modifier = Modifier.padding(end = 20.dp)
+                        )
+                    }
+                    SwipeToDismissBoxValue.StartToEnd -> {
+                        Icon(
+                            imageVector = Icons.Filled.PushPin,
+                            contentDescription = if (note.isPinned) stringResource(R.string.feature_list_unpin) else stringResource(R.string.feature_list_pin),
+                            modifier = Modifier.padding(start = 20.dp),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                    else -> {}
+                }
             }
         },
         modifier = modifier
@@ -87,7 +119,8 @@ internal fun SwipeToDismissNoteCard(
             note = note,
             category = category,
             isSelected = isSelected,
-            onClick = onClick
+            onClick = onClick,
+            onPinToggle = onPinToggle
         )
     }
 }

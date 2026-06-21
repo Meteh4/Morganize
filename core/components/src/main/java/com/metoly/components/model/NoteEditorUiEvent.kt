@@ -1,8 +1,10 @@
 package com.metoly.components.model
 
+import com.metoly.morganize.core.ui.UiText
+
 sealed interface NoteEditorUiEvent {
     data object SaveSuccess : NoteEditorUiEvent
-    data class ShowSnackbar(val message: String) : NoteEditorUiEvent
+    data class ShowSnackbar(val message: UiText) : NoteEditorUiEvent
     data class ScrollToPage(val pageIndex: Int) : NoteEditorUiEvent
     
     // Security UI events

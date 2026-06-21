@@ -1,0 +1,144 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.metoly.morganize.feature.widget" >
+4
+5    <uses-sdk android:minSdkVersion="24" />
+5-->INJECTED
+5-->INJECTED
+6
+7    <application>
+7-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:4:5-74:19
+8        <receiver
+8-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:5:9-16:20
+9            android:name="com.metoly.morganize.feature.widget.MorganizeWidgetReceiver"
+9-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:6:13-52
+10            android:exported="true" >
+10-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:7:13-36
+11            <intent-filter>
+11-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:8:13-11:29
+12                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+12-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:9:17-84
+12-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:9:25-81
+13                <action android:name="com.metoly.morganize.ACTION_UPDATE_WIDGET" />
+13-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:10:17-84
+13-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:10:25-81
+14            </intent-filter>
+15
+16            <meta-data
+16-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:13:13-15:65
+17                android:name="android.appwidget.provider"
+17-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:14:17-58
+18                android:resource="@xml/morganize_widget_info" />
+18-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:15:17-62
+19        </receiver>
+20        <receiver
+20-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:18:9-28:20
+21            android:name="com.metoly.morganize.feature.widget.MorganizeWidgetReceiver2x2"
+21-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:19:13-55
+22            android:exported="true" >
+22-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:20:13-36
+23            <intent-filter>
+23-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:8:13-11:29
+24                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+24-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:9:17-84
+24-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:9:25-81
+25                <action android:name="com.metoly.morganize.ACTION_UPDATE_WIDGET" />
+25-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:10:17-84
+25-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:10:25-81
+26            </intent-filter>
+27
+28            <meta-data
+28-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:13:13-15:65
+29                android:name="android.appwidget.provider"
+29-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:14:17-58
+30                android:resource="@xml/morganize_widget_info_2x2" />
+30-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:15:17-62
+31        </receiver>
+32        <receiver
+32-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:30:9-40:20
+33            android:name="com.metoly.morganize.feature.widget.MorganizeWidgetReceiver4x2"
+33-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:31:13-55
+34            android:exported="true" >
+34-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:32:13-36
+35            <intent-filter>
+35-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:8:13-11:29
+36                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+36-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:9:17-84
+36-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:9:25-81
+37                <action android:name="com.metoly.morganize.ACTION_UPDATE_WIDGET" />
+37-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:10:17-84
+37-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:10:25-81
+38            </intent-filter>
+39
+40            <meta-data
+40-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:13:13-15:65
+41                android:name="android.appwidget.provider"
+41-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:14:17-58
+42                android:resource="@xml/morganize_widget_info_4x2" />
+42-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:15:17-62
+43        </receiver>
+44        <receiver
+44-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:42:9-52:20
+45            android:name="com.metoly.morganize.feature.widget.MorganizeWidgetReceiver2x4"
+45-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:43:13-55
+46            android:exported="true" >
+46-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:44:13-36
+47            <intent-filter>
+47-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:8:13-11:29
+48                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+48-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:9:17-84
+48-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:9:25-81
+49                <action android:name="com.metoly.morganize.ACTION_UPDATE_WIDGET" />
+49-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:10:17-84
+49-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:10:25-81
+50            </intent-filter>
+51
+52            <meta-data
+52-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:13:13-15:65
+53                android:name="android.appwidget.provider"
+53-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:14:17-58
+54                android:resource="@xml/morganize_widget_info_2x4" />
+54-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:15:17-62
+55        </receiver>
+56        <receiver
+56-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:54:9-64:20
+57            android:name="com.metoly.morganize.feature.widget.MorganizeWidgetReceiver4x4"
+57-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:55:13-55
+58            android:exported="true" >
+58-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:56:13-36
+59            <intent-filter>
+59-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:8:13-11:29
+60                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+60-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:9:17-84
+60-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:9:25-81
+61                <action android:name="com.metoly.morganize.ACTION_UPDATE_WIDGET" />
+61-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:10:17-84
+61-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:10:25-81
+62            </intent-filter>
+63
+64            <meta-data
+64-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:13:13-15:65
+65                android:name="android.appwidget.provider"
+65-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:14:17-58
+66                android:resource="@xml/morganize_widget_info_4x4" />
+66-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:15:17-62
+67        </receiver>
+68
+69        <activity
+69-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:66:9-73:20
+70            android:name="com.metoly.morganize.feature.widget.MorganizeWidgetConfigureActivity"
+70-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:67:13-61
+71            android:exported="true"
+71-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:68:13-36
+72            android:theme="@style/Theme.Morganize" >
+72-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:69:13-51
+73            <intent-filter>
+73-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:70:13-72:29
+74                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+74-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:71:17-87
+74-->/Users/bordo/StudioProjects/Morganize/feature/widget/src/main/AndroidManifest.xml:71:25-84
+75            </intent-filter>
+76        </activity>
+77    </application>
+78
+79</manifest>

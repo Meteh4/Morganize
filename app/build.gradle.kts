@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.metoly.morganize"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.metoly.morganize"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -18,7 +18,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -80,4 +81,5 @@ dependencies {
     implementation(project(":feature:edit"))
     implementation(project(":feature:list"))
     implementation(project(":feature:onboarding"))
+    implementation(project(":feature:widget"))
 }

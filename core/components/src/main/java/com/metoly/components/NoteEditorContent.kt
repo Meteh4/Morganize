@@ -33,6 +33,7 @@ fun NoteEditorContent(
     onSecretItemUnlockRequested: (pageId: String, itemId: String) -> Unit = { _, _ -> }
 ) {
     var showAddCategorySheet by remember { mutableStateOf(false) }
+    var showAddTagSheet by remember { mutableStateOf(false) }
 
     NoteContent(
         title = state.title,
@@ -72,6 +73,10 @@ fun NoteEditorContent(
         selectedCategoryId = state.categoryId,
         onCategorySelected = { onEvent(NoteEditorEvent.CategorySelected(it)) },
         onAddCategory = { showAddCategorySheet = true },
+        tags = state.tags,
+        selectedTagIds = state.selectedTagIds,
+        onTagToggled = { onEvent(NoteEditorEvent.TagToggled(it)) },
+        onAddTag = { showAddTagSheet = true },
         onAddPage = { onEvent(NoteEditorEvent.AddPage) },
         // ── Drawing layer ────────────────────────────────────────────────
         isDrawingMode = state.isDrawingMode,
@@ -114,6 +119,15 @@ fun NoteEditorContent(
             onDismiss = { showAddCategorySheet = false },
             onSave = { name, colorArgb ->
                 onEvent(NoteEditorEvent.CreateCategory(name, colorArgb))
+            }
+        )
+    }
+
+    if (showAddTagSheet) {
+        AddTagBottomSheet(
+            onDismiss = { showAddTagSheet = false },
+            onSave = { name, colorArgb ->
+                onEvent(NoteEditorEvent.CreateTag(name, colorArgb))
             }
         )
     }

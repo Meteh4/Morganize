@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_edit_screen_title">Edit Note</string>
+    <string name="feature_edit_back">Back</string>
+    <string name="feature_edit_delete_note">Delete note</string>
+    <string name="feature_edit_delete_dialog_title">Delete note?</string>
+    <string name="feature_edit_delete_dialog_message">This action cannot be undone.</string>
+    <string name="feature_edit_delete_confirm">Delete</string>
+    <string name="feature_edit_delete_cancel">Cancel</string>
+    <string name="feature_edit_save">Save changes</string>
+    <string name="feature_edit_title_hint">Title</string>
+    <string name="feature_edit_content_hint">Start writing…</string>
+
+    <!-- Top Bar -->
+    <string name="feature_edit_share_note">Share note</string>
+    <string name="feature_edit_set_reminder">Set Reminder</string>
+
+    <!-- Dialogs -->
+    <string name="feature_edit_set_password_title">Set Note Password</string>
+    <string name="feature_edit_unlock_item_title">Unlock Item</string>
+    <string name="feature_edit_unlock_note_title">Unlock Note</string>
+
+    <!-- Snackbar Messages -->
+    <string name="feature_edit_save_failed">Failed to save note: %1$s</string>
+    <string name="feature_edit_incorrect_password">Incorrect password</string>
+    <string name="feature_edit_biometric_failed">Biometric decryption failed</string>
+    <string name="feature_edit_note_duplicated">Note duplicated</string>
+</resources>

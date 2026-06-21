@@ -52,6 +52,9 @@ sealed interface NoteEditorEvent {
     data class BackgroundColorChanged(val colorArgb: Int?) : NoteEditorEvent
     data class CategorySelected(val categoryId: Long?) : NoteEditorEvent
     data class CreateCategory(val name: String, val colorArgb: Int) : NoteEditorEvent
+    data class TagToggled(val tagId: Long) : NoteEditorEvent
+    data class CreateTag(val name: String, val colorArgb: Int) : NoteEditorEvent
+    data class ReminderChanged(val timestamp: Long?) : NoteEditorEvent
     
     // ── Secret Item ─────────────────────────────────────────────────
     data class SecretItemAdded(

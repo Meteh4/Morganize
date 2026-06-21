@@ -1,0 +1,13 @@
+com.metoly.morganize.feature.widget
+drawable widget_preview_bg
+drawable widget_preview_inner_bg
+layout morganize_widget_preview
+layout morganize_widget_preview_2x2
+layout morganize_widget_preview_2x4
+layout morganize_widget_preview_4x2
+layout morganize_widget_preview_4x4
+xml morganize_widget_info
+xml morganize_widget_info_2x2
+xml morganize_widget_info_2x4
+xml morganize_widget_info_4x2
+xml morganize_widget_info_4x4

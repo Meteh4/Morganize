@@ -64,6 +64,8 @@ fun <T> suspendAsResponseStateFlow(block: suspend () -> T): Flow<ResponseState<T
     emit(ResponseState.Loading)
     try {
         emit(ResponseState.Success(block()))
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
     } catch (e: Exception) {
         emit(ResponseState.Error(e.message ?: "Bilinmeyen hata"))
     }
