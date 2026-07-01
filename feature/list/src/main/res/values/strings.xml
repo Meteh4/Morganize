@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="feature_list_app_name">Morganize</string>
     <string name="feature_list_create_note">Create note</string>
@@ -14,5 +15,51 @@
     <string name="feature_list_delete_dialog_message">Are you sure you want to delete %1$s?</string>
     <string name="feature_list_delete_dialog_confirm">Delete</string>
     <string name="feature_list_delete_dialog_cancel">Cancel</string>
+    <string name="feature_list_duplicate_note">Duplicate note</string>
 
+    <!-- Search -->
+    <string name="feature_list_search_placeholder">Search notes…</string>
+    <string name="feature_list_search">Search</string>
+    <string name="feature_list_close_search">Close search</string>
+
+    <!-- Sort -->
+    <string name="feature_list_sort">Sort</string>
+    <string name="feature_list_sort_recently_updated">Recently Updated</string>
+    <string name="feature_list_sort_oldest_updated">Oldest Updated</string>
+    <string name="feature_list_sort_title_asc">Title A → Z</string>
+    <string name="feature_list_sort_title_desc">Title Z → A</string>
+    <string name="feature_list_sort_newest_created">Newest Created</string>
+
+    <!-- View Mode -->
+    <string name="feature_list_switch_to_grid">Switch to grid</string>
+    <string name="feature_list_switch_to_list">Switch to list</string>
+
+    <!-- More Options Menu -->
+    <string name="feature_list_more_options">More options</string>
+    <string name="feature_list_theme">Theme</string>
+    <string name="feature_list_export_notes">Export Notes</string>
+    <string name="feature_list_import_notes">Import Notes</string>
+
+    <!-- Pin -->
+    <string name="feature_list_pinned">Pinned</string>
+    <string name="feature_list_pin">Pin</string>
+    <string name="feature_list_unpin">Unpin</string>
+
+    <!-- Secret Note -->
+    <string name="feature_list_secret_note">Secret Note</string>
+
+    <!-- Detail Pane -->
+    <string name="feature_list_share_note">Share note</string>
+    <string name="feature_list_note_locked">This note is locked</string>
+    <string name="feature_list_edit_to_unlock">Edit note to unlock</string>
+    <string name="feature_list_page_number">Page %1$d</string>
+
+    <!-- Snackbar Messages -->
+    <string name="feature_list_undo">Undo</string>
+    <string name="feature_list_note_deleted">Note deleted</string>
+    <string name="feature_list_note_duplicated">Note duplicated</string>
+    <string name="feature_list_export_success">Notes exported successfully</string>
+    <string name="feature_list_export_failed">Failed to export notes</string>
+    <string name="feature_list_import_success">Imported %1$d notes</string>
+    <string name="feature_list_import_failed">Failed to import notes</string>
 </resources>

@@ -21,6 +21,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,6 +51,8 @@ internal fun NoteDetailPane(
     category: Category?,
     showBackButton: Boolean,
     onEditClick: () -> Unit,
+    onDuplicateClick: () -> Unit,
+    onShareClick: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -75,6 +80,18 @@ internal fun NoteDetailPane(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onDuplicateClick) {
+                        Icon(
+                            imageVector = Icons.Outlined.ContentCopy,
+                            contentDescription = stringResource(R.string.feature_list_duplicate_note) // We will create this string
+                        )
+                    }
+                    IconButton(onClick = onShareClick) {
+                        Icon(
+                            imageVector = Icons.Outlined.Share,
+                            contentDescription = "Share note"
+                        )
+                    }
                     IconButton(onClick = onEditClick) {
                         Icon(
                             painterResource(id = com.metoly.morganize.core.ui.R.drawable.edit_note),

@@ -1,0 +1,8 @@
+com.metoly.morganize.feature.widget-pngs-0 /Users/bordo/StudioProjects/Morganize/feature/widget/build/generated/res/pngs/debug
+com.metoly.morganize.feature.widget-updated_navigation_xml-1 /Users/bordo/StudioProjects/Morganize/feature/widget/build/generated/updated_navigation_xml/debug
+com.metoly.morganize.feature.widget-mergeDebugResources-2 /Users/bordo/StudioProjects/Morganize/feature/widget/build/intermediates/incremental/debug/mergeDebugResources/merged.dir
+com.metoly.morganize.feature.widget-mergeDebugResources-3 /Users/bordo/StudioProjects/Morganize/feature/widget/build/intermediates/incremental/debug/mergeDebugResources/stripped.dir
+com.metoly.morganize.feature.widget-debug-4 /Users/bordo/StudioProjects/Morganize/feature/widget/build/intermediates/merged_res/debug/mergeDebugResources
+com.metoly.morganize.feature.widget-debug-5 /Users/bordo/StudioProjects/Morganize/feature/widget/build/intermediates/packaged_res/debug/packageDebugResources
+com.metoly.morganize.feature.widget-debug-6 /Users/bordo/StudioProjects/Morganize/feature/widget/src/debug/res
+com.metoly.morganize.feature.widget-main-7 /Users/bordo/StudioProjects/Morganize/feature/widget/src/main/res

@@ -68,8 +68,8 @@ private val TransparentFieldColors
 
 /**
  * The main scrollable content area for a note.
- * Renders the title, category chips, and a vertically list of grid pages.
- * Handles scrolling, overscroll-to-add-page behaviour, and directs all grid events.
+ * Renders the title, category chips, and a vertical list of grid pages.
+ * Handles scrolling, overscroll-to-add-page behavior, and directs all grid events.
  *
  * @param modifier Standard Compose modifier.
  * @param title The title of the note.
@@ -91,7 +91,12 @@ private val TransparentFieldColors
  * @param categories List of available categories for the horizontal filter row.
  * @param selectedCategoryId The ID of the applied category filter.
  * @param onCategorySelected Callback when a category filter is applied or removed.
+ * @param onCategoryLongClick Callback when a category is long-pressed (for edit/delete).
  * @param onAddCategory Callback to invoke the add category bottom sheet.
+ * @param tags List of available tags for the horizontal tag row.
+ * @param selectedTagIds Set of selected tag IDs.
+ * @param onTagToggled Callback when a tag is selected or deselected.
+ * @param onAddTag Callback to invoke the add tag bottom sheet.
  * @param onAddPage Callback to append a new page to the end of the note.
  * @param isReadOnly Prevents modifications to the content when true (e.g. List Screen).
  * @param isDrawingMode Locks scrolling and enables canvas strokes if true.
@@ -135,7 +140,12 @@ fun NoteContent(
     categories: List<Category>,
     selectedCategoryId: Long?,
     onCategorySelected: (Long?) -> Unit,
+    onCategoryLongClick: (com.metoly.morganize.core.model.Category) -> Unit = {},
     onAddCategory: () -> Unit = {},
+    tags: List<com.metoly.morganize.core.model.Tag> = emptyList(),
+    selectedTagIds: Set<Long> = emptySet(),
+    onTagToggled: (Long) -> Unit = {},
+    onAddTag: () -> Unit = {},
     onAddPage: () -> Unit,
     isReadOnly: Boolean = false,
     isDrawingMode: Boolean = false,
@@ -234,8 +244,19 @@ fun NoteContent(
                 categories = categories,
                 selectedCategoryId = selectedCategoryId,
                 onCategorySelected = onCategorySelected,
+                onCategoryLongClick = onCategoryLongClick,
                 onAddCategory = onAddCategory
             )
+
+            if (tags.isNotEmpty() || onAddTag != {}) {
+                Spacer(Modifier.height(MorgDimens.spacingSm))
+                TagChipRow(
+                    tags = tags,
+                    selectedTagIds = selectedTagIds,
+                    onTagToggled = onTagToggled,
+                    onAddTag = onAddTag
+                )
+            }
 
             Spacer(Modifier.height(MorgDimens.spacingLg))
 

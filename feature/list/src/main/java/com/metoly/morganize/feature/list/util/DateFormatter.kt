@@ -1,16 +1,20 @@
 package com.metoly.morganize.feature.list.util
 
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/**
+ * Thread-safe date formatting utility using java.time.DateTimeFormatter.
+ * All formatters are immutable and thread-safe, unlike SimpleDateFormat.
+ */
 object DateFormatter {
 
-    private val dateFormat by lazy { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
+    private val dateTimeFormatter: DateTimeFormatter =
+        DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", Locale.getDefault())
+            .withZone(ZoneId.systemDefault())
 
-    private val dateTimeFormat by lazy {
-        SimpleDateFormat("d MMM yyyy, HH:mm", Locale.getDefault())
-    }
-
-    fun formatWithTime(millis: Long): String = dateTimeFormat.format(Date(millis))
+    fun formatWithTime(millis: Long): String =
+        dateTimeFormatter.format(Instant.ofEpochMilli(millis))
 }

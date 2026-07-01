@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -15,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import com.metoly.morganize.core.model.Category
 import com.metoly.morganize.core.ui.theme.MorgDimens
 
@@ -32,6 +35,7 @@ fun CategoryChipRow(
     categories: List<Category>,
     selectedCategoryId: Long?,
     onCategorySelected: (Long?) -> Unit,
+    onCategoryLongClick: ((Category) -> Unit)? = null,
     onAddCategory: (() -> Unit)? = null
 ) {
     LazyRow(
@@ -49,16 +53,29 @@ fun CategoryChipRow(
 
         items(categories, key = { it.id }) { category ->
             val chipColor = Color(category.colorArgb)
-            FilterChip(
-                selected = selectedCategoryId == category.id,
-                onClick = { onCategorySelected(category.id) },
-                label = { Text(category.name) },
-                colors =
-                    FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = chipColor.copy(alpha = 0.3f),
-                        selectedLabelColor = MaterialTheme.colorScheme.onSurface
+            Box(
+                modifier = Modifier.pointerInput(category) {
+                    detectTapGestures(
+                        onLongPress = {
+                            onCategoryLongClick?.invoke(category)
+                        },
+                        onTap = {
+                            onCategorySelected(category.id)
+                        }
                     )
-            )
+                }
+            ) {
+                FilterChip(
+                    selected = selectedCategoryId == category.id,
+                    onClick = { onCategorySelected(category.id) },
+                    label = { Text(category.name) },
+                    colors =
+                        FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = chipColor.copy(alpha = 0.3f),
+                            selectedLabelColor = MaterialTheme.colorScheme.onSurface
+                        )
+                )
+            }
         }
 
         if (onAddCategory != null) {

@@ -26,7 +26,8 @@ class NoteEditorDelegate(
     val encryptionManager: EncryptionManager? = null,
     val keyManager: KeyManager? = null,
     val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
-    private val onCategoryCreate: (name: String, colorArgb: Int) -> Unit = { _, _ -> }
+    private val onCategoryCreate: (name: String, colorArgb: Int) -> Unit = { _, _ -> },
+    private val onTagCreate: (name: String, colorArgb: Int) -> Unit = { _, _ -> }
 ) {
 
     private val _state = MutableStateFlow(NoteEditorState())
@@ -92,6 +93,23 @@ class NoteEditorDelegate(
             is NoteEditorEvent.CreateCategory -> {
                 onCategoryCreate(event.name, event.colorArgb)
             }
+
+            is NoteEditorEvent.TagToggled -> {
+                _state.update {
+                    val newTags = if (it.selectedTagIds.contains(event.tagId)) {
+                        it.selectedTagIds - event.tagId
+                    } else {
+                        it.selectedTagIds + event.tagId
+                    }
+                    it.copy(selectedTagIds = newTags)
+                }
+            }
+
+            is NoteEditorEvent.CreateTag ->
+                onTagCreate(event.name, event.colorArgb)
+
+            is NoteEditorEvent.ReminderChanged ->
+                _state.update { it.copy(reminderAt = event.timestamp) }
             
             // ── Security ────────────────────────────────────────────────────────
             is NoteEditorEvent.SecretItemAdded,
@@ -518,7 +536,7 @@ class NoteEditorDelegate(
                         _state.update { it.copy(pages = newPages) }
                         sendUiEvent(NoteEditorUiEvent.ScrollToPage(addedIndex))
                     } catch (e: Exception) {
-                        sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Encryption failed: ${e.message}"))
+                        sendUiEvent(NoteEditorUiEvent.ShowSnackbar(com.metoly.morganize.core.ui.UiText.DynamicString("Encryption failed: ${e.message}")))
                     }
                 }
             }
@@ -582,7 +600,7 @@ class NoteEditorDelegate(
                             transientSecretItemKeys = it.transientSecretItemKeys + (item.id to secretKey)
                         ) }
                     } catch (_: Exception) {
-                        sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Biometric decryption failed"))
+                        sendUiEvent(NoteEditorUiEvent.ShowSnackbar(com.metoly.morganize.core.ui.UiText.DynamicString("Biometric decryption failed")))
                     }
                 }
             }
@@ -643,7 +661,7 @@ class NoteEditorDelegate(
                     )
                 }
             } catch (e: Exception) {
-                sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Failed to re-encrypt: ${e.message}"))
+                sendUiEvent(NoteEditorUiEvent.ShowSnackbar(com.metoly.morganize.core.ui.UiText.DynamicString("Failed to re-encrypt: ${e.message}")))
             }
         }
     }

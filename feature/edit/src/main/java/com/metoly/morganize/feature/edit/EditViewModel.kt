@@ -56,7 +56,18 @@ class EditViewModel(
     private val _editState = MutableStateFlow(EditSpecificState())
     val editState: StateFlow<EditSpecificState> = _editState.asStateFlow()
 
-    private var originalNote: Note? = null
+    var originalNote: Note? = null
+
+    val hasUnsavedChanges: Boolean
+        get() {
+            val state = uiState.value
+            val currentNote = originalNote ?: return false
+            if (state.title.trim() != currentNote.title) return true
+            if (state.backgroundColor != currentNote.backgroundColor) return true
+            if (state.categoryId != currentNote.categoryId) return true
+            if (state.isSecretNote != currentNote.isSecret) return true
+            return false // We skip page content comparison because it requires suspend
+        }
 
     init {
         loadCategories()
@@ -147,13 +158,13 @@ class EditViewModel(
                     .onEach { result ->
                         when (result) {
                             is ResponseState.Success -> delegate.sendUiEvent(NoteEditorUiEvent.SaveSuccess)
-                            is ResponseState.Error -> delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar(result.message))
+                            is ResponseState.Error -> delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar(com.metoly.morganize.core.ui.UiText.DynamicString(result.message)))
                             else -> Unit
                         }
                     }
                     .launchIn(viewModelScope)
             } catch (e: Exception) {
-                delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Failed to save note: ${e.message}"))
+                delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar(com.metoly.morganize.core.ui.UiText.StringResource(R.string.feature_edit_save_failed, e.message ?: "")))
             }
         }
     }
@@ -182,7 +193,7 @@ class EditViewModel(
                     )
                 }
             } catch (e: Exception) {
-                delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Incorrect password"))
+                delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar(com.metoly.morganize.core.ui.UiText.StringResource(R.string.feature_edit_incorrect_password)))
             }
         }
     }
@@ -201,7 +212,7 @@ class EditViewModel(
                 val password = encryptionManager.decryptString(biometricPwdCipher, biometricPwdIv, decryptedKey)
                 unlockSecretNote(password)
             } catch (e: Exception) {
-                delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Biometric decryption failed"))
+                delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar(com.metoly.morganize.core.ui.UiText.StringResource(R.string.feature_edit_biometric_failed)))
                 delegate.onEvent(NoteEditorEvent.SecretNoteBiometricFailed)
             }
         }
@@ -277,7 +288,7 @@ class EditViewModel(
             .onEach { result ->
                 when (result) {
                     is ResponseState.Success -> delegate.sendUiEvent(NoteEditorUiEvent.SaveSuccess)
-                    is ResponseState.Error -> delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar(result.message))
+                    is ResponseState.Error -> delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar(com.metoly.morganize.core.ui.UiText.DynamicString(result.message)))
                     else -> Unit
                 }
             }

@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.metoly.morganize.feature.onboarding"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -44,4 +44,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+dependencies {
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 }

@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.metoly.morganize.core.data"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -22,7 +22,15 @@ dependencies {
     implementation(project(":core:database"))
 
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.koin.android)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.kotlinx.serialization.json)
+}
+
+dependencies {
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.mockk)
 }

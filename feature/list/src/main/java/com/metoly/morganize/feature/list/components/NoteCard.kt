@@ -1,6 +1,9 @@
 package com.metoly.morganize.feature.list.components
 import androidx.compose.runtime.getValue
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.ui.res.painterResource
 
 import androidx.compose.animation.animateColorAsState
@@ -53,6 +56,7 @@ internal fun NoteCard(
     category: Category?,
     isSelected: Boolean,
     onClick: () -> Unit,
+    onPinToggle: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val resolvedNoteColor = resolveNoteColor(note.backgroundColor)
@@ -132,7 +136,7 @@ internal fun NoteCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (note.isSecret && note.title.isBlank()) "Secret Note" else note.title.ifBlank { stringResource(R.string.feature_list_untitled) },
+                        text = if (note.isSecret && note.title.isBlank()) stringResource(R.string.feature_list_secret_note) else note.title.ifBlank { stringResource(R.string.feature_list_untitled) },
                         style = MaterialTheme.typography.titleMedium,
                         color = textColor,
                         maxLines = 1,
@@ -140,11 +144,20 @@ internal fun NoteCard(
                         modifier = Modifier.weight(1f)
                     )
                     
+                    if (note.isPinned) {
+                        Spacer(Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Filled.PushPin,
+                            contentDescription = stringResource(R.string.feature_list_pinned),
+                            modifier = Modifier.size(16.dp),
+                            tint = textColor.copy(alpha = 0.7f)
+                        )
+                    }
                     if (note.isSecret) {
                         Spacer(Modifier.width(8.dp))
                         Icon(
                             painter = painterResource(id = com.metoly.morganize.core.ui.R.drawable.lock_locked),
-                            contentDescription = "Secret Note",
+                            contentDescription = stringResource(R.string.feature_list_secret_note),
                             modifier = Modifier.size(16.dp),
                             tint = textColor.copy(alpha = 0.8f)
                         )

@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.metoly.morganize.feature.create"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -44,4 +44,11 @@ dependencies {
     implementation(libs.coil.compose)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+dependencies {
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.mockk)
 }

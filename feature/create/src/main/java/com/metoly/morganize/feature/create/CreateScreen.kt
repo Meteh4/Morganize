@@ -34,9 +34,11 @@ import com.metoly.components.security.BiometricHelper
 import com.metoly.components.security.SecretItemTypePickerBottomSheet
 import com.metoly.components.security.SetCredentialsBottomSheet
 import com.metoly.components.security.UnlockBottomSheet
+import com.metoly.components.security.BiometricCipherHandler
 import com.metoly.morganize.feature.create.components.CreateTopBar
 import kotlinx.coroutines.flow.collectLatest
-import javax.crypto.Cipher
+import kotlinx.coroutines.launch
+import androidx.activity.compose.BackHandler
 
 /**
  * Screen for creating a new note.
@@ -52,6 +54,7 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val lazyListState = rememberLazyListState()
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
 
     var activeRichState by remember { mutableStateOf<RichTextEditorState?>(null) }
     var activeEditingTextItemId by remember { mutableStateOf<String?>(null) }
@@ -66,13 +69,14 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current
-    LaunchedEffect(lifecycleOwner) {
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_PAUSE) {
                 viewModel.delegate.onEvent(NoteEditorEvent.LockAllSecretItems)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     val updateRichState: (RichTextEditorState) -> Unit = { newState ->
@@ -103,6 +107,7 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
     var showSetCredentialsForSecretItem by remember { mutableStateOf(false) }
     var showSetCredentialsForSecretNote by remember { mutableStateOf(false) }
     var isPendingSecretImage by remember { mutableStateOf(false) }
+    var showReminderPicker by remember { mutableStateOf(false) }
 
     val secretImagePickerLauncher = rememberNoteImagePicker { path ->
         isPendingSecretImage = false
@@ -110,77 +115,76 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
         showSetCredentialsForSecretItem = true
     }
 
+    var showUnsavedDialog by remember { mutableStateOf(false) }
+
+    BackHandler {
+        if (viewModel.hasUnsavedChanges) {
+            showUnsavedDialog = true
+        } else {
+            onBack()
+        }
+    }
+
+    if (showUnsavedDialog) {
+        com.metoly.components.UnsavedChangesDialog(
+            onConfirmSave = {
+                showUnsavedDialog = false
+                viewModel.save()
+            },
+            onDiscard = {
+                showUnsavedDialog = false
+                onBack()
+            },
+            onDismiss = {
+                showUnsavedDialog = false
+            }
+        )
+    }
+
     LaunchedEffect(viewModel.uiEvent) {
         viewModel.uiEvent.collectLatest { event ->
             when (event) {
                 is NoteEditorUiEvent.SaveSuccess -> onSaved()
-                is NoteEditorUiEvent.ShowSnackbar -> snackbarHostState.showSnackbar(event.message)
+                is NoteEditorUiEvent.ShowSnackbar -> snackbarHostState.showSnackbar(event.message.asString(context))
                 is NoteEditorUiEvent.ScrollToPage -> lazyListState.animateScrollToItem(event.pageIndex + 1)
                 is NoteEditorUiEvent.ShowBiometricPrompt -> {
-
-                    val keyManager = com.metoly.morganize.core.model.security.KeyManager()
-                    try {
-                        val secretKey = keyManager.getOrCreateBiometricKey(event.keystoreAlias)
-                        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-                        if (event.decryptionIv != null) {
-                            val ivBytes = android.util.Base64.decode(event.decryptionIv, android.util.Base64.NO_WRAP)
-                            val spec = javax.crypto.spec.GCMParameterSpec(128, ivBytes)
-                            cipher.init(Cipher.DECRYPT_MODE, secretKey, spec)
-                        } else {
-                            cipher.init(Cipher.DECRYPT_MODE, secretKey)
-                        }
-                        biometricHelper.showBiometricPrompt(
-                            activity = context as FragmentActivity,
-                            cipher = cipher,
-                            onSuccess = { _ ->
-                                val id = event.itemId
-                                if (id != null) {
-                                    viewModel.delegate.onEvent(NoteEditorEvent.SecretItemUnlockWithBiometric(
-                                       pageId = uiState.pages[activePageIndex].id,
-                                       itemId = id,
-                                       decryptedKey = secretKey
-                                    ))
-                                } else {
-                                    viewModel.delegate.onEvent(NoteEditorEvent.SecretNoteUnlockWithBiometric(secretKey))
-
-                                }
-                            },
-                            onFailed = {
-                                val id = event.itemId
-                                if (id != null) {
-                                    viewModel.delegate.onEvent(NoteEditorEvent.SecretItemBiometricFailed(
-                                       pageId = uiState.pages[activePageIndex].id,
-                                       itemId = id
-                                    ))
-                                } else {
-                                    viewModel.delegate.onEvent(NoteEditorEvent.SecretNoteBiometricFailed)
-                                }
-                            }
-                        )
-                    } catch (e: Exception) {
-                        android.util.Log.e("BIOMETRIC", "Failed to init cipher", e)
-                        snackbarHostState.showSnackbar("Biometric Error: ${e.message}")
-                        val id = event.itemId
-                        if (id != null) {
-                             viewModel.delegate.onEvent(NoteEditorEvent.SecretItemBiometricFailed(
-                                pageId = uiState.pages[activePageIndex].id,
-                                itemId = id
-                             ))
-                        } else {
-                             viewModel.delegate.onEvent(NoteEditorEvent.SecretNoteBiometricFailed)
-                        }
-                    }
+                    BiometricCipherHandler.handleBiometricPrompt(
+                        event = event,
+                        activity = context as FragmentActivity,
+                        biometricHelper = biometricHelper,
+                        keyManager = viewModel.delegate.keyManager!!,
+                        delegate = viewModel.delegate,
+                        activePageId = uiState.pages[activePageIndex].id,
+                        onError = { msg -> coroutineScope.launch { snackbarHostState.showSnackbar(msg) } }
+                    )
                 }
                 is NoteEditorUiEvent.UnlockFailed -> snackbarHostState.showSnackbar(event.message)
             }
         }
     }
 
+    if (showReminderPicker) {
+        com.metoly.components.ReminderDateTimePickerDialog(
+            initialReminderAt = uiState.reminderAt,
+            onDismissRequest = { showReminderPicker = false },
+            onReminderSet = { timestamp ->
+                viewModel.delegate.onEvent(NoteEditorEvent.ReminderChanged(timestamp))
+                showReminderPicker = false
+            }
+        )
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CreateTopBar(
-                onBack = onBack,
+                onBack = {
+                    if (viewModel.hasUnsavedChanges) {
+                        showUnsavedDialog = true
+                    } else {
+                        onBack()
+                    }
+                },
                 selectedColor = uiState.backgroundColor,
                 onColorSelected = { colorArgb ->
                     viewModel.delegate.onEvent(NoteEditorEvent.BackgroundColorChanged(colorArgb = colorArgb))
@@ -189,8 +193,12 @@ fun CreateScreen(viewModel: CreateViewModel, onBack: () -> Unit, onSaved: () -> 
                 onToggleSecretNote = {
                     if (!uiState.isSecretNote) {
                         showSetCredentialsForSecretNote = true
+                    } else {
+                        viewModel.delegate.onEvent(NoteEditorEvent.SecretNoteLock)
                     }
-                }
+                },
+                hasReminder = uiState.reminderAt != null,
+                onReminderClick = { showReminderPicker = true }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },

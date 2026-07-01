@@ -21,6 +21,7 @@
             <option value="$PROJECT_DIR$/feature/edit" />
             <option value="$PROJECT_DIR$/feature/list" />
             <option value="$PROJECT_DIR$/feature/onboarding" />
+            <option value="$PROJECT_DIR$/feature/widget" />
           </set>
         </option>
       </GradleProjectSettings>

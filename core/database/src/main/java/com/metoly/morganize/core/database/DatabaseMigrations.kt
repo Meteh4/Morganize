@@ -47,6 +47,39 @@ val MIGRATION_2_3 =
         }
 
 /**
+ * MIGRATION_3_4 — Grid system migration:
+ * Consolidates content, imagePaths, drawingPath, richSpansJson, checklistJson
+ * into a single pagesJson column. Old note content cannot be losslessly converted
+ * to the new grid format, so notes are preserved with metadata but empty pages.
+ */
+val MIGRATION_3_4 =
+        object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS notes_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        title TEXT NOT NULL,
+                        pagesJson TEXT NOT NULL DEFAULT '[]',
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL,
+                        backgroundColor INTEGER,
+                        categoryId INTEGER
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO notes_new (id, title, createdAt, updatedAt, backgroundColor, categoryId)
+                    SELECT id, title, createdAt, updatedAt, backgroundColor, categoryId FROM notes
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE notes")
+                db.execSQL("ALTER TABLE notes_new RENAME TO notes")
+            }
+        }
+
+/**
  * MIGRATION_4_5 — adds SecretNote encryption support:
  * - isSecret: flag indicating the note is password/biometric-protected
  * - encryptedContent: Base64-encoded AES-256-GCM ciphertext of pages JSON
@@ -75,5 +108,50 @@ val MIGRATION_5_6 =
                 db.execSQL("ALTER TABLE notes ADD COLUMN hasBiometric INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE notes ADD COLUMN biometricWrappedPassword TEXT")
                 db.execSQL("ALTER TABLE notes ADD COLUMN biometricWrappedPasswordIv TEXT")
+            }
+        }
+
+/**
+ * MIGRATION_6_7 — Faz 1 & 2 feature support:
+ * - isPinned: allows users to pin important notes to the top (F-2)
+ * - isDeleted / deletedAt: soft-delete and trash bin support (F-3)
+ * - isArchived: note archiving for decluttering without deletion (F-8)
+ */
+val MIGRATION_6_7 =
+        object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE notes ADD COLUMN isPinned INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE notes ADD COLUMN isDeleted INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE notes ADD COLUMN deletedAt INTEGER")
+                db.execSQL("ALTER TABLE notes ADD COLUMN isArchived INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+/**
+ * MIGRATION_7_8 — Faz 3 feature support:
+ * - tags table: lightweight labels for notes (F-15)
+ * - note_tag_cross_ref: many-to-many note↔tag relationship (F-15)
+ * - reminderAt: optional reminder timestamp on notes (F-16)
+ */
+val MIGRATION_7_8 =
+        object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `tags` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `colorArgb` INTEGER NOT NULL
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `note_tag_cross_ref` (
+                        `noteId` INTEGER NOT NULL,
+                        `tagId` INTEGER NOT NULL,
+                        PRIMARY KEY(`noteId`, `tagId`),
+                        FOREIGN KEY(`noteId`) REFERENCES `notes`(`id`) ON DELETE CASCADE,
+                        FOREIGN KEY(`tagId`) REFERENCES `tags`(`id`) ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("ALTER TABLE notes ADD COLUMN reminderAt INTEGER")
             }
         }

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Delete Dialog -->
+    <string name="core_components_delete_dialog_title">Delete Note</string>
+    <string name="core_components_delete_dialog_message">"%s" will be deleted. This action cannot be undone.</string>
+    <string name="core_components_delete_dialog_generic_message">This note will be deleted. This action cannot be undone.</string>
+    <string name="core_components_delete_dialog_confirm">Delete</string>
+    <string name="core_components_delete_dialog_cancel">Cancel</string>
+    <string name="core_components_untitled">Untitled Note</string>
+
+    <!-- Add Item Bottom Sheet -->
+    <string name="core_components_add_item_title">Add Item</string>
+    <string name="core_components_add_item_subtitle">Choose content type to add</string>
+    <string name="core_components_add_item_text">Text</string>
+    <string name="core_components_add_item_text_desc">Rich text with formatting</string>
+    <string name="core_components_add_item_image">Image</string>
+    <string name="core_components_add_item_image_desc">Photo or picture from gallery</string>
+    <string name="core_components_add_item_checklist">Checklist</string>
+    <string name="core_components_add_item_checklist_desc">Checkboxes with tasks</string>
+    <string name="core_components_add_item_secret">Secret Item</string>
+    <string name="core_components_add_item_secret_desc">Password-protected content</string>
+
+    <!-- Note Content -->
+    <string name="core_components_page_number">Page %1$d</string>
+    <string name="core_components_add_page">Add page</string>
+    <string name="core_components_drag_up">Drag up</string>
+
+    <!-- Theme Picker -->
+    <string name="core_components_theme_title">Choose Theme</string>
+    <string name="core_components_theme_system">System Default</string>
+    <string name="core_components_theme_light">Light</string>
+    <string name="core_components_theme_dark">Dark</string>
+    <string name="core_components_theme_apply">Apply</string>
+
+    <!-- Tag Bottom Sheet -->
+    <string name="core_components_tag_new">New Tag</string>
+    <string name="core_components_tag_subtitle">Create a tag to easily find your notes</string>
+    <string name="core_components_tag_name_label">Tag Name</string>
+    <string name="core_components_tag_choose_color">Choose Color</string>
+    <string name="core_components_tag_create">Create</string>
+
+    <!-- Security: Set Credentials -->
+    <string name="core_components_set_credentials_title">Set Credentials</string>
+    <string name="core_components_password_label">Password (min 4 chars)</string>
+    <string name="core_components_confirm_password_label">Confirm Password</string>
+    <string name="core_components_passwords_no_match">Passwords do not match</string>
+    <string name="core_components_enable_biometric">Enable Biometric Unlock</string>
+    <string name="core_components_confirm">Confirm</string>
+
+    <!-- Security: Unlock Dialog -->
+    <string name="core_components_unlock_title">Unlock</string>
+    <string name="core_components_biometric_disabled">Biometric disabled due to too many failed attempts. Please use your password.</string>
+    <string name="core_components_incorrect_password_attempts">Incorrect password. Attempt %1$d of %2$d</string>
+    <string name="core_components_unlock">Unlock</string>
+
+    <!-- Security: Biometric -->
+    <string name="core_components_biometric_unlock_title">Unlock Item</string>
+    <string name="core_components_biometric_unlock_subtitle">Confirm your biometric to decrypt</string>
+    <string name="core_components_biometric_use_password">Use Password</string>
+    <string name="core_components_biometric_error">Biometric Error: %1$s</string>
+
+    <!-- Secret Item Picker -->
+    <string name="core_components_secret_item_title">Secret Item</string>
+
+    <!-- Unsaved Changes -->
+    <string name="core_components_unsaved_title">Unsaved Changes</string>
+    <string name="core_components_unsaved_message">You have unsaved changes. Save before leaving?</string>
+    <string name="core_components_unsaved_save">Save</string>
+    <string name="core_components_unsaved_discard">Discard</string>
+</resources>

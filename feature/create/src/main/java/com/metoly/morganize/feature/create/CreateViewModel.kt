@@ -44,6 +44,14 @@ class CreateViewModel(
     val uiState = delegate.state
     val uiEvent = delegate.uiEvent
 
+    val hasUnsavedChanges: Boolean
+        get() {
+            val state = uiState.value
+            if (state.title.isNotBlank()) return true
+            if (state.pages.any { it.items.isNotEmpty() }) return true
+            return false
+        }
+
     init {
         observeCategories()
     }
@@ -104,13 +112,13 @@ class CreateViewModel(
                     .onEach { result ->
                         when (result) {
                             is ResponseState.Success -> delegate.sendUiEvent(NoteEditorUiEvent.SaveSuccess)
-                            is ResponseState.Error -> delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar(result.message))
+                            is ResponseState.Error -> delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar(com.metoly.morganize.core.ui.UiText.DynamicString(result.message)))
                             else -> Unit
                         }
                     }
                     .launchIn(viewModelScope)
             } catch (e: Exception) {
-                delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar("Failed to encrypt note: ${e.message}"))
+                delegate.sendUiEvent(NoteEditorUiEvent.ShowSnackbar(com.metoly.morganize.core.ui.UiText.StringResource(R.string.feature_create_encrypt_failed, e.message ?: "")))
             }
         }
     }
